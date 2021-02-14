@@ -70,35 +70,40 @@ async def env_ws(websocket, path):
 
     async for message in websocket:
         m=json.loads(message) # message is in Json
-        if m['command']!='upd':
+        command=m['command']
+        if command!='upd':
             print(m)
-        if m['command'] == "new":
+        if command == "new":
             '''
-            create a new node
+            create a new node or an edge
                 {command:"new",
-                    node:{name,pos:[,,]}
+                    info:{name,...}
                 }
             '''
-            node=m['node']
-            if node['name'] in env.nodes:
-                await websocket.send("err no such node %s" % node['name'])
-            else:
-                env.nodes.update({node['name']:Environment.Node(node,env)})
-                await websocket.send("msg node %s created" % node['name'])
-            
-        elif m['command'] == "mov":
+            env.Create(m['info'])
+            await websocket.send("msg %s %s created" % (m['info']['type'],m['info']['name']))
+
+        if command == "rmv":
+            '''
+            remove a new node or an edge
+                {command:"rmv",
+                    info:{name,...}
+                }
+            '''
+            env.Remove(m['info'])
+            await websocket.send("msg %s removed" % m['info']['name'])
+
+
+        elif command == "mov":
             '''
             move a node to pos
                 {command:"mov",node_name,pos}
             '''
             node_name=m['node_name']
-            if node_name in env.nodes:
-                env.nodes[node_name].move(m['pos'])
-                await websocket.send("msg node %s moved to %s" % (node_name,m['pos']))
-            else:
-                await websocket.send("err no such node %s" % node_name)
+            env.Move(m['node_name'],m['pos'])
+            await websocket.send("msg node %s moved to %s" % (node_name,m['pos']))
 
-        elif m['command'] == "cod":
+        elif command == "cod":
             '''
             set code of a node
                 {command:"cod",node_name,code}
@@ -110,26 +115,18 @@ async def env_ws(websocket, path):
             else:
                 await websocket.send("err no such node %s" % node_name)
 
-        elif m['command'] == "exc":
+        elif command == "exc":
             '''
             run a node 
                 {command:"exc",node_name}
             '''
             env.tasks.put(m['node_name'],block=False)
 
-        elif m['command'] == "upd":
+        elif command == "upd":
             '''
             if there are changes after last upd command, send those changes to client
                 {command:"upd",(int)max_steps}
             '''
-            for name,node in env.nodes.items():# directly update code in nodes
-                if name in node_history_client:
-                    if node_history_client[name]!=node.latest_history:
-                        await websocket.send("cod "+json.dumps({'name':name,'code':node.code}))
-                        node_history_client[name]=node.latest_history
-                else:
-                    await websocket.send("cod "+json.dumps({'name':name,'code':node.code}))
-                    node_history_client[name]=node.latest_history
             max_steps=int(m['max_steps'])if 'max_steps' in m else 100
             for _ in range(max_steps):# update env
                 #TODO: if too far, reload entire env
@@ -148,8 +145,18 @@ async def env_ws(websocket, path):
                     env_history_client=env_history_client.last # move backward
                     env_history_client_version = env_history_client.version
 
+            for name,node in env.nodes.items():# directly update code in nodes
+                if name in node_history_client:
+                    if node_history_client[name]!=node.latest_history:
+                        await websocket.send("cod "+json.dumps({'name':name,'code':node.code}))
+                        node_history_client[name]=node.latest_history
+                else:
+                    await websocket.send("cod "+json.dumps({'node_name':name,'code':node.code}))
+                    node_history_client[name]=node.latest_history
+            
+
         
-        elif m['command'] == "udo":
+        elif command == "udo":
             '''
             undo  
             {command:"udo",name}
@@ -172,7 +179,7 @@ async def env_ws(websocket, path):
                     await websocket.send("err no such node %s" % node_name)
                 
 
-        elif m['command'] == "rdo":
+        elif command == "rdo":
             '''
             redo
             if node_name=='', apply redo on env
@@ -193,24 +200,39 @@ async def env_ws(websocket, path):
                 else:
                     await websocket.send("err no such node %s" % node_name)
 
+        #TODO
+        elif command == "sav":
+            '''
+            save the graph to disk
+            '''
+        #TODO
+        elif command == "lod":
+            '''
+            load the graph to disk
+            '''
+
 
 async def Update_client(ws,direction,history_item):
     '''
-    for client that aren't on head,
+    for client that isn't on head,
     if direction == 1, do/redo the action in history_item
     if direction == -1, undo the action in history_item
     '''
     # history_item can't be type "stt"
     if direction==1:
         if history_item.type=="mov":# move node to new position
-            await ws.send("mov "+json.dumps({'node_name':history_item.content['name'],'pos':history_item.content['new']}))
-        if history_item.type=="new":# add new node
-            await ws.send("new "+json.dumps({'node_name':history_item.content['name'],'pos':history_item.content['pos']}))
+            await ws.send(json.dumps({'command':"mov",'node_name':history_item.content['name'],'pos':history_item.content['new']}))
+        if history_item.type=="new":# add node
+            await ws.send(json.dumps({'command':"new",'info':history_item.content})) # info
+        if history_item.type=="rmv":# remove node
+            await ws.send(json.dumps({'command':"rmv",'node_name':history_item.content['name']}))
     else:
         if history_item.type=="mov":# move node back to old position
-            await ws.send("mov "+json.dumps({'node_name':history_item.content['name'],'pos':history_item.content['old']}))
+            await ws.send(json.dumps({'command':"mov",'node_name':history_item.content['name'],'pos':history_item.content['old']}))
         if history_item.type=="new":# remove node
-            await ws.send("rmv "+json.dumps({'node_name':history_item.content['name']}))
+            await ws.send(json.dumps({'command':"rmv",'node_name':history_item.content['name']}))
+        if history_item.type=="rmv":# add node
+            await ws.send(json.dumps({'command':"new",'info':history_item.content})) # info
     
         
 @router.route("/lobby") #* lobby

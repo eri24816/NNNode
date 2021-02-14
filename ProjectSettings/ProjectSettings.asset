@@ -624,7 +624,7 @@ PlayerSettings:
   cloudServicesEnabled:
     Analytics: 1
     Build: 0
-    Collab: 1
+    Collab: 0
     Game Performance: 0
     Purchasing: 0
     Unity Ads: 0
@@ -640,10 +640,10 @@ PlayerSettings:
     m_VersionCode: 1
     m_VersionName: 
   apiCompatibilityLevel: 6
-  cloudProjectId: 09750166-b8d4-4b86-b190-0e9b2dda1e72
+  cloudProjectId:
   framebufferDepthMemorylessMode: 0
   projectName: NNNode
-  organizationId: chenpingyi
+  organizationId:
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0
