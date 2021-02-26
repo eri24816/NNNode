@@ -3024,6 +3024,8 @@ namespace TMPro
 
             //Debug.Log("Inserting character " + m_IsCompositionActive);
 
+            Delete();
+
             string replaceString = c.ToString();
             int insertPos = m_StringPosition;
             if (c == '\t')
@@ -3034,13 +3036,13 @@ namespace TMPro
 
             }
                 
-            Delete();
+            
 
             // Can't go past the character limit
             if (characterLimit > 0 && text.Length >= characterLimit)
                 return;
 
-            
+
             m_Text = text.Insert(insertPos, replaceString);
 
             if (!char.IsHighSurrogate(c))
@@ -4222,10 +4224,12 @@ namespace TMPro
             if (m_TextComponent == null)
                 return;
 
+            /*
             if (multiLine)
                 m_TextComponent.enableWordWrapping = true;
             else
                 m_TextComponent.enableWordWrapping = false;
+            */
         }
 
         // Control Rich Text option on the text component.

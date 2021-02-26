@@ -17,7 +17,7 @@ public class Port : MonoBehaviour
 
     protected virtual void Start()
     {
-        node = transform.parent.parent.GetComponent<Node>();
+        node = transform.parent.GetComponent<Node>();
     }
 
     protected virtual void Update()

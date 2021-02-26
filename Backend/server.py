@@ -90,6 +90,7 @@ async def env_ws(websocket, path):
                     info:{name,...}
                 }
             '''
+            
             env.Remove(m['info'])
             await websocket.send("msg %s removed" % m['info']['name'])
 

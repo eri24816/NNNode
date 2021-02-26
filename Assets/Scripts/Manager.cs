@@ -13,8 +13,8 @@ public class Manager : MonoBehaviour
     public static Manager i;
     public Dictionary<string,Node> Nodes;
     public GameObject[] prefabs;
-    public Dictionary<string, GameObject> prefabDict; 
-
+    public Dictionary<string, GameObject> prefabDict;
+    public GameObject canvas;
     public enum State
     {
         idle,
