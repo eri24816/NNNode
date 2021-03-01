@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class Port : MonoBehaviour
+public class Port : MonoBehaviour, IDragHandler
 {
     /*
         Child game object of a node.
@@ -31,9 +32,15 @@ public class Port : MonoBehaviour
         return (flow.GetType() == flowType) && (Edges.Count < maxEdges) && (isInput ? flow.head == null : flow.tail == null);
     }
 
-    public void OnMouseDrag()
+
+    public void Disconnect(Flow flow)
     {
-        if (Manager.i.state==Manager.State.idle && Input.GetMouseButton(0))
+        Edges.Remove(flow);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (Manager.i.state == Manager.State.idle && Input.GetMouseButton(0))
         {
             if (Edges.Count < maxEdges)
             {
@@ -43,10 +50,6 @@ public class Port : MonoBehaviour
                 else newEdge.tail = this;
             }
         }
-    }
-    public void Disconnect(Flow flow)
-    {
-        Edges.Remove(flow);
     }
 }
     

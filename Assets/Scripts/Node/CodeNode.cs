@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class CodeNode : Node,IEndDragHandler,IBeginDragHandler
+public class CodeNode : Node,IEndDragHandler,IBeginDragHandler,IDragHandler
 {
     public bool expanded = false;
 
@@ -32,17 +32,19 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler
         float h = l < r ? l : r;
         upPad = h / 2;
         
+        /*
         if (ins.Count > 0)
             for (int i = 0; i < ins.Count; i++)
             {
-                ins[i].transform.position = new Vector3(-w / 2, h/2- .1f*i -.1f) + transform.position;
+                ins[i].transform.position = new Vector3(-w / 2,- .1f*i -.1f) + transform.position;
             }
 
         if (outs.Count > 0)
             for (int i = 0; i < outs.Count; i++)
             {
-                outs[i].transform.position = new Vector3(w / 2, h / 2 - .1f * i - .1f) + transform.position;
+                outs[i].transform.position = new Vector3(w / 2, - .1f * i - .1f) + transform.position;
             }
+        */
     }
     public void Rename()
     {
@@ -58,7 +60,7 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler
         expanded ^= true;
         CodeEditor.SetActive(expanded);
     }
-    public bool dragging = true;
+    public bool dragging = false;
     public void OnEndDrag(PointerEventData eventData)
     {
         dragging = false;
@@ -66,7 +68,10 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        print("begin drag");
         dragging = true;
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
     }
 }

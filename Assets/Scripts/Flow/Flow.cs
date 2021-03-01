@@ -42,7 +42,9 @@ public class Flow : MonoBehaviour
         Port targetPort = null;
         while (Input.GetMouseButton(0)) // while mouse hold
         {
-            targetPort = CamControl.colliderHover.GetComponent<Port>();
+            targetPort = null;
+            if(CamControl.colliderHover)
+                targetPort = CamControl.colliderHover.GetComponent<Port>();
             if (targetPort)
                 if (!targetPort.AcceptEdge(this)) targetPort = null;
             Vector3 dragPos;
@@ -82,7 +84,7 @@ public class Flow : MonoBehaviour
 
     public float shapeVel = 0.5f;
     public float curveDist = 0.8f;
-    public void Reshape(Vector3 tail, Vector3 head) // TODO
+    public void Reshape(Vector3 tail, Vector3 head)
     {
         float dist = Vector3.Distance(tail, head);
         float vel = shapeVel * Mathf.Min(1, dist);
@@ -102,6 +104,7 @@ public class Flow : MonoBehaviour
         }
         Gradient gradient = new Gradient
         {
+            colorKeys = new GradientColorKey[] { new GradientColorKey(new Color(0.6f,0.7f,1f), 0), new GradientColorKey(new Color(0.6f,0.7f,0.8f), 1) },
             alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(.2f, Mathf.Min(0.5f, 0.15f / dist)), new GradientAlphaKey(.2f, 1 - Mathf.Min(0.5f, 0.15f / dist)), new GradientAlphaKey(1, 1) }
         };
         line.colorGradient = gradient;

@@ -42,7 +42,6 @@ public class Node : MonoBehaviour
     {
         Manager.i.Nodes.Add(Name,this);
         targetPos = transform.position;
-        transform.SetParent( Manager.i.canvas.transform);
     }
 
     public void Remove()
