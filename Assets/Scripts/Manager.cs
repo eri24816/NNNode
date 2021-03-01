@@ -51,33 +51,29 @@ public class Manager : MonoBehaviour
         
     }
 
-    public void CreateFlow(Flow flow)
+    public void AddFlow(Flow flow)
     {
-        // TODO: Tell server create flow
+        // TODO: Tell server adding an flow
     }
 
      
     public int nameNum = 0;
 
-    public void CreateNode(string type, Vector3 pos, string name = null)
-    {
-        var prefab = prefabDict[type];
-        if (name == null) name = $"{prefab.name} {nameNum++}";
 
-        Node newNode = Instantiate(prefab).GetComponent<Node>();
-        newNode.Name = newNode.name = name;
-        newNode.transform.position = pos;
-        if(connectToServer)
-            switch (type)
-            {
-                case "CodeNode":
-                    env.Send(new APIMessage.NewCodeNode(prefab.name, name, pos).Json);
-                    break;
-                case "FuntionNode":
-                    env.Send(new APIMessage.NewCodeNode(prefab.name, name, pos).Json);
-                    break;
-            }
-    } 
+    public void AddNode(Node node) // Called by Node when the Creating corutine breaks
+    {
+        // Tell server adding a node
+        Nodes.Add(node.Name, node);
+        if (!connectToServer) return;
+        if (node is CodeNode)
+        {
+            env.Send(new APIMessage.NewCodeNode(node.name, node.transform.position).Json);
+        }
+        if (node is FunctionNode)
+        {
+            env.Send(new APIMessage.NewFunctionNode(node.name, node.transform.position).Json);
+        }
+    }
 
 
     

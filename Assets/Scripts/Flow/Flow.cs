@@ -11,7 +11,7 @@ public class Flow : MonoBehaviour
     {
         line = GetComponent<LineRenderer>();
         line.positionCount = 10;
-        StartCoroutine(Creating());
+        
     }
     protected virtual void Update()
     {
@@ -64,7 +64,7 @@ public class Flow : MonoBehaviour
         {
             if (dragTail) tail = targetPort; else head = targetPort;
             targetPort.Edges.Add(this);
-            Manager.i.CreateFlow(this);
+            Manager.i.AddFlow(this);
             Manager.i.state = Manager.State.idle;
             yield break;
         }

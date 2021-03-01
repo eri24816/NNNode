@@ -14,7 +14,7 @@ namespace APIMessage
             public float[] pos;
         }
         public Info info;
-        public NewCodeNode(string type, string name,  Vector3 pos) { info.name = name; info.type = type; info.pos = new float[] { pos.x, pos.y, pos.z }; }
+        public NewCodeNode(string name,  Vector3 pos) { info.name = name; info.type = "CodeNode"; info.pos = new float[] { pos.x, pos.y, pos.z }; }
         public string Json { get => JsonUtility.ToJson(this); }
     }
 
@@ -29,7 +29,7 @@ namespace APIMessage
             public float[] pos;
         }
         public Info info;
-        public NewFunctionNode(string type, string name, Vector3 pos) { info.name = name; info.type = type; info.pos = new float[] { pos.x, pos.y, pos.z }; }
+        public NewFunctionNode( string name, Vector3 pos) { info.name = name; info.type = "FunctionNode"; info.pos = new float[] { pos.x, pos.y, pos.z }; }
         public string Json { get => JsonUtility.ToJson(this); }
     }
 

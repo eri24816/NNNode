@@ -48,6 +48,7 @@ public class Port : MonoBehaviour, IDragHandler
                 Flow newEdge = Instantiate(Manager.i.prefabDict[flowType.Name]).GetComponent<Flow>();
                 if (isInput) newEdge.head = this;
                 else newEdge.tail = this;
+                StartCoroutine(newEdge.Creating());
             }
         }
     }

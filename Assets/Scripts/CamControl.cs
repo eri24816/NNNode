@@ -48,7 +48,7 @@ public class CamControl : MonoBehaviour
                 worldMouse = WorldPoint();
             }
 
-            if(CompareTag(colliderHover, "background") || !CompareTag(selectedGameObject, "InputField"))
+            if(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject==null)
                 transform.Translate(new Vector3(0, 0, Input.mouseScrollDelta.y * zoom*focusPlane.GetDistanceToPoint(transform.position)));
             transform.Translate(worldMouse - WorldPoint());
         }
@@ -68,11 +68,17 @@ public class CamControl : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.C))
         {
-            Manager.i.CreateNode("CodeNode",worldMouse);
+            Node newNode = Instantiate(Manager.i.prefabDict["CodeNode"]).GetComponent<Node>();
+            newNode.Name = newNode.name = $"CodeNode {Manager.i.nameNum++}";
+            newNode.transform.position = worldMouse;
+            StartCoroutine(newNode.Creating());
         }
         if (Input.GetKeyDown(KeyCode.F))
         {
-            Manager.i.CreateNode("FunctionNode", worldMouse);
+            Node newNode = Instantiate(Manager.i.prefabDict["FunctionNode"]).GetComponent<Node>();
+            newNode.Name = newNode.name = $"FunctionNode {Manager.i.nameNum++}";
+            newNode.transform.position = worldMouse;
+            StartCoroutine(newNode.Creating());
         }
         bool ctrlDown = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
         if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Manager.i.Undo();

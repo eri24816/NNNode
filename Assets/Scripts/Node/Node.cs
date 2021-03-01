@@ -40,12 +40,13 @@ public class Node : MonoBehaviour
 
     public virtual void Start()
     {
-        Manager.i.Nodes.Add(Name,this);
         targetPos = transform.position;
     }
 
     public void Remove()
     {
+        //TODO: call manager and server
+        //TODO: remove connected flows
         Destroy(gameObject);
         Manager.i.Nodes.Remove(Name);
     }
@@ -93,16 +94,17 @@ public class Node : MonoBehaviour
         }
     }
 
-    /*
-    public IEnumerator Creating()
+    
+    public virtual IEnumerator Creating()//Drag and drop, maybe?
     {
         yield return null;
-
+        /*
         while (Input.GetMouseButton(0))
         {
             
             yield return null;
-        }
-    }*/
+        }*/
+        Manager.i.AddNode(this);
+    }
 
 }
