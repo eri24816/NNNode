@@ -35,7 +35,7 @@ public class Node : MonoBehaviour
 {
     public List<Port> ins, outs;
     public RectTransform panel;
-    public string Name;
+    public string id,Name;
     
 
     public virtual void Start()
@@ -43,12 +43,18 @@ public class Node : MonoBehaviour
         targetPos = transform.position;
     }
 
-    public void Remove()
+    void Remove()
     {
-        //TODO: call manager and server
-        //TODO: remove connected flows
-        Destroy(gameObject);
-        Manager.i.Nodes.Remove(Name);
+        // Remove node from this client
+        // Invoked by X button
+        for (int i = 0; i < ins.Count; i++)
+            ins[i].Remove();
+
+        for (int i = 0; i < outs.Count; i++)
+            outs[i].Remove();
+
+        Manager.i.RemoveNode(this);
+        StartCoroutine(Removing()); // Play removing animation and destroy the game objecct
     }
 
     public virtual void Update()
@@ -63,11 +69,8 @@ public class Node : MonoBehaviour
     }
 
     public float upPad = 0.1f, downPad = 0.1f;
-    public virtual void Reshape(float w, float l, float r)//Trapezoid shaped node
-    {
-
-        
-    }
+    public virtual void Reshape(float w, float l, float r){}//Trapezoid shaped node
+    
 
     readonly CoolDown recvMoveCD = new CoolDown(hz: 10);
     readonly CoolDown sendMoveCD = new CoolDown(hz: 10);
@@ -106,5 +109,9 @@ public class Node : MonoBehaviour
         }*/
         Manager.i.AddNode(this);
     }
-
+    public virtual IEnumerator Removing()// SAO-like?
+    {
+        yield return null;
+        Destroy(gameObject);
+    }
 }

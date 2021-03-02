@@ -62,6 +62,7 @@ class Node:
         create a node
         '''
         self.type=info['type']
+        self.id=info['id']
         self.name=info['name']
         self.pos=info['pos']
         self.env=env
@@ -75,7 +76,7 @@ class Node:
         pass
 
     def move(self,pos):
-        self.env.Update_history("mov",{"name":self.name,"old":self.pos,"new":pos})# node moves are logged in env history
+        self.env.Update_history("mov",{"id":self.id,"old":self.pos,"new":pos})# node moves are logged in env history
         self.pos=pos
 
     def Update_history(self,type,content):
@@ -85,7 +86,7 @@ class Node:
         cod, {name, old, new} - change code
         '''
         # don't repeat cod history    
-        if type=="cod" and self.latest_history.type=="cod" and content['name'] == self.latest_history.content['name']:
+        if type=="cod" and self.latest_history.type=="cod" and content['id'] == self.latest_history.content['id']:
             if (datetime.datetime.now() - self.latest_history.time).seconds<3:
                 self.latest_history.content['new']=content['new']
                 self.latest_history.version+=1
@@ -124,7 +125,7 @@ class CodeNode(Node):
     '''
     def __init__(self,info,env):
         '''
-        info: {type=CodeNode,name,pos,code,output}
+        info: {type=CodeNode,id,name,pos,code,output}
         '''
         super().__init__(info,env) #*? usage of super?
         self.code=info['code']if 'code' in info else ''
@@ -134,11 +135,11 @@ class CodeNode(Node):
         self.out_control=[] # there can be more than one out_control
 
     def get_info(self):
-        return {"type":"CodeNode","name":self.name,"pos":self.pos,"code":self.code,"output":self.output}
+        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output}
 
     def set_code(self,code):
         # code changes are logged in node history
-        self.Update_history("cod",{"name":self.name,"old":self.code,"new":code}) 
+        self.Update_history("cod",{"id":self.id,"old":self.code,"new":code}) 
         self.code=code
 
     def remove(self):
@@ -159,7 +160,7 @@ class FunctionNode(Node):
     '''
     def __init__(self,info,env):
         '''
-        info: {type=FunctionNode,name,pos,code,output,in_data,out_data}
+        info: {type=FunctionNode,id,name,pos,code,output,in_data,out_data}
         '''
         super().__init__(info,env)
         self.code=info['code']if 'code' in info else ''
@@ -184,11 +185,11 @@ class FunctionNode(Node):
     def get_info(self):
         in_data=[i for i in self.in_data] # get keys
         out_data=[i for i in self.out_data] # get keys
-        return {"type":"FunctionNode","name":self.name,"pos":self.pos,"code":self.code,"output":self.output,"in_data":in_data,"out_data":out_data}
+        return {"type":"FunctionNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,"in_data":in_data,"out_data":out_data}
 
     def set_code(self,code):
         # code changes are logged in node history
-        self.Update_history("cod",{"name":self.name,"old":self.code,"new":code})
+        self.Update_history("cod",{"id":self.id,"old":self.code,"new":code})
         self.code=code
 
     def remove(self):
@@ -212,7 +213,7 @@ class Edge(): # abstract class
         create an edge connecting two nodes
         '''
         self.type=info['type']
-        self.name=info['name']
+        self.id=info['id']
         self.tail=env.nodes[info['tail']]
         self.head=env.nodes[info['head']]
         self.info=info # for remove history
@@ -228,7 +229,7 @@ class Edge(): # abstract class
 class DataFlow(Edge):
     def __init__(self,info,env):
         '''
-        info: {type=DataFlow,name,tail,head,tail_var,head_var}
+        info: {type=DataFlow,id,tail,head,tail_var,head_var}
         '''
         super().__init__(info,env)
         self.activated=False
@@ -250,7 +251,7 @@ class DataFlow(Edge):
 class ControlFlow(Edge):
     def __init__(self,info,env):
         '''
-        info: {type=ControlFlow,name,tail,head}
+        info: {type=ControlFlow,id,tail,head}
         '''
         super().__init__(info,env)
         self.activated=False
@@ -281,48 +282,49 @@ class Env():
         self.name=name
         self.thread=None
         self.tasks = queue.Queue()
-        self.nodes={} # {name : Node}
-        self.edges={} # {name : Edge}
+        self.nodes={} # {id : Node}
+        self.edges={} # {id : Edge}
         self.globals=globals()
         self.locals={}
         self.first_history=self.latest_history=History_item("stt") # first history item
         self.lock_history=False # when undoing or redoing, lock_history set to True to avoid unwanted history change
+        self.id_num=0
     
     def Create(self,info): # create any type of node or edge
-        # info: {name, type, ...}
+        # info: {id, type, ...}
         new_instance=globals()[info['type']](info,self)
-        name=info['name']
+        id=info['id']
         
         
         if info['type']=="DataFlow" or info['type']=="ControlFlow":
-            assert name not in self.edges
-            self.edges.update({name:new_instance})
+            assert id not in self.edges
+            self.edges.update({id:new_instance})
         else:
-            assert name not in self.nodes
-            self.nodes.update({name:new_instance})
+            assert id not in self.nodes
+            self.nodes.update({id:new_instance})
 
     def Remove(self,info): # remove any type of node or edge
-        if info['name'] in self.edges:
-            self.edges[info['name']].remove()
-            self.edges.pop(info['name'])
+        if info['id'] in self.edges:
+            self.edges[info['id']].remove()
+            self.edges.pop(info['id'])
         else:
-            self.nodes[info['name']].remove()
-            self.nodes.pop(info['name'])
-    def Move(self,name,pos):
-        self.nodes[name].move(pos)
+            self.nodes[info['id']].remove()
+            self.nodes.pop(info['id'])
+    def Move(self,id,pos):
+        self.nodes[id].move(pos)
 
     def Update_history(self,type,content):
         '''
         type, content:
         stt, None - start the environment
         new, info - new node or edge
-        mov, {name, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
+        mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
         rem, info - remove node or edge
         '''
         if self.lock_history:
             return
         # don't repeat mov history
-        if type=="mov" and self.latest_history.type=="mov" and content['name'] == self.latest_history.content['name']:
+        if type=="mov" and self.latest_history.type=="mov" and content['id'] == self.latest_history.content['id']:
             if (datetime.datetime.now() - self.latest_history.time).seconds<3:
                 self.latest_history.content['new']=content['new']
                 self.latest_history.version+=1
@@ -353,7 +355,7 @@ class Env():
             elif type=="rem":
                 self.Create(content)
             elif type=="mov":
-                self.Move(content['name'],content['old'])
+                self.Move(content['id'],content['old'])
 
         self.latest_history.head_direction=-1
         self.latest_history=self.latest_history.last
@@ -376,7 +378,7 @@ class Env():
             elif type=="rem":
                 self.Remove(content)
             elif type=="mov":
-                self.Move(content['name'],content['new'])
+                self.Move(content['id'],content['new'])
 
         return 1
 

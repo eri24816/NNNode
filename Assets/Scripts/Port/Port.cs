@@ -31,7 +31,10 @@ public class Port : MonoBehaviour, IDragHandler
     {
         return (flow.GetType() == flowType) && (Edges.Count < maxEdges) && (isInput ? flow.head == null : flow.tail == null);
     }
-
+    public void Remove() // Called when the node is going to be remove
+    {
+        foreach (Flow f in Edges) f.Remove();
+    }
 
     public void Disconnect(Flow flow)
     {

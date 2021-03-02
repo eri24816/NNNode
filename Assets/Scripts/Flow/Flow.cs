@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Flow : MonoBehaviour
 {
+    public string id;
     public Port tail, head;
     public LineRenderer line;
     public bool hard = false;
@@ -74,11 +75,16 @@ public class Flow : MonoBehaviour
         }
         Manager.i.state = Manager.State.idle;
     }
-
     public void Remove()
+    {
+        Manager.i.RemoveFlow(this);
+        RawRemove();
+    }
+    public void RawRemove()
     {
         if (tail) tail.Disconnect(this);
         if (head) head.Disconnect(this);
+
         Destroy(gameObject);
     }
 

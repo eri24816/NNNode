@@ -25,9 +25,11 @@ public class Manager : MonoBehaviour
     string env_name = "my_env";
     WebSocket lobby, env;
     Queue<string> messagesFromServer;
+    Queue<string> avaliableIds;
     void Start()
     {
         messagesFromServer = new Queue<string>();
+        avaliableIds = new Queue<string>();
         Nodes = new Dictionary<string, Node>();
         prefabDict = new Dictionary<string, GameObject>();
         foreach (GameObject prefab in prefabs)
@@ -54,48 +56,62 @@ public class Manager : MonoBehaviour
     public void AddFlow(Flow flow)
     {
         // TODO: Tell server adding an flow
+        flow.id = avaliableIds.Dequeue();
     }
 
      
     public int nameNum = 0;
 
 
-    public void AddNode(Node node) // Called by Node when the Creating corutine breaks
+    public void AddNode(Node node) // Called by Node when the Creating corutine ends
     {
         // Tell server adding a node
-        Nodes.Add(node.Name, node);
+        node.id = avaliableIds.Dequeue();
+        Nodes.Add(node.id, node);
         if (!connectToServer) return;
         if (node is CodeNode)
         {
-            env.Send(new APIMessage.NewCodeNode(node.name, node.transform.position).Json);
+            env.Send(new APIMessage.NewCodeNode(node.id,node.name, node.transform.position).Json);
         }
         if (node is FunctionNode)
         {
-            env.Send(new APIMessage.NewFunctionNode(node.name, node.transform.position).Json);
+            env.Send(new APIMessage.NewFunctionNode(node.id, node.name, node.transform.position).Json);
         }
     }
 
+    public void RemoveNode(Node node)
+    {
+        Nodes.Remove(node.id);
+        if (connectToServer)
+            env.Send(new APIMessage.Rmv(node.id).Json);
+    }
 
-    
+    public void RemoveFlow(Flow flow)
+    {
+        Nodes.Remove(flow.id);
+        if (connectToServer)
+            env.Send(new APIMessage.Rmv(flow.id).Json);
+    }
+
     public void MoveNode(Node node,Vector3 pos)
     {
         if (connectToServer)
-            env.Send(new APIMessage.Mov(node.Name,pos).Json);
+            env.Send(new APIMessage.Mov(node.id,pos).Json);
     }
 
 
     public void Undo(Node node = null)
     {
-        string name = node ? node.Name : "";
+        string id = node ? node.id : "";
         if (connectToServer)
-            env.Send("{\"command\":\"udo\",\"node_name\":\"" + name + "\"}");
+            env.Send("{\"command\":\"udo\",\"id\":\"" + id + "\"}");
     }
 
     public void Redo(Node node = null)
     {
-        string name = node ? node.Name : "";
+        string id = node ? node.id : "";
         if (connectToServer)
-            env.Send("{\"command\":\"rdo\",\"node_name\":\"" + name + "\"}");
+            env.Send("{\"command\":\"rdo\",\"id\":\"" + id + "\"}");
     }
     
     //TODO: update before every env.Send()
@@ -127,6 +143,13 @@ public class Manager : MonoBehaviour
 
     private void Update()
     {
+        if (avaliableIds.Count < 5)
+        {
+            if (connectToServer)
+                env.Send(new APIMessage.Gid().Json); // request for an unused id
+            else
+                avaliableIds.Enqueue((nameNum++).ToString());
+        }
         while (messagesFromServer.Count > 0)
         {
             string recived = messagesFromServer.Dequeue();
@@ -138,7 +161,7 @@ public class Manager : MonoBehaviour
 
             if (command == "new")
             {
-                if (!Nodes.ContainsKey(FindString(recived, "name")))
+                if (!Nodes.ContainsKey(FindString(recived, "id")))
                 {
                     string type = FindString(recived, "type");
                     print(type);
@@ -147,6 +170,7 @@ public class Manager : MonoBehaviour
                         GameObject prefab = prefabDict[message.info.type];
                         var script = Instantiate(prefab).GetComponent<CodeNode>();
                         script.name = script.Name = message.info.name;
+                        script.id = message.info.id;
                         script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
                     }
 
@@ -156,6 +180,7 @@ public class Manager : MonoBehaviour
                         GameObject prefab = prefabDict[message.info.type];
                         var script = Instantiate(prefab).GetComponent<FunctionNode>();
                         script.name = script.Name = message.info.name;
+                        script.id = message.info.id;
                         script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
                     }
                 }
@@ -163,13 +188,21 @@ public class Manager : MonoBehaviour
             else if (command == "mov")
             {
                 var message = JsonUtility.FromJson<APIMessage.Mov>(recived);
-                Nodes[message.node_name].RawMove(new Vector3(message.pos[0], message.pos[1], message.pos[2]));
+                Nodes[message.id].RawMove(new Vector3(message.pos[0], message.pos[1], message.pos[2]));
             }
             else if (command == "rmv")
             {
                 var message = JsonUtility.FromJson<APIMessage.Rmv>(recived);
-                Nodes[message.node_name].Remove();
+                StartCoroutine(Nodes[message.id].Removing());
             }
+            // TODO: remove flow
+
+            else if (command == "gid")// get a unused id to assign to new nodes or flows
+            {
+                var message = JsonUtility.FromJson<APIMessage.Gid>(recived);
+                avaliableIds.Enqueue(message.id);
+            }
+
         }
     }
 
