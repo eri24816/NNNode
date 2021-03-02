@@ -63,7 +63,11 @@ public class Flow : MonoBehaviour
         // after mouse release
         if (targetPort)
         {
-            if (dragTail) tail = targetPort; else head = targetPort;
+            if (dragTail) 
+                tail = targetPort;
+            else 
+                head = targetPort;
+
             targetPort.Edges.Add(this);
             Manager.i.AddFlow(this);
             Manager.i.state = Manager.State.idle;

@@ -12,6 +12,7 @@ public class Manager : MonoBehaviour
 
     public static Manager i;
     public Dictionary<string,Node> Nodes;
+    public Dictionary<string, Flow> Flows;
     public GameObject[] prefabs;
     public Dictionary<string, GameObject> prefabDict;
     public enum State
@@ -31,6 +32,7 @@ public class Manager : MonoBehaviour
         messagesFromServer = new Queue<string>();
         avaliableIds = new Queue<string>();
         Nodes = new Dictionary<string, Node>();
+        Flows = new Dictionary<string, Flow>();
         prefabDict = new Dictionary<string, GameObject>();
         foreach (GameObject prefab in prefabs)
             prefabDict.Add(prefab.name, prefab);
@@ -55,8 +57,19 @@ public class Manager : MonoBehaviour
 
     public void AddFlow(Flow flow)
     {
-        // TODO: Tell server adding an flow
         flow.id = avaliableIds.Dequeue();
+        Flows.Add(flow.id,flow);
+        if (flow is ControlFlow controlFlow)
+        {
+            if (connectToServer)
+                env.Send(new APIMessage.NewControlFlow(controlFlow).Json);
+        }
+        if (flow is DataFlow dataFlow)
+        {
+            if (connectToServer)
+                env.Send(new APIMessage.NewDataFlow(dataFlow).Json);
+        }
+        
     }
 
      
@@ -88,7 +101,7 @@ public class Manager : MonoBehaviour
 
     public void RemoveFlow(Flow flow)
     {
-        Nodes.Remove(flow.id);
+        Flows.Remove(flow.id);
         if (connectToServer)
             env.Send(new APIMessage.Rmv(flow.id).Json);
     }
@@ -161,16 +174,17 @@ public class Manager : MonoBehaviour
 
             if (command == "new")
             {
-                if (!Nodes.ContainsKey(FindString(recived, "id")))
+                if (!Nodes.ContainsKey(FindString(recived, "id"))&& !Flows.ContainsKey(FindString(recived, "id")))
                 {
+                    
                     string type = FindString(recived, "type");
-                    print(type);
                     if (type == "CodeNode") {
                         var message = JsonUtility.FromJson<APIMessage.NewCodeNode>(recived);
                         GameObject prefab = prefabDict[message.info.type];
                         var script = Instantiate(prefab).GetComponent<CodeNode>();
                         script.name = script.Name = message.info.name;
                         script.id = message.info.id;
+                        Nodes.Add(message.info.id, script);
                         script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
                     }
 
@@ -181,7 +195,21 @@ public class Manager : MonoBehaviour
                         var script = Instantiate(prefab).GetComponent<FunctionNode>();
                         script.name = script.Name = message.info.name;
                         script.id = message.info.id;
+                        Nodes.Add(message.info.id, script);
                         script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
+                    }
+                    else if (type == "ControlFlow")
+                    {
+                        var message = JsonUtility.FromJson<APIMessage.NewControlFlow>(recived);
+                        GameObject prefab = prefabDict[message.info.type];
+                        var script = Instantiate(prefab).GetComponent<ControlFlow>();
+                        script.id = message.info.id;
+                        script.head = Nodes[message.info.head].GetPort(true);
+                        script.head.Edges.Add(script);
+                        script.tail = Nodes[message.info.tail].GetPort(false);
+                        script.tail.Edges.Add(script);
+                        Flows.Add(message.info.id, script);
+
                     }
                 }
             }
@@ -193,7 +221,17 @@ public class Manager : MonoBehaviour
             else if (command == "rmv")
             {
                 var message = JsonUtility.FromJson<APIMessage.Rmv>(recived);
-                StartCoroutine(Nodes[message.id].Removing());
+                if (Nodes.ContainsKey(message.id))
+                {
+                    StartCoroutine(Nodes[message.id].Removing());
+                    Nodes.Remove(message.id);
+                }
+                if (Flows.ContainsKey(message.id))
+                {
+                    Flows[message.id].RawRemove();
+                    Flows.Remove(message.id);
+                }
+
             }
             // TODO: remove flow
 

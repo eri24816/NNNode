@@ -31,9 +31,15 @@ public class Port : MonoBehaviour, IDragHandler
     {
         return (flow.GetType() == flowType) && (Edges.Count < maxEdges) && (isInput ? flow.head == null : flow.tail == null);
     }
-    public void Remove() // Called when the node is going to be remove
+    public void Remove() // Called when the node is going to be removed
     {
-        foreach (Flow f in Edges) f.Remove();
+        
+        foreach (Flow f in Edges) {
+            if (isInput) f.tail.Disconnect(f);
+            else f.head.Disconnect(f);
+            Manager.i.Flows.Remove(f.id);
+            Destroy(f.gameObject);
+        }
     }
 
     public void Disconnect(Flow flow)
@@ -47,10 +53,10 @@ public class Port : MonoBehaviour, IDragHandler
         {
             if (Edges.Count < maxEdges)
             {
-
                 Flow newEdge = Instantiate(Manager.i.prefabDict[flowType.Name]).GetComponent<Flow>();
                 if (isInput) newEdge.head = this;
                 else newEdge.tail = this;
+                Edges.Add(newEdge);
                 StartCoroutine(newEdge.Creating());
             }
         }

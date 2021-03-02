@@ -74,4 +74,8 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler,IDragHandler
     public void OnDrag(PointerEventData eventData)
     {
     }
+    public override Port GetPort(bool isInput = true, string var_name = "")
+    {
+        return isInput ? ins[0] : outs[0];
+    }
 }

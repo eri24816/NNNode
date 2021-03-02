@@ -15,6 +15,7 @@ namespace APIMessage
             public float[] pos;
         }
         public Info info;
+        // TODO: directly take node as argument
         public NewCodeNode(string id,string name,  Vector3 pos) { info.id = id; info.name = name; info.type = "CodeNode"; info.pos = new float[] { pos.x, pos.y, pos.z }; }
         public string Json { get => JsonUtility.ToJson(this); }
     }
@@ -32,6 +33,42 @@ namespace APIMessage
         }
         public Info info;
         public NewFunctionNode(string id, string name, Vector3 pos) { info.id = id; info.name = name; info.type = "FunctionNode"; info.pos = new float[] { pos.x, pos.y, pos.z }; }
+        public string Json { get => JsonUtility.ToJson(this); }
+    }
+
+    class NewControlFlow
+    {
+        public string command = "new";
+        [System.Serializable]
+        public struct Info
+        {
+            public string id;
+            public string type;
+            public string head;
+            public string tail;
+        }
+        public Info info;
+        public NewControlFlow(ControlFlow flow) { info.id = flow.id; info.type = "ControlFlow"; info.head = flow.head.node.id; info.tail = flow.tail.node.id; }
+        public string Json { get => JsonUtility.ToJson(this); }
+    }
+
+    class NewDataFlow
+    {
+        public string command = "new";
+        [System.Serializable]
+        public struct Info
+        {
+            public string id;
+            public string type;
+            public string head;
+            public string tail;
+            public string head_var;
+            public string tail_var;
+        }
+        public Info info;
+        public NewDataFlow(DataFlow flow) { info.id = flow.id; info.type = "ControlFlow"; info.head = flow.head.node.id; info.tail = flow.tail.node.id;
+            //TODO: head_var,tail_var
+                }
         public string Json { get => JsonUtility.ToJson(this); }
     }
 

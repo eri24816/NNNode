@@ -82,7 +82,7 @@ async def env_ws(websocket, path):
                 }
             '''
             env.Create(m['info'])
-            await websocket.send("msg %s %s created" % (m['info']['type'],m['info']['name']))
+            await websocket.send("msg %s %s created" % (m['info']['type'],m['info']['id']))
 
         if command == "rmv":
             '''
@@ -93,7 +93,7 @@ async def env_ws(websocket, path):
             '''
             
             env.Remove({"id" : m['id']})
-            await websocket.send("msg %s removed" % m['info']['name'])
+            await websocket.send("msg %s removed" % m['id'])
 
 
         elif command == "mov":
@@ -224,6 +224,7 @@ async def Update_client(ws,direction,history_item):
     if direction == 1, do/redo the action in history_item
     if direction == -1, undo the action in history_item
     '''
+    print('Update client: '+history_item.type+', '+str(history_item.content))
     # history_item can't be type "stt"
     if direction==1:
         if history_item.type=="mov":# move node to new position

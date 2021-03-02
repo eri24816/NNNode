@@ -38,7 +38,7 @@ class History_item:
     '''
     works as a linked list
     '''
-    def __init__(self,type,content={},last=None):
+    def __init__(self,type,content={},last=None,sequence_id=-1):
         self.type=type
         self.content=content
         self.last=last
@@ -51,6 +51,7 @@ class History_item:
         -1: backward, 0: self is head, 1: forward
         '''#*? Is it OK to del the history_items that will no longer be visited while some clients are still there?
         
+        self.sequence_id = sequence_id
         self.time=datetime.datetime.now()
         if self.last !=None:
             self.last.next=self
@@ -112,7 +113,8 @@ class Node:
         return 1
 
     def remove(self):
-        self.env.Update_history("rem",self.get_info())
+        self.env.nodes.pop(self.id)
+        self.env.Update_history("rmv",self.get_info())
         del self #*?
 
 
@@ -216,14 +218,16 @@ class Edge(): # abstract class
         self.id=info['id']
         self.tail=env.nodes[info['tail']]
         self.head=env.nodes[info['head']]
-        self.info=info # for remove history
+        self.info = info  # for remove history
+        self.env=env
         self.env.Update_history("new",info)
     
     def get_info(self):
         return self.info
 
     def remove(self):
-        self.env.Update_history("rem",self.info)
+        self.env.edges.pop(self.id)
+        self.env.Update_history("rmv", self.info)
         del self #*?
 
 class DataFlow(Edge):
@@ -243,10 +247,7 @@ class DataFlow(Edge):
     def remove(self):
         self.tail.out_data[self.tail_var].remove(self)
         self.head.in_data[self.head_var]=None 
-        super().remove()
-      
-
-        
+        super().remove()      
 
 class ControlFlow(Edge):
     def __init__(self,info,env):
@@ -288,7 +289,20 @@ class Env():
         self.locals={}
         self.first_history=self.latest_history=History_item("stt") # first history item
         self.lock_history=False # when undoing or redoing, lock_history set to True to avoid unwanted history change
-        self.id_num=0
+        self.id_num = 0
+        
+        self.current_history_sequence_id = -1
+        
+
+    class History_sequence():
+        next_history_sequence_id = 0
+        def __init__(self,env):
+            self.env=env
+        def __enter__(self):
+            self.env.current_history_sequence_id = self.next_history_sequence_id
+            self.next_history_sequence_id += 1
+        def __exit__(self, type, value, traceback):
+            self.env.current_history_sequence_id = -1   
     
     def Create(self,info): # create any type of node or edge
         # info: {id, type, ...}
@@ -306,13 +320,16 @@ class Env():
     def Remove(self,info): # remove any type of node or edge
         if info['id'] in self.edges:
             self.edges[info['id']].remove()
-            self.edges.pop(info['id'])
+            
         else:
-            self.nodes[info['id']].remove()
-            self.nodes.pop(info['id'])
+            with self.History_sequence(self): # removing a node may cause some edges also being removed. When undoing and redoing, these multiple actions should be done in a sequence.
+                self.nodes[info['id']].remove()
+
+
     def Move(self,id,pos):
         self.nodes[id].move(pos)
 
+    
     def Update_history(self,type,content):
         '''
         type, content:
@@ -331,7 +348,7 @@ class Env():
                 return
 
         # add an item to the linked list
-        self.latest_history=History_item(type,content,self.latest_history)
+        self.latest_history=History_item(type,content,self.latest_history,self.current_history_sequence_id)
 
     class History_lock():
         def __init__(self,env):
@@ -341,7 +358,6 @@ class Env():
         def __exit__(self, type, value, traceback):
             self.env.lock_history=False
     
-    #TODO: handle undo and redo
     def Undo(self):
         if self.latest_history.last==None:
             return 0 # noting to undo
@@ -352,14 +368,23 @@ class Env():
 
             if type=="new":
                 self.Remove(content)
-            elif type=="rem":
+            elif type=="rmv":
                 self.Create(content)
             elif type=="mov":
                 self.Move(content['id'],content['old'])
 
-        self.latest_history.head_direction=-1
+        self.latest_history.head_direction = -1
+
+        seq_id_a = self.latest_history.sequence_id
+        
         self.latest_history=self.latest_history.last
-        self.latest_history.head_direction=0
+        self.latest_history.head_direction = 0
+
+        seq_id_b = self.latest_history.sequence_id
+        
+        if seq_id_a !=-1 and seq_id_a == seq_id_b:
+            self.Undo()
+
         return 1
 
     def Redo(self):
@@ -375,10 +400,17 @@ class Env():
             
             if type=="new":
                 self.Create(content)
-            elif type=="rem":
+            elif type=="rmv":
                 self.Remove(content)
             elif type=="mov":
                 self.Move(content['id'],content['new'])
+
+        seq_id_a = self.latest_history.sequence_id
+
+        seq_id_b =  self.latest_history.next.sequence_id if self.latest_history.next!=None else -1
+
+        if seq_id_a !=-1 and seq_id_a == seq_id_b:
+            self.Redo()
 
         return 1
 

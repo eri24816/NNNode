@@ -36,8 +36,11 @@ public class Node : MonoBehaviour
     public List<Port> ins, outs;
     public RectTransform panel;
     public string id,Name;
-    
 
+    public virtual Port GetPort(bool isInput = true, string var_name = "")
+    {
+        return isInput ? ins[0] : outs[0];
+    }
     public virtual void Start()
     {
         targetPos = transform.position;
