@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CoolDown
 {
@@ -31,7 +32,7 @@ public class CoolDown
     }
 }
 
-public class Node : MonoBehaviour
+public class Node : MonoBehaviour,IPointerClickHandler
 {
     public List<Port> ins, outs;
     public RectTransform panel;
@@ -117,4 +118,19 @@ public class Node : MonoBehaviour
         yield return null;
         Destroy(gameObject);
     }
+
+    float lastClickTime;
+    float doubleClickDelay = 0.2f;
+    public virtual void OnPointerClick(PointerEventData eventData)
+    {
+        if (Time.time - lastClickTime < doubleClickDelay) OnDoubleClick();
+        else lastClickTime = Time.time;
+    }
+
+    protected virtual void OnDoubleClick()
+    {
+        
+    }
+
+    
 }

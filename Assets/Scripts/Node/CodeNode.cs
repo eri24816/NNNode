@@ -10,13 +10,18 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler,IDragHandler
     [SerializeField]
     TMPro.TMP_InputField nameInput;
 
-    public GameObject CodeEditor;
+    [SerializeField]
+    GameObject CodeEditor;
+
+    TMPro.CodeEditor CodeEditorScript;
+
+    public string Code { get { return CodeEditorScript.text; } set { CodeEditorScript.text = value; } }
 
     public override void Start()
     {
         base.Start();
-        Reshape(1.3f, 1f, 1f);
         nameInput.enabled = false;
+        CodeEditorScript = CodeEditor.GetComponent<TMPro.CodeEditor>();
     }
 
 
@@ -26,25 +31,8 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler,IDragHandler
         if (dragging) OnMouseDrag();
     }
 
-    public override void Reshape(float w, float l, float r)//Trapezoid shaped node
+    public override void Reshape(float w, float l, float r)
     {
-
-        float h = l < r ? l : r;
-        upPad = h / 2;
-        
-        /*
-        if (ins.Count > 0)
-            for (int i = 0; i < ins.Count; i++)
-            {
-                ins[i].transform.position = new Vector3(-w / 2,- .1f*i -.1f) + transform.position;
-            }
-
-        if (outs.Count > 0)
-            for (int i = 0; i < outs.Count; i++)
-            {
-                outs[i].transform.position = new Vector3(w / 2, - .1f * i - .1f) + transform.position;
-            }
-        */
     }
     public void Rename()
     {
@@ -71,11 +59,17 @@ public class CodeNode : Node,IEndDragHandler,IBeginDragHandler,IDragHandler
         dragging = true;
     }
 
-    public void OnDrag(PointerEventData eventData)
-    {
-    }
+    public void OnDrag(PointerEventData eventData){}
     public override Port GetPort(bool isInput = true, string var_name = "")
     {
         return isInput ? ins[0] : outs[0];
+    }
+    protected override void OnDoubleClick()
+    {
+        Manager.i.Activate(this);
+    }
+    public void SetCode()
+    {
+        Manager.i.SetCode(this);
     }
 }

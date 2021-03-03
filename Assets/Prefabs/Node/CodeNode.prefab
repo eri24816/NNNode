@@ -2162,6 +2162,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
       value: 1
       objectReference: {fileID: 0}
@@ -2182,6 +2186,10 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_OnDeselect.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
       objectReference: {fileID: 0}
@@ -2194,6 +2202,18 @@ PrefabInstance:
       value: RenameEnd
       objectReference: {fileID: 0}
     - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 2400822583092379813}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetCode
+      objectReference: {fileID: 0}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: CodeNode, Assembly-CSharp
       objectReference: {fileID: 0}
@@ -2202,11 +2222,19 @@ PrefabInstance:
       value: CodeNode, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: CodeNode, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_OnDeselect.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents: []

@@ -86,6 +86,19 @@ namespace APIMessage
 
     }
 
+    class Cod
+    {
+        public Cod(string id, string code)
+        {
+            this.id = id; this.code=code;
+        }
+        public string command = "cod";
+        public string id;
+        public string code;
+        public string Json { get => JsonUtility.ToJson(this); }
+
+    }
+
     class Rmv
     {
         public Rmv(string id)

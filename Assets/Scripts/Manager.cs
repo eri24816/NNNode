@@ -126,6 +126,22 @@ public class Manager : MonoBehaviour
         if (connectToServer)
             env.Send("{\"command\":\"rdo\",\"id\":\"" + id + "\"}");
     }
+
+    public void SetCode(Node node)
+    {
+        if (!connectToServer) return;
+        if (node is CodeNode codeNode)
+        {
+            env.Send(new APIMessage.Cod(node.id, codeNode.Code).Json);
+        }
+        
+    }
+
+    public void Activate(Node node)
+    {
+        if (connectToServer)
+            env.Send("{\"command\":\"act\",\"id\":\"" + node.id + "\"}");
+    }
     
     //TODO: update before every env.Send()
     IEnumerator AskForUpdate(float hz=5)
@@ -233,14 +249,21 @@ public class Manager : MonoBehaviour
                 }
 
             }
-            // TODO: remove flow
 
             else if (command == "gid")// get a unused id to assign to new nodes or flows
             {
                 var message = JsonUtility.FromJson<APIMessage.Gid>(recived);
                 avaliableIds.Enqueue(message.id);
             }
-
+            else if (command == "cod")
+            {
+                var message = JsonUtility.FromJson<APIMessage.Cod>(recived);
+                Node node = Nodes[message.id];
+                if (node is CodeNode codeNode)
+                {
+                    codeNode.Code = message.code;
+                }
+            }
         }
     }
 
