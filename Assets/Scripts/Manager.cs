@@ -29,6 +29,8 @@ public class Manager : MonoBehaviour
     Queue<string> avaliableIds;
     void Start()
     {
+        Application.targetFrameRate = 60;
+
         messagesFromServer = new Queue<string>();
         avaliableIds = new Queue<string>();
         Nodes = new Dictionary<string, Node>();

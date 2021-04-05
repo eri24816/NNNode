@@ -122,7 +122,7 @@ class Node:
 class CodeNode(Node):
     '''
     A node with editable code, like a block in jupyter notebook.
-    A CodeNode can be invoked either by a input control flow or by client(e.g. double click on the node) .
+    A CodeNode can be invoked either by an input control flow or by client(e.g. double click on the node) .
     After running, it will activate its output control flow (if there is one).
     '''
     def __init__(self,info,env):

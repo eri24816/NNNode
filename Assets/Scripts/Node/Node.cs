@@ -85,10 +85,10 @@ public class Node : MonoBehaviour,IPointerClickHandler
         sendMoveCD.Request();
         recvMoveCD.Delay(1);
     }
-    public void RawMove(Vector3 p) // can't set transform.position outside update
+    public void RawMove(Vector3 p) 
     {
         recvMoveCD.Request();
-        targetPos = p;
+        targetPos = p; // can't set transform.position outside update
     }
     public void OnMouseDrag()
     {
@@ -102,7 +102,7 @@ public class Node : MonoBehaviour,IPointerClickHandler
     }
 
     
-    public virtual IEnumerator Creating()//Drag and drop, maybe?
+    public virtual IEnumerator Creating()//Drag and drop?
     {
         yield return null;
         /*

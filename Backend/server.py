@@ -155,9 +155,7 @@ async def env_ws(websocket, path):
                 else:
                     await websocket.send("cod "+json.dumps({'id':id,'code':node.code}))
                     node_history_client[id]=node.latest_history
-            
-
-        
+               
         elif command == "udo":
             '''
             undo  
@@ -179,7 +177,6 @@ async def env_ws(websocket, path):
                 else:
                     await websocket.send("err no such node %s" % id)
                 
-
         elif command == "rdo":
             '''
             redo
@@ -200,6 +197,12 @@ async def env_ws(websocket, path):
                         await websocket.send("msg node %s noting to redo" % id)
                 else:
                     await websocket.send("err no such node %s" % id)
+
+        elif command == "act":
+            '''
+            activate a node or an edge
+            {command:"act",id}
+            '''
 
         #TODO
         elif command == "sav":
