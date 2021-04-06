@@ -12,7 +12,11 @@ namespace GraphUI
         public bool selected = false;
         float lastClickTime;
         float doubleClickDelay = 0.2f;
-
+        public static Node TheOnlySelectedNode()
+        {
+            if (current.Count == 1 && current[0] is Node n) return n;
+            return null;
+        }
         public static void ClearSelection()
         {
             foreach (Selectable s in current)
@@ -21,23 +25,53 @@ namespace GraphUI
         }
         public static void Delete()
         {
-            foreach (Selectable s in current)
+            Selectable[] temp = new Selectable[current.Count];
+            current.CopyTo(temp);
+            foreach (Selectable s in temp)
             {
                 s.Remove();
             }
-            current.Clear();
         }
         public virtual void OnPointerClick(PointerEventData eventData)
         {
             if (dragged) return; // Check dragging
             
+            
+        }
+        protected virtual void OnDoubleClick()
+        {
+
+        }
+        public virtual void Select()
+        {
+            selected = true;
+        }
+        public virtual void Unselect()
+        {
+            selected = false;
+        }
+
+        public virtual void OnPointerEnter(PointerEventData eventData)
+        {
+            SoundEffect.Hover();
+        }
+
+        public virtual void OnPointerExit(PointerEventData eventData)
+        {
+            
+        }
+        protected bool dragged;
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            dragged = false;
+            SoundEffect.Click();
             if (eventData.button == 0)
             {
                 if (Time.time - lastClickTime < doubleClickDelay) OnDoubleClick();
                 else lastClickTime = Time.time;
 
 
-                if (CamControl. ctrlDown)
+                if (CamControl.ctrlDown)
                 {
                     if (selected)
                     {
@@ -70,36 +104,9 @@ namespace GraphUI
                 }
             }
         }
-        protected virtual void OnDoubleClick()
-        {
-
-        }
-        public virtual void Select()
-        {
-            selected = true;
-        }
-        public virtual void Unselect()
-        {
-            selected = false;
-        }
-
-        public virtual void OnPointerEnter(PointerEventData eventData)
-        {
-            
-        }
-
-        public virtual void OnPointerExit(PointerEventData eventData)
-        {
-            
-        }
-        protected bool dragged;
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            dragged = false;
-        }
         protected virtual void Remove()
         {
-            
+            if (current.Contains(this)) current.Remove(this);
         }
     }
 }

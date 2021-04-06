@@ -41,7 +41,7 @@ namespace GraphUI
         [SerializeField]
         UnityEngine.UI.Outline outline_select,outline_running;
         [SerializeField]
-        Color outlineUnselectedColor, outlineHoverColor, outlineSelectedColor;
+        Color outlineUnselectedColor, outlineHoverColor, outlineSelectedColor,outlineRunningColor;
         public virtual Port GetPort(bool isInput = true, string var_name = "")
         {
             return isInput ? ins[0] : outs[0];
@@ -57,6 +57,7 @@ namespace GraphUI
         {
             // Remove node from this client
             // Invoked by X button
+            base.Remove();
             for (int i = 0; i < ins.Count; i++)
                 ins[i].Remove();
 
@@ -168,6 +169,7 @@ namespace GraphUI
             }
             outline.effectColor = target;
         }
+
         IEnumerator changeOutlineColor;
         public override void Select()
         {
@@ -204,7 +206,17 @@ namespace GraphUI
                 StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_select, outlineUnselectedColor));
             }
         }
-
-
+        public void Activate()
+        {
+            if (changeOutlineColor != null)
+                StopCoroutine(changeOutlineColor);
+            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlineRunningColor));
+        }
+        public void Deactivate()
+        {
+            if (changeOutlineColor != null)
+                StopCoroutine(changeOutlineColor);
+            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, new Color(0,0,0,0)));
+        }
     }
 }

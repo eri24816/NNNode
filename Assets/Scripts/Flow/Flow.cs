@@ -83,6 +83,7 @@ namespace GraphUI
         }
         protected override void Remove()
         {
+            base.Remove();
             Manager.ins.RemoveFlow(this);
             RawRemove();
         }

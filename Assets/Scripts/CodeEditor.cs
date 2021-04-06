@@ -1745,6 +1745,8 @@ namespace TMPro
 
         public override void OnPointerDown(PointerEventData eventData)
         {
+            if (node)
+                node.OnPointerDown(eventData);
             if (!MayDrag(eventData))
                 return;
 
@@ -4035,8 +4037,7 @@ namespace TMPro
         public virtual void OnPointerClick(PointerEventData eventData)
         {
             //Debug.Log("Pointer Click Event...");
-            if (node)
-                node.OnPointerClick(eventData);
+            
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
             

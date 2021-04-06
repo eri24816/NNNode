@@ -18,7 +18,7 @@ namespace GraphUI
         TMPro.CodeEditor CodeEditorScript;
 
         
-        public string Code { get { return CodeEditorScript.text; } set { CodeEditorScript.text = value; } }
+        public string Code { get { return CodeEditorScript.text; } set { CodeEditorScript.SetTextWithoutNotify( value); } }
 
         public override void Start()
         {

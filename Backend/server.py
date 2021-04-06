@@ -65,7 +65,9 @@ async def env_ws(websocket, path):
 
     node_history_client={} # which node history is client on
     env_history_client=env.latest_history # which env history is client on
-    env_history_client_version=0
+    env_history_client_version = 0
+    update_message_buffer = {}
+    env.update_message_buffers.append(update_message_buffer) # register to env so the buffer will be updated
 
     #TODO: client load entire env
 
@@ -112,7 +114,7 @@ async def env_ws(websocket, path):
             '''
             id=m['id']
             if id in env.nodes:
-                env.nodes[id].set_code(m['code'])
+                env.nodes[id].set_code(m['value'])
                 await websocket.send("msg changed node %s's code" % id)
             else:
                 await websocket.send("err no such node %s" % id)
@@ -147,15 +149,13 @@ async def env_ws(websocket, path):
                     env_history_client=env_history_client.last # move backward
                     env_history_client_version = env_history_client.version
 
-            for id,node in env.nodes.items():# directly update code in nodes #TODO: edit this section's websocket syntax 
-                if id in node_history_client:
-                    if node_history_client[id]!=node.latest_history:
-                        await websocket.send("cod "+json.dumps({'id':id,'code':node.code}))
-                        node_history_client[id]=node.latest_history
-                else:
-                    await websocket.send("cod "+json.dumps({'id':id,'code':node.code}))
-                    node_history_client[id]=node.latest_history
-               
+            for key, value in update_message_buffer.items():
+                command_, id = key[:3], key[4:]
+                if command_ == "cod":
+                    value=env.nodes[id].code
+                await websocket.send(json.dumps({'command': command_, 'id': id, 'value': value}))
+            update_message_buffer.clear()
+
         elif command == "udo":
             '''
             undo  
@@ -170,10 +170,11 @@ async def env_ws(websocket, path):
                     await websocket.send("msg  noting to undo" )
             else:
                 if id in env.nodes:
-                    if env.nodes[id].Undo():
-                        await websocket.send("msg node %s undone" % id)
-                    else:
-                        await websocket.send("msg node %s noting to undo" % id)
+                    with Environment.History_lock(env.nodes[id]):
+                        if env.nodes[id].Undo():
+                            await websocket.send("msg node %s undone" % id)
+                        else:
+                            await websocket.send("msg node %s noting to undo" % id)
                 else:
                     await websocket.send("err no such node %s" % id)
                 
@@ -191,10 +192,11 @@ async def env_ws(websocket, path):
                     await websocket.send("msg  noting to redo" )
             else:
                 if id in env.nodes:
-                    if env.nodes[id].Redo():
-                        await websocket.send("msg node %s redone" % id)
-                    else:
-                        await websocket.send("msg node %s noting to redo" % id)
+                    with Environment.History_lock(env.nodes[id]):
+                        if env.nodes[id].Redo():
+                            await websocket.send("msg node %s redone" % id)
+                        else:
+                            await websocket.send("msg node %s noting to redo" % id)
                 else:
                     await websocket.send("err no such node %s" % id)
 
@@ -243,7 +245,8 @@ async def Update_client(ws,direction,history_item):
             await ws.send(json.dumps({'command':"rmv",'id':history_item.content['id']}))
         if history_item.type=="rmv":# add node
             await ws.send(json.dumps({'command':"new",'info':history_item.content})) # info
-    
+
+
         
 @router.route("/lobby") #* lobby
 async def lobby(websocket, path):

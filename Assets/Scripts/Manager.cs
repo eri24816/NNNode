@@ -265,8 +265,17 @@ public class Manager : MonoBehaviour
                 Node node = Nodes[message.id];
                 if (node is CodeNode codeNode)
                 {
-                    codeNode.Code = message.code;
+                    codeNode.Code = message.value;
                 }
+            }
+            else if(command == "act")
+            {
+                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
+                if (!Nodes.ContainsKey(message.id)) return;
+                if (message.value == "0")
+                    Nodes[message.id].Deactivate();
+                if (message.value == "1")
+                    Nodes[message.id].Activate();
             }
         }
     }

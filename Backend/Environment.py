@@ -55,8 +55,21 @@ class History_item:
         self.time=datetime.datetime.now()
         if self.last !=None:
             self.last.next=self
-            self.last.head_direction=1 # self is head
+            self.last.head_direction = 1  # self is head
+    def __str__(self):
+        result=self.type+", "+str(self.content)
+        if self.last:
+            result = str(self.last) + '\n' + result
+        return result
 
+class History_lock():
+    def __init__(self,o):
+        self.o=o
+    def __enter__(self):
+        self.o.lock_history=True
+    def __exit__(self, type, value, traceback):
+        self.o.lock_history = False
+        
 class Node:
     def __init__(self,info,env):
         '''
@@ -69,7 +82,8 @@ class Node:
         self.env=env
         self.env.Update_history("new",info)
         # self.env.latest_history.name=self.name #*?   what is this line for? 
-        self.first_history=self.latest_history=History_item("stt")
+        self.first_history = self.latest_history = History_item("stt")
+        self.lock_history=False
         self.running=False
 
     @abstractmethod
@@ -80,12 +94,14 @@ class Node:
         self.env.Update_history("mov",{"id":self.id,"old":self.pos,"new":pos})# node moves are logged in env history
         self.pos=pos
 
-    def Update_history(self,type,content):
+    def Update_history(self, type, content):
         '''
         type, content:
         stt, None - create the node
         cod, {name, old, new} - change code
         '''
+        if self.lock_history:
+            return
         # don't repeat cod history within 3 seconds 
         if type=="cod" and self.latest_history.type=="cod" and content['id'] == self.latest_history.content['id']:
             if (datetime.datetime.now() - self.latest_history.time).seconds<3:
@@ -95,13 +111,15 @@ class Node:
 
         # add an item to the linked list
         self.latest_history=History_item(type,content,self.latest_history)
+        
 
     def Undo(self):
+        
         if self.latest_history.last==None:
             return 0 # nothing to undo
         self.latest_history.head_direction=-1
         self.latest_history=self.latest_history.last
-        self.latest_history.head_direction=0
+        self.latest_history.head_direction = 0
         return 1
     
     def Redo(self):
@@ -154,6 +172,7 @@ class CodeNode(Node):
     def set_code(self,code):
         # code changes are logged in node history
         self.Update_history("cod",{"id":self.id,"old":self.code,"new":code}) 
+        self.env.Write_update_message(self.id,'cod','')
         self.code=code
 
     def remove(self):
@@ -164,6 +183,18 @@ class CodeNode(Node):
             i.remove()
         super().remove()
 
+    def Undo(self):
+        if self.latest_history.last:
+            if self.latest_history.type=="cod":
+                self.set_code(self.latest_history.content['old'])
+        return super().Undo()
+
+    def Redo(self):
+        if super().Redo():
+            if self.latest_history.type=="cod":
+                self.set_code(self.latest_history.content['new'])
+            return 1
+        return 0
 
     '''
     graph stuff 
@@ -176,12 +207,13 @@ class CodeNode(Node):
     def activate(self):
         super().activate()
         self.env.nodes_to_run.put(self)
+        self.env.Write_update_message(self.id,'act','1')
 
     def finish_running(self):
         self.deactivate()
         for out_control in self.out_control:
             out_control.activate()
-    
+        self.env.Write_update_message(self.id,'act','0')
 
 
 class FunctionNode(Node):
@@ -344,14 +376,14 @@ class Env():
         
         self.current_history_sequence_id = -1
 
+        # unlike history, some types of changes aren't necessary needed to be updated sequentially on client, like code in a node or whether the node is running.
+        # one buffer per client
+        # format:[ { "<command>/<node id>": <value> } ]
+        # it's a dictionary so replicated updates will overwrite
+        self.update_message_buffers = []
+
         # for run() thread
         self.nodes_to_run = queue.Queue()
-
-        '''
-        # for graph_manager() thread
-        self.node_to_activate = queue.Queue()
-        self.node_finnish_running = queue.Queue()
-        '''
 
     class History_sequence():
         next_history_sequence_id = 0
@@ -409,19 +441,17 @@ class Env():
         # add an item to the linked list
         self.latest_history=History_item(type,content,self.latest_history,self.current_history_sequence_id)
 
-    class History_lock():
-        def __init__(self,env):
-            self.env=env
-        def __enter__(self):
-            self.env.lock_history=True
-        def __exit__(self, type, value, traceback):
-            self.env.lock_history=False
     
+    def Write_update_message(self, id, name, v):
+        k=name+"/"+id
+        for buffer in self.update_message_buffers:
+            buffer[k]=v
+
     def Undo(self):
         if self.latest_history.last==None:
             return 0 # noting to undo
         # undo
-        with self.History_lock(self):
+        with History_lock(self):
             type=self.latest_history.type
             content=self.latest_history.content
 
@@ -453,7 +483,7 @@ class Env():
         self.latest_history=self.latest_history.next
         self.latest_history.head_direction=0
 
-        with self.History_lock(self):
+        with History_lock(self):
             type=self.latest_history.type
             content=self.latest_history.content
             
@@ -472,13 +502,6 @@ class Env():
             self.Redo()
 
         return 1
-    
-    '''
-    # run in another thread from the main thread (server.py)
-    def graph_manager(self):
-        while self.flag_running:
-            self.node_to_activate.get().activate()
-    '''
 
     # run in another thread from the main thread (server.py)
     def run(self):

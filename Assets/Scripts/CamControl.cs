@@ -84,8 +84,8 @@ public class CamControl : MonoBehaviour
             StartCoroutine(newNode.Creating());
         }
         
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Manager.ins.Undo();
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Manager.ins.Redo();
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Manager.ins.Undo(Selectable.TheOnlySelectedNode());
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Manager.ins.Redo(Selectable.TheOnlySelectedNode());
         if (Input.GetKeyDown(KeyCode.Delete))
             Selectable.Delete();
     }
