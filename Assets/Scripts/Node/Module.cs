@@ -1,14 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-// Pytorch NN modules
-public class Module : Node
+namespace GraphUI
 {
-    public override void Start()
+    // Pytorch NN modules
+    public class Module : Node
     {
-        base.Start();
+        public override void Start()
+        {
+            base.Start();
+        }
+
+
     }
-
-
 }

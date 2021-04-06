@@ -203,7 +203,7 @@ async def env_ws(websocket, path):
             activate a node or an edge
             {command:"act",id}
             '''
-
+            env.nodes[m['id']].activate()
         #TODO
         elif command == "sav":
             '''

@@ -70,7 +70,7 @@ class Node:
         self.env.Update_history("new",info)
         # self.env.latest_history.name=self.name #*?   what is this line for? 
         self.first_history=self.latest_history=History_item("stt")
-        # currently there will be only stt and cod in node history
+        self.running=False
 
     @abstractmethod
     def get_info(self):
@@ -86,7 +86,7 @@ class Node:
         stt, None - create the node
         cod, {name, old, new} - change code
         '''
-        # don't repeat cod history    
+        # don't repeat cod history within 3 seconds 
         if type=="cod" and self.latest_history.type=="cod" and content['id'] == self.latest_history.content['id']:
             if (datetime.datetime.now() - self.latest_history.time).seconds<3:
                 self.latest_history.content['new']=content['new']
@@ -98,7 +98,7 @@ class Node:
 
     def Undo(self):
         if self.latest_history.last==None:
-            return 0 # noting to undo
+            return 0 # nothing to undo
         self.latest_history.head_direction=-1
         self.latest_history=self.latest_history.last
         self.latest_history.head_direction=0
@@ -106,7 +106,7 @@ class Node:
     
     def Redo(self):
         if self.latest_history.next==None:
-            return 0 # noting to redo
+            return 0 # nothing to redo
         self.latest_history.head_direction=1
         self.latest_history=self.latest_history.next
         self.latest_history.head_direction=0
@@ -115,8 +115,20 @@ class Node:
     def remove(self):
         self.env.nodes.pop(self.id)
         self.env.Update_history("rmv",self.get_info())
-        del self #*?
+        del self  #*?
+    
+    @abstractmethod
+    def on_input_flow_activated(self):
+        # check if the condition is satisfied that the node can be activated (e.g. all its input flows is activated)
+        pass
 
+    def activate(self):
+        self.activated = True
+        #TODO: inform client to play animations
+
+    def deactivate(self):
+        self.activated = False
+        #TODO: inform client to play animations
 
 
 class CodeNode(Node):
@@ -151,6 +163,25 @@ class CodeNode(Node):
         for i in self.out_control:
             i.remove()
         super().remove()
+
+
+    '''
+    graph stuff 
+    '''
+    def on_input_flow_activated(self):
+        # A code node can only have one input flow, so the node is activated as soon as its input flow is activated
+        self.activate()
+        self.in_control.deactivate()
+
+    def activate(self):
+        super().activate()
+        self.env.nodes_to_run.put(self)
+
+    def finish_running(self):
+        self.deactivate()
+        for out_control in self.out_control:
+            out_control.activate()
+    
 
 
 class FunctionNode(Node):
@@ -220,7 +251,8 @@ class Edge(): # abstract class
         self.head=env.nodes[info['head']]
         self.info = info  # for remove history
         self.env=env
-        self.env.Update_history("new",info)
+        self.env.Update_history("new", info)
+        self.activated=True
     
     def get_info(self):
         return self.info
@@ -228,7 +260,20 @@ class Edge(): # abstract class
     def remove(self):
         self.env.edges.pop(self.id)
         self.env.Update_history("rmv", self.info)
-        del self #*?
+        del self  #*?
+
+
+    '''
+    graph stuff 
+    '''        
+    def activate(self):
+        self.activated = True
+        #TODO: inform client to play animations
+
+    def deactivate(self):
+        self.activated = False
+        #TODO: inform client to play animations
+
 
 class DataFlow(Edge):
     def __init__(self,info,env):
@@ -274,6 +319,12 @@ class ControlFlow(Edge):
         self.head.in_control=None
         super().remove()
 
+    def activate(self):
+        super().activate()
+        # inform the head node
+        self.head.on_input_flow_activated()
+
+
 import queue
 
 # the environment to run the code in
@@ -282,7 +333,7 @@ class Env():
     def __init__(self,name):
         self.name=name
         self.thread=None
-        self.tasks = queue.Queue()
+       
         self.nodes={} # {id : Node}
         self.edges={} # {id : Edge}
         self.globals=globals()
@@ -292,7 +343,15 @@ class Env():
         self.id_num = 0
         
         self.current_history_sequence_id = -1
-        
+
+        # for run() thread
+        self.nodes_to_run = queue.Queue()
+
+        '''
+        # for graph_manager() thread
+        self.node_to_activate = queue.Queue()
+        self.node_finnish_running = queue.Queue()
+        '''
 
     class History_sequence():
         next_history_sequence_id = 0
@@ -413,28 +472,26 @@ class Env():
             self.Redo()
 
         return 1
+    
+    '''
+    # run in another thread from the main thread (server.py)
+    def graph_manager(self):
+        while self.flag_running:
+            self.node_to_activate.get().activate()
+    '''
 
     # run in another thread from the main thread (server.py)
     def run(self):
         self.flag_running = True
         while self.flag_running:
-            
-
-
-
-
-
-
-            '''
-            self.task = None # task = None when idle
-            self.task = self.tasks.get() # wait for a task
-            output=''
+            node_to_run=self.nodes_to_run.get()
             try:
                 with stdoutIO() as s:
-                    exec_(self.nodes[self.task].code,self.globals,self.locals) # run the code in the Node
+                    exec_(node_to_run.code,self.globals,self.locals) # run the code in the Node
                     output = s.getvalue()
             except Exception:
                 output += traceback.format_exc()
-            self.nodes[self.task].output=output
+            node_to_run.output = output
+            node_to_run.finish_running()
             print(output)
-            '''
+            

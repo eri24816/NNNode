@@ -1,19 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class ControlPort : Port
+namespace GraphUI
 {
-
-    override protected void Start()
+    public class ControlPort : Port
     {
-        base.Start();
-        flowType = typeof(ControlFlow);
-    }
 
-    override protected void Update()
-    {
-        base.Update();
-    }
+        override protected void Start()
+        {
+            base.Start();
+            flowType = typeof(ControlFlow);
+        }
 
+        override protected void Update()
+        {
+            base.Update();
+        }
+
+    }
 }

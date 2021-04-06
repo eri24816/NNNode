@@ -29,7 +29,7 @@ namespace TMPro
         ILayoutElement,
         IScrollHandler
     {
-
+        public GraphUI.Node node;
         // Setting the content type acts as a shortcut for setting a combination of InputType, CharacterValidation, LineType, and TouchScreenKeyboardType
         public enum ContentType
         {
@@ -4035,11 +4035,13 @@ namespace TMPro
         public virtual void OnPointerClick(PointerEventData eventData)
         {
             //Debug.Log("Pointer Click Event...");
-
+            if (node)
+                node.OnPointerClick(eventData);
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
-
+            
             ActivateInputField();
+            
         }
 
         public void OnControlClick()

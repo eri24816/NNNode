@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using WebSocketSharp;
+using GraphUI;
 
 
 
@@ -10,11 +11,12 @@ public class Manager : MonoBehaviour
 {
     public bool connectToServer=true;// Set this to false when debugging and don't want to connect to server.
 
-    public static Manager i;
+    public static Manager ins;
     public Dictionary<string,Node> Nodes;
     public Dictionary<string, Flow> Flows;
     public GameObject[] prefabs;
     public Dictionary<string, GameObject> prefabDict;
+    
     public enum State
     {
         idle,
@@ -39,7 +41,7 @@ public class Manager : MonoBehaviour
         foreach (GameObject prefab in prefabs)
             prefabDict.Add(prefab.name, prefab);
 
-        i = this;
+        ins = this;
 
         if (connectToServer)
         {
