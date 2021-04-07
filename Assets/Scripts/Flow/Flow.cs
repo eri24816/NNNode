@@ -8,18 +8,22 @@ namespace GraphUI
     {
         public string id;
         public Port tail, head;
-        public LineRenderer line;
+        public Line line;
         public bool hard = false;
+
         protected virtual void Start()
         {
-            line = GetComponent<LineRenderer>();
-            line.positionCount = 10;
-
+            transform.SetParent(Manager.ins.canvasTransform);
+            line = GetComponent<Line>();
+            line.resolution = 10;
         }
         protected virtual void Update()
         {
             if (tail && head)
-                Reshape(tail.transform.position, head.transform.position);
+            {
+                line.Tail = tail.transform.position;
+                line.Head = head.transform.position;
+            }
         }
         public void Move(Vector3 movement)
         {
@@ -55,9 +59,15 @@ namespace GraphUI
 
                 // reshape
                 if (dragTail)
-                    Reshape(dragPos, head.transform.position);
+                {
+                    line.Tail = dragPos;
+                    line.Head = head.transform.position;
+                }
                 else
-                    Reshape(tail.transform.position, dragPos);
+                {
+                    line.Tail = tail.transform.position;
+                    line.Head = dragPos;
+                }
                 yield return null;
             }
 
@@ -95,32 +105,5 @@ namespace GraphUI
             Destroy(gameObject);
         }
 
-        public float shapeVel = 0.5f;
-        public float curveDist = 0.8f;
-        public void Reshape(Vector3 tail, Vector3 head)
-        {
-            float dist = Vector3.Distance(tail, head);
-            float vel = shapeVel * Mathf.Min(1, dist);
-
-
-            for (int i = 0; i < line.positionCount / 2; i++)
-            {
-                float t = ((float)i) / line.positionCount / Mathf.Max(dist, 1) * curveDist;
-                float u = 1 - t;
-                line.SetPosition(i, tail * u * u * u + (tail + Vector3.right * vel) * 3 * u * u * t + (head + Vector3.left * vel) * 3 * u * t * t + head * t * t * t);
-            }
-            for (int i = line.positionCount / 2; i < line.positionCount; i++)
-            {
-                float u = ((float)(line.positionCount - i - 1)) / line.positionCount / Mathf.Max(dist, 1) * curveDist;
-                float t = 1 - u;
-                line.SetPosition(i, tail * u * u * u + (tail + Vector3.right * vel) * 3 * u * u * t + (head + Vector3.left * vel) * 3 * u * t * t + head * t * t * t);
-            }
-            Gradient gradient = new Gradient
-            {
-                colorKeys = new GradientColorKey[] { new GradientColorKey(new Color(0.6f, 0.7f, 1f), 0), new GradientColorKey(new Color(0.6f, 0.7f, 0.8f), 1) },
-                alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(.2f, Mathf.Min(0.5f, 0.15f / dist)), new GradientAlphaKey(.2f, 1 - Mathf.Min(0.5f, 0.15f / dist)), new GradientAlphaKey(1, 1) }
-            };
-            line.colorGradient = gradient;
-        }
     }
 }

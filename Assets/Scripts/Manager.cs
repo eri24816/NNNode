@@ -12,6 +12,7 @@ public class Manager : MonoBehaviour
     public bool connectToServer=true;// Set this to false when debugging and don't want to connect to server.
 
     public static Manager ins;
+    public Transform canvasTransform;
     public Dictionary<string,Node> Nodes;
     public Dictionary<string, Flow> Flows;
     public GameObject[] prefabs;
