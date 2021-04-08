@@ -205,6 +205,7 @@ public class Manager : MonoBehaviour
                         var script = Instantiate(prefab).GetComponent<CodeNode>();
                         script.name = script.Name = message.info.name;
                         script.id = message.info.id;
+                        script.Code = message.info.code;
                         Nodes.Add(message.info.id, script);
                         script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
                     }
@@ -272,11 +273,24 @@ public class Manager : MonoBehaviour
             else if(command == "act")
             {
                 var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
-                if (!Nodes.ContainsKey(message.id)) return;
-                if (message.value == "0")
-                    Nodes[message.id].Deactivate();
-                if (message.value == "1")
-                    Nodes[message.id].Activate();
+                if (Nodes.ContainsKey(message.id))
+                {
+                    if (message.value == "0")
+                        Nodes[message.id].DisplayInactivate();
+                    if (message.value == "1")
+                        Nodes[message.id].DisplayPending();
+                    if (message.value == "2")
+                        Nodes[message.id].DisplayActivate();
+                }/* TODO
+                else
+                {
+                    if (message.value == "0")
+                        Flows[message.id].DisplayInactivate();
+                    if (message.value == "1")
+                        Flows[message.id].DisplayPending();
+                    if (message.value == "2")
+                        Flows[message.id].DisplayActivate();
+                }*/
             }
         }
     }

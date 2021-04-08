@@ -80,7 +80,7 @@ class Node:
         self.name=info['name']
         self.pos=info['pos']
         self.env=env
-        self.env.Update_history("new",info)
+        self.env.Update_history("new", info)
         # self.env.latest_history.name=self.name #*?   what is this line for? 
         self.first_history = self.latest_history = History_item("stt")
         self.lock_history=False
@@ -164,7 +164,9 @@ class CodeNode(Node):
         self.output=info['output']if 'output' in info else ''
 
         self.in_control=None # only 1 in_control is allowed
-        self.out_control=[] # there can be more than one out_control
+        self.out_control = []  # there can be more than one out_control
+        
+        self.already_activated=0
 
     def get_info(self):
         return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output}
@@ -206,14 +208,21 @@ class CodeNode(Node):
 
     def activate(self):
         super().activate()
+        if self.already_activated: 
+            return # prevent duplication in env.nodes_to_run
         self.env.nodes_to_run.put(self)
-        self.env.Write_update_message(self.id,'act','1')
+        self.env.Write_update_message(self.id, 'act', '1')  # 1 means "pending"
+        self.already_activated=1
 
+    def start_running(self):
+        self.env.Write_update_message(self.id,'act','2') # 2 means "running". This method is just for UI
+    
     def finish_running(self):
         self.deactivate()
         for out_control in self.out_control:
             out_control.activate()
-        self.env.Write_update_message(self.id,'act','0')
+        self.env.Write_update_message(self.id, 'act', '0')
+        self.already_activated=0
 
 
 class FunctionNode(Node):
@@ -455,8 +464,11 @@ class Env():
             type=self.latest_history.type
             content=self.latest_history.content
 
-            if type=="new":
+            if type == "new":
+                if content['id'] in self.nodes:
+                    self.latest_history.content=self.nodes[content['id']].get_info()
                 self.Remove(content)
+                
             elif type=="rmv":
                 self.Create(content)
             elif type=="mov":
@@ -505,15 +517,20 @@ class Env():
 
     # run in another thread from the main thread (server.py)
     def run(self):
-        self.flag_running = True
-        while self.flag_running:
-            node_to_run=self.nodes_to_run.get()
+        output=""
+        self.flag_exit = 0
+        self.is_busy=0
+        while not self.flag_exit:
+            node_to_run = self.nodes_to_run.get()
+            node_to_run.start_running()
+            self.is_busy=1
             try:
                 with stdoutIO() as s:
                     exec_(node_to_run.code,self.globals,self.locals) # run the code in the Node
                     output = s.getvalue()
             except Exception:
                 output += traceback.format_exc()
+            self.is_busy=0
             node_to_run.output = output
             node_to_run.finish_running()
             print(output)

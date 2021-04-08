@@ -1,26 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace GraphUI
 {
     public class Flow : Selectable
     {
+
         public string id;
         public Port tail, head;
         public Line line;
         public bool hard = false;
+        public Color colorSelected, colorHover, colorUnselected, colorActivated;
+
 
         protected virtual void Start()
         {
             transform.SetParent(Manager.ins.canvasTransform);
             line = GetComponent<Line>();
-            line.resolution = 10;
         }
         protected virtual void Update()
         {
             if (tail && head)
             {
+                
                 line.Tail = tail.transform.position;
                 line.Head = head.transform.position;
             }
@@ -32,6 +36,7 @@ namespace GraphUI
             {
                 tail.node.Move(movement);
                 head.node.Move(movement);
+                
             }
         }
 
@@ -105,5 +110,63 @@ namespace GraphUI
             Destroy(gameObject);
         }
 
+
+        IEnumerator changeColor;
+        public override void OnPointerEnter(PointerEventData eventData)
+        {
+            base.OnPointerEnter(eventData);
+            if (!selected)
+            {
+                if (changeColor != null)
+                    StopCoroutine(changeColor);
+                StartCoroutine(changeColor = line.ChangeColor(colorHover));
+            }
+        }
+        public override void OnPointerExit(PointerEventData eventData)
+        {
+            base.OnPointerEnter(eventData);
+            if (!selected)
+            {
+                if (changeColor != null)
+                    StopCoroutine(changeColor);
+                StartCoroutine(changeColor = line.ChangeColor(colorUnselected));
+            }
+        }
+        public override void Select()
+        {
+            base.Select();
+            if (changeColor != null)
+                StopCoroutine(changeColor);
+            StartCoroutine(changeColor = line.ChangeColor(colorSelected));
+
+        }
+        public override void Unselect()
+        {
+            base.Unselect();
+            if (changeColor != null)
+                StopCoroutine(changeColor);
+            StartCoroutine(changeColor = line.ChangeColor(colorUnselected));
+        }
+        // TODO !!!!!!!!!!!!!!!!!!!
+        /*
+        public void DisplayActivate()
+        {
+            if (changeColor != null)
+                StopCoroutine(changeColor);
+            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlineRunningColor));
+        }
+        public void DisplayInactivate()
+        {
+            if (changeColor != null)
+                StopCoroutine(changeColor);
+            outline_running.effectColor = outlineRunningColor;
+            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, new Color(0, 0, 0, 0)));
+        }
+        public void DisplayPending()
+        {
+            if (changeColor != null)
+                StopCoroutine(changeColor);
+            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlinePendingColor));
+        }*/
     }
 }

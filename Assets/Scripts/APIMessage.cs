@@ -13,6 +13,7 @@ namespace APIMessage
             public string id;
             public string name;
             public string type;
+            public string code;
             public float[] pos;
         }
         public Info info;

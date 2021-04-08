@@ -36,7 +36,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 1, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &-3280705933205192647
 MonoBehaviour:
@@ -56,6 +56,10 @@ MonoBehaviour:
   head: {fileID: 0}
   line: {fileID: 0}
   hard: 0
+  colorSelected: {r: 0, g: 1, b: 0.20489168, a: 0.7019608}
+  colorHover: {r: 0, g: 0.6666667, b: 1, a: 0.74509805}
+  colorUnselected: {r: 0, g: 0.6666667, b: 1, a: 0.2784314}
+  colorActivated: {r: 1, g: 0.71493685, b: 0, a: 0.9647059}
 --- !u!114 &5087582684243637261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,14 +72,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b1d17d8b44de72488cf3286ea01ea93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Material: {fileID: 2100000, guid: 49592c4c217972a4d8d8c87cc7c3a9cd, type: 2}
+  m_Color: {r: 0, g: 0.6666667, b: 1, a: 0.2784314}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  resolution: 0
+  resolution: 20
   shapeVel: 0.5
   curveDist: 0.8
-  width: 0.2
+  width: 0.02
+  raycastThreshold: 1.2
+  longerEndPoint: 0
 --- !u!222 &-2210745314712556638
 CanvasRenderer:
   m_ObjectHideFlags: 0

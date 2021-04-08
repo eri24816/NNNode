@@ -1342,12 +1342,14 @@ MonoBehaviour:
   outlineHoverColor: {r: 0.4528302, g: 0.4528302, b: 0.4528302, a: 1}
   outlineSelectedColor: {r: 0.10828154, g: 0.5754717, b: 0.0027144956, a: 1}
   outlineRunningColor: {r: 0.03137255, g: 0.827451, b: 1, a: 0.5019608}
+  outlinePendingColor: {r: 0, g: 0.7490196, b: 1, a: 0.078431375}
   upPad: 0.55
   downPad: 0
   dragging: 0
   expanded: 1
   nameInput: {fileID: 6472357831961444655}
   CodeEditor: {fileID: 7220442982499668534}
+  CodeEditorScript: {fileID: 558536461673384968}
 --- !u!114 &3679373338086342663
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1361,10 +1363,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 10
-    m_Right: 10
-    m_Top: 10
-    m_Bottom: 10
+    m_Left: 2
+    m_Right: 2
+    m_Top: 2
+    m_Bottom: 2
   m_ChildAlignment: 0
   m_Spacing: 0
   m_ChildForceExpandWidth: 0
@@ -1788,7 +1790,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8009105930568994709, guid: 6381b8163b315c24d89a223756c2bf0c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -48
+      value: -30
       objectReference: {fileID: 0}
     - target: {fileID: 8009105930568994709, guid: 6381b8163b315c24d89a223756c2bf0c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1914,7 +1916,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8009105930568994709, guid: 6381b8163b315c24d89a223756c2bf0c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -48
+      value: -30
       objectReference: {fileID: 0}
     - target: {fileID: 8009105930568994709, guid: 6381b8163b315c24d89a223756c2bf0c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -2132,9 +2134,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4208210591348227373, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_text
-      value: '1
-
-'
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4208210591348227373, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_fontSize
@@ -2326,11 +2326,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
---- !u!224 &6701786785536162317 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 3394898164550249981, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+--- !u!1 &7220442982499668534 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1596724895733269958, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
   m_PrefabInstance: {fileID: 8222621249901074416}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &558536461673384968 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8492891170719652856, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+  m_PrefabInstance: {fileID: 8222621249901074416}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7220442982499668534}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2c327e979eb03f48947ffaa8d2aa463, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8251082641689728286 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 44232822031925998, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
@@ -2342,8 +2353,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &7220442982499668534 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1596724895733269958, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+--- !u!224 &6701786785536162317 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 3394898164550249981, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
   m_PrefabInstance: {fileID: 8222621249901074416}
   m_PrefabAsset: {fileID: 0}

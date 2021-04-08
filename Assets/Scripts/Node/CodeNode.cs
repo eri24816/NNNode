@@ -15,6 +15,7 @@ namespace GraphUI
         [SerializeField]
         GameObject CodeEditor;
 
+        [SerializeField]
         TMPro.CodeEditor CodeEditorScript;
 
         
@@ -25,7 +26,6 @@ namespace GraphUI
             base.Start();
             nameInput.enabled = false;
             nameInput.text = Name;
-            CodeEditorScript = CodeEditor.GetComponent<TMPro.CodeEditor>();
         }
 
         public void Rename()
