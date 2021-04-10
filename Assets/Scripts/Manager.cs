@@ -188,18 +188,19 @@ public class Manager : MonoBehaviour
         {
             string recived = messagesFromServer.Dequeue();
             print(WSPath + " says: " + recived);
-            
+
 
             string command = recived.Length >= 16 ? recived.Substring(13, 3) : "";
 
 
             if (command == "new")
             {
-                if (!Nodes.ContainsKey(FindString(recived, "id"))&& !Flows.ContainsKey(FindString(recived, "id")))
+                if (!Nodes.ContainsKey(FindString(recived, "id")) && !Flows.ContainsKey(FindString(recived, "id")))
                 {
-                    
+
                     string type = FindString(recived, "type");
-                    if (type == "CodeNode") {
+                    if (type == "CodeNode")
+                    {
                         var message = JsonUtility.FromJson<APIMessage.NewCodeNode>(recived);
                         GameObject prefab = prefabDict[message.info.type];
                         var script = Instantiate(prefab).GetComponent<CodeNode>();
@@ -270,7 +271,7 @@ public class Manager : MonoBehaviour
                     codeNode.Code = message.value;
                 }
             }
-            else if(command == "act")
+            else if (command == "act")
             {
                 var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
                 if (Nodes.ContainsKey(message.id))
@@ -292,7 +293,14 @@ public class Manager : MonoBehaviour
                         Flows[message.id].DisplayActivate();
                 }*/
             }
+            else if (command == "out")
+            {
+                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
+                if (Nodes.ContainsKey(message.id))
+                {
+                    Nodes[message.id].ShowOutput(message.value);
+                }
+            }
         }
     }
-
 }

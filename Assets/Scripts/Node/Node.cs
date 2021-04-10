@@ -19,6 +19,7 @@ public class CoolDown
     public void Delay(float t=-1)
     {
         waitTime = Time.time + (t == -1 ? span : t);
+        pending = false;
     }
     public bool Update()
     {
@@ -170,30 +171,30 @@ namespace GraphUI
             outline.effectColor = target;
         }
 
-        IEnumerator changeOutlineColor;
+        IEnumerator changeOutlineColor1, changeOutlineColor2;
         public override void Select()
         {
             base.Select();
-            if(changeOutlineColor!=null)
-                StopCoroutine(changeOutlineColor);
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_select, outlineSelectedColor));
+            if(changeOutlineColor1!=null)
+                StopCoroutine(changeOutlineColor1);
+            StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineSelectedColor));
             
         }
         public override void Unselect()
         {
             base.Unselect();
-            if (changeOutlineColor != null)
-                StopCoroutine(changeOutlineColor);
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_select, outlineUnselectedColor));
+            if (changeOutlineColor1 != null)
+                StopCoroutine(changeOutlineColor1);
+            StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineUnselectedColor));
         }
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
             if (!selected)
             {
-                if (changeOutlineColor != null)
-                    StopCoroutine(changeOutlineColor);
-                StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_select, outlineHoverColor));
+                if (changeOutlineColor1 != null)
+                    StopCoroutine(changeOutlineColor1);
+                StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineHoverColor));
             }
         }
         public override void OnPointerExit(PointerEventData eventData)
@@ -201,29 +202,33 @@ namespace GraphUI
             base.OnPointerExit(eventData);
             if (!selected)
             {
-                if (changeOutlineColor != null)
-                    StopCoroutine(changeOutlineColor);
-                StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_select, outlineUnselectedColor));
+                if (changeOutlineColor1 != null)
+                    StopCoroutine(changeOutlineColor1);
+                StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineUnselectedColor));
             }
         }
         public void DisplayActivate()
         {
-            if (changeOutlineColor != null)
-                StopCoroutine(changeOutlineColor);
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlineRunningColor));
+            if (changeOutlineColor2 != null)
+                StopCoroutine(changeOutlineColor2);
+            StartCoroutine(changeOutlineColor2 = ChangeOutlineColor(outline_running, outlineRunningColor));
         }
         public void DisplayInactivate()
         {
-            if (changeOutlineColor != null)
-                StopCoroutine(changeOutlineColor);
+            if (changeOutlineColor2 != null)
+                StopCoroutine(changeOutlineColor2);
             outline_running.effectColor = outlineRunningColor;
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, new Color(0, 0, 0, 0)));
+            StartCoroutine(changeOutlineColor2 = ChangeOutlineColor(outline_running, new Color(0, 0, 0, 0)));
         }
         public void DisplayPending()
         {
-            if (changeOutlineColor != null)
-                StopCoroutine(changeOutlineColor);
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlinePendingColor));
+            if (changeOutlineColor2 != null)
+                StopCoroutine(changeOutlineColor2);
+            StartCoroutine(changeOutlineColor2 = ChangeOutlineColor(outline_running, outlinePendingColor));
+        }
+        public virtual void ShowOutput(string output)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

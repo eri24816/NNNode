@@ -149,7 +149,7 @@ async def env_ws(websocket, path):
                     env_history_client=env_history_client.last # move backward
                     env_history_client_version = env_history_client.version
 
-            for key, value in update_message_buffer.items():
+            for key, value in update_message_buffer.copy().items():
                 command_, id = key[:3], key[4:]
                 if command_ == "cod":
                     value=env.nodes[id].code

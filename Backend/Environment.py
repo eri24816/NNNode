@@ -25,7 +25,9 @@ def exec_(script,globals=None, locals=None):
             ast_module = ast.parse("")
             ast_module.body=stmts[:-1]
             exec(compile(ast_module, filename="<ast>", mode="exec"), globals, locals)
-        print(eval(compile(ast.Expression(body=stmts[-1].value), filename="<ast>", mode="eval"), globals, locals))
+        last = eval(compile(ast.Expression(body=stmts[-1].value), filename="<ast>", mode="eval"), globals, locals)
+        if last:
+            print(last)
     else:    
         exec(script, globals, locals)
     return output
@@ -217,11 +219,12 @@ class CodeNode(Node):
     def start_running(self):
         self.env.Write_update_message(self.id,'act','2') # 2 means "running". This method is just for UI
     
-    def finish_running(self):
+    def finish_running(self,output):
         self.deactivate()
         for out_control in self.out_control:
             out_control.activate()
         self.env.Write_update_message(self.id, 'act', '0')
+        self.env.Write_update_message(self.id, 'out', output)
         self.already_activated=0
 
 
@@ -517,13 +520,13 @@ class Env():
 
     # run in another thread from the main thread (server.py)
     def run(self):
-        output=""
         self.flag_exit = 0
         self.is_busy=0
         while not self.flag_exit:
             node_to_run = self.nodes_to_run.get()
             node_to_run.start_running()
-            self.is_busy=1
+            self.is_busy = 1
+            output=""
             try:
                 with stdoutIO() as s:
                     exec_(node_to_run.code,self.globals,self.locals) # run the code in the Node
@@ -532,6 +535,6 @@ class Env():
                 output += traceback.format_exc()
             self.is_busy=0
             node_to_run.output = output
-            node_to_run.finish_running()
+            node_to_run.finish_running(output)
             print(output)
             
