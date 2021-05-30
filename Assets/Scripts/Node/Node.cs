@@ -36,13 +36,16 @@ namespace GraphUI
 {
     public class Node : Selectable, IEndDragHandler, IBeginDragHandler, IDragHandler
     {
+        
         public List<Port> ins, outs;
         public RectTransform panel;
         public string id, Name;
-        [SerializeField]
+        [SerializeField] 
         UnityEngine.UI.Outline outline_select,outline_running;
         [SerializeField]
         Color outlineUnselectedColor, outlineHoverColor, outlineSelectedColor,outlineRunningColor,outlinePendingColor;
+        [SerializeField]
+        public List<UnityEngine.UI.Graphic> changeColorOnSelect;
         public virtual Port GetPort(bool isInput = true, string var_name = "")
         {
             return isInput ? ins[0] : outs[0];
@@ -158,7 +161,7 @@ namespace GraphUI
 
 
 
-        IEnumerator ChangeOutlineColor(UnityEngine.UI.Outline outline,Color target,float speed=15)
+        IEnumerator SmoothChangeColor(UnityEngine.UI.Outline outline,Color target,float speed=15)
         {
             Color original = outline.effectColor;
             float t = 1f;
@@ -171,30 +174,50 @@ namespace GraphUI
             outline.effectColor = target;
         }
 
-        IEnumerator changeOutlineColor1, changeOutlineColor2;
+        IEnumerator SmoothChangeColor(List<UnityEngine.UI.Graphic> graphics, Color target, float speed = 15)
+        {
+            if (graphics.Count == 0) yield break;
+            Color original = graphics[0].color;
+            float t = 1f;
+            while (t > 0.02f)
+            {
+                t *= Mathf.Pow(0.5f, Time.deltaTime * speed);
+                var c = Color.Lerp(target, original, t);
+                foreach (UnityEngine.UI.Graphic g in graphics)
+                {
+                    g.color = new Color(c.r, c.g, c.b, g.color.a);
+                }
+                    
+                yield return null;
+            }
+            foreach(UnityEngine.UI.Graphic g in graphics)
+                g.color = new Color(target.r, target.g, target.b, g.color.a);
+        }
+
+        IEnumerator changeColor1, changeColor2;
         public override void Select()
         {
             base.Select();
-            if(changeOutlineColor1!=null)
-                StopCoroutine(changeOutlineColor1);
-            StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineSelectedColor));
+            if(changeColor1!=null)
+                StopCoroutine(changeColor1);
+            StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineSelectedColor));
             
         }
         public override void Unselect()
         {
             base.Unselect();
-            if (changeOutlineColor1 != null)
-                StopCoroutine(changeOutlineColor1);
-            StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineUnselectedColor));
+            if (changeColor1 != null)
+                StopCoroutine(changeColor1);
+            StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineUnselectedColor));
         }
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
             if (!selected)
             {
-                if (changeOutlineColor1 != null)
-                    StopCoroutine(changeOutlineColor1);
-                StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineHoverColor));
+                if (changeColor1 != null)
+                    StopCoroutine(changeColor1);
+                StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineHoverColor));
             }
         }
         public override void OnPointerExit(PointerEventData eventData)
@@ -202,29 +225,29 @@ namespace GraphUI
             base.OnPointerExit(eventData);
             if (!selected)
             {
-                if (changeOutlineColor1 != null)
-                    StopCoroutine(changeOutlineColor1);
-                StartCoroutine(changeOutlineColor1 = ChangeOutlineColor(outline_select, outlineUnselectedColor));
+                if (changeColor1 != null)
+                    StopCoroutine(changeColor1);
+                StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineUnselectedColor));
             }
         }
         public void DisplayActivate()
         {
-            if (changeOutlineColor2 != null)
-                StopCoroutine(changeOutlineColor2);
-            StartCoroutine(changeOutlineColor2 = ChangeOutlineColor(outline_running, outlineRunningColor));
+            if (changeColor2 != null)
+                StopCoroutine(changeColor2);
+            StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, outlineRunningColor));
         }
         public void DisplayInactivate()
         {
-            if (changeOutlineColor2 != null)
-                StopCoroutine(changeOutlineColor2);
+            if (changeColor2 != null)
+                StopCoroutine(changeColor2);
             outline_running.effectColor = outlineRunningColor;
-            StartCoroutine(changeOutlineColor2 = ChangeOutlineColor(outline_running, new Color(0, 0, 0, 0)));
+            StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, new Color(0, 0, 0, 0)));
         }
         public void DisplayPending()
         {
-            if (changeOutlineColor2 != null)
-                StopCoroutine(changeOutlineColor2);
-            StartCoroutine(changeOutlineColor2 = ChangeOutlineColor(outline_running, outlinePendingColor));
+            if (changeColor2 != null)
+                StopCoroutine(changeColor2);
+            StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, outlinePendingColor));
         }
         public virtual void ShowOutput(string output)
         {
