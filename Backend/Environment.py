@@ -83,7 +83,6 @@ class Node:
         self.pos=info['pos']
         self.env=env
         self.env.Update_history("new", info)
-        # self.env.latest_history.name=self.name #*?   what is this line for? 
         self.first_history = self.latest_history = History_item("stt")
         self.lock_history=False
         self.running=False

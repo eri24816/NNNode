@@ -104,7 +104,7 @@ namespace GraphUI
                 }
             }
         }
-        protected virtual void Remove()
+        public virtual void Remove()
         {
             if (current.Contains(this)) current.Remove(this);
         }

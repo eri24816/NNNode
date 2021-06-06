@@ -91,7 +91,7 @@ public class Manager : MonoBehaviour
         {
             env.Send(new APIMessage.NewCodeNode(node.id,node.name, node.transform.position).Json);
         }
-        if (node is FunctionNode)
+        if (node is CodeNode)
         {
             env.Send(new APIMessage.NewFunctionNode(node.id, node.name, node.transform.position).Json);
         }
@@ -215,7 +215,7 @@ public class Manager : MonoBehaviour
                     {
                         var message = JsonUtility.FromJson<APIMessage.NewFunctionNode>(recived);
                         GameObject prefab = prefabDict[message.info.type];
-                        var script = Instantiate(prefab).GetComponent<FunctionNode>();
+                        var script = Instantiate(prefab).GetComponent<CodeNode>();
                         script.name = script.Name = message.info.name;
                         script.id = message.info.id;
                         Nodes.Add(message.info.id, script);

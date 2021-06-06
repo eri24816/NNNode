@@ -16,10 +16,18 @@ namespace GraphUI
         public int maxEdges;
         public bool isInput; // true: input false: output
         public System.Type flowType;
+        public string Name = "";
+        [SerializeField]
+        private List<GameObject> toHideOnMinimize;
 
         protected virtual void Start()
         {
             node = transform.parent.GetComponent<Node>();
+        }
+        public void SetExpanded(bool expanded) // currently only DataPort uses this
+        {
+            foreach (GameObject g in toHideOnMinimize)
+                g.SetActive(expanded);
         }
 
         protected virtual void Update()

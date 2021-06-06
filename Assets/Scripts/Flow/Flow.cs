@@ -96,7 +96,7 @@ namespace GraphUI
             }
             Manager.ins.state = Manager.State.idle;
         }
-        protected override void Remove()
+        public override void Remove()
         {
             base.Remove();
             Manager.ins.RemoveFlow(this);

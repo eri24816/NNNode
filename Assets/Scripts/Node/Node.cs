@@ -36,16 +36,28 @@ namespace GraphUI
 {
     public class Node : Selectable, IEndDragHandler, IBeginDragHandler, IDragHandler
     {
-        
-        public List<Port> ins, outs;
-        public RectTransform panel;
+        [SerializeField]
+        protected List<Port> ins, outs;
+        public virtual void AddPort(Port port, bool isIn=true)
+        {
+            if (isIn)
+            {
+                ins.Add(port);
+            }
+            else
+            {
+                outs.Add(port);
+            }
+        }
+
+
         public string id, Name;
         [SerializeField] 
-        UnityEngine.UI.Outline outline_select,outline_running;
+        UnityEngine.UI.Outline outline_running;
         [SerializeField]
-        Color outlineUnselectedColor, outlineHoverColor, outlineSelectedColor,outlineRunningColor,outlinePendingColor;
+        Color unselectedColor, hoverColor, selectedColor,outlineRunningColor,outlinePendingColor;
         [SerializeField]
-        public List<UnityEngine.UI.Graphic> changeColorOnSelect;
+        List<UnityEngine.UI.Graphic> lights;
         public virtual Port GetPort(bool isInput = true, string var_name = "")
         {
             return isInput ? ins[0] : outs[0];
@@ -53,11 +65,10 @@ namespace GraphUI
         public virtual void Start()
         {
             targetPos = transform.position;
-            outline_select.effectColor = outlineUnselectedColor;
             outline_running.effectColor = new Color(0, 0, 0, 0);
         }
 
-        protected override void Remove()
+        public override void Remove()
         {
             // Remove node from this client
             // Invoked by X button
@@ -92,7 +103,7 @@ namespace GraphUI
             }
         }
 
-        public float upPad = 0.1f, downPad = 0.1f;
+
         public virtual void Reshape(float w, float l, float r) { }//Trapezoid shaped node
 
 
@@ -200,7 +211,7 @@ namespace GraphUI
             base.Select();
             if(changeColor1!=null)
                 StopCoroutine(changeColor1);
-            StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineSelectedColor));
+            StartCoroutine(changeColor1 = SmoothChangeColor(lights, selectedColor));
             
         }
         public override void Unselect()
@@ -208,7 +219,7 @@ namespace GraphUI
             base.Unselect();
             if (changeColor1 != null)
                 StopCoroutine(changeColor1);
-            StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineUnselectedColor));
+            StartCoroutine(changeColor1 = SmoothChangeColor(lights, unselectedColor));
         }
         public override void OnPointerEnter(PointerEventData eventData)
         {
@@ -217,7 +228,7 @@ namespace GraphUI
             {
                 if (changeColor1 != null)
                     StopCoroutine(changeColor1);
-                StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineHoverColor));
+                StartCoroutine(changeColor1 = SmoothChangeColor(lights, hoverColor));
             }
         }
         public override void OnPointerExit(PointerEventData eventData)
@@ -227,7 +238,7 @@ namespace GraphUI
             {
                 if (changeColor1 != null)
                     StopCoroutine(changeColor1);
-                StartCoroutine(changeColor1 = SmoothChangeColor(changeColorOnSelect, outlineUnselectedColor));
+                StartCoroutine(changeColor1 = SmoothChangeColor(lights, unselectedColor));
             }
         }
         public void DisplayActivate()

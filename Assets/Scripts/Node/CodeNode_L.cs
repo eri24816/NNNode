@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+
 namespace GraphUI
 {
-    public class CodeNode : Node
+    public class CodeNode_L : Node // not used old class
     {
         public bool expanded = false;
 
@@ -11,7 +13,7 @@ namespace GraphUI
         TMPro.TMP_InputField nameInput;
 
         [SerializeField]
-        GameObject CodeEditor; 
+        GameObject CodeEditor;
 
         [SerializeField]
         TMPro.CodeEditor CodeEditorScript;
@@ -24,8 +26,8 @@ namespace GraphUI
         [SerializeField]
         float expandedWidth, minimizedWidth;
 
-        readonly CoolDown recvCodeCD = new CoolDown(hz: 100);
-        string output = "";
+        readonly CoolDown recvCodeCD=new CoolDown(hz:100);
+        string output="";
         public float maxOutputHeight = 150;
         string recievedCode;
         public string Code { get { return CodeEditorScript.text; } set { CodeEditorScript.SetTextWithoutNotify(value); } }
@@ -62,13 +64,13 @@ namespace GraphUI
         public void CollapseOrExpand()
         {
             expanded ^= true;
-            foreach (GameObject g in toHideOnMinimize)
+            foreach(GameObject g in toHideOnMinimize)
                 g.SetActive(expanded);
             foreach (Port p in ins)
                 p.SetExpanded(expanded);
             foreach (Port p in outs)
                 p.SetExpanded(expanded);
-            ((RectTransform)transform).sizeDelta = new Vector2(expanded ? expandedWidth : minimizedWidth, ((RectTransform)transform).sizeDelta.y);
+            ((RectTransform)transform).sizeDelta = new Vector2(expanded?expandedWidth:minimizedWidth,((RectTransform)transform).sizeDelta.y);
             if (expanded)
             {
                 ShowOutput(output);
@@ -84,7 +86,7 @@ namespace GraphUI
                 outputTextLayoutElement.minHeight = 0;
                 outputText.text="";
             }*/
-
+                
         }
 
         public override Port GetPort(bool isInput = true, string var_name = "")
