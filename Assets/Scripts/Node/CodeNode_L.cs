@@ -103,7 +103,7 @@ namespace GraphUI
             recvCodeCD.Delay(1);
             Manager.ins.SetCode(this);
         }
-        public override void ShowOutput(string output)
+        public void ShowOutput(string output)
         {
             this.output = output;
             if (expanded)

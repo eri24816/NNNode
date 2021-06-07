@@ -151,11 +151,12 @@ async def env_ws(websocket, path):
 
             if env.running_node:
                 env.running_node.flush_output()
-            for key, value in update_message_buffer.copy().items():
+            for key, value in sorted(update_message_buffer.copy().items()):
                 command_, id = key[:3], key[4:]
                 if command_ == "cod":
                     value=env.nodes[id].code
                 await websocket.send(json.dumps({'command': command_, 'id': id, 'value': value}))
+                #print({'command': command_, 'id': id, 'value': value})
             update_message_buffer.clear()
 
         elif command == "udo":

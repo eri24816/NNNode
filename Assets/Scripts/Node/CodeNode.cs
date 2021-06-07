@@ -11,7 +11,7 @@ namespace GraphUI
         TMPro.TMP_InputField nameInput;
 
         [SerializeField]
-        GameObject CodeEditor; 
+        GameObject CodeEditor;
 
         [SerializeField]
         TMPro.CodeEditor CodeEditorScript;
@@ -71,7 +71,7 @@ namespace GraphUI
             ((RectTransform)transform).sizeDelta = new Vector2(expanded ? expandedWidth : minimizedWidth, ((RectTransform)transform).sizeDelta.y);
             if (expanded)
             {
-                ShowOutput(output);
+                UpdateOutputText();
             }
             /*
             if (expanded)
@@ -101,17 +101,26 @@ namespace GraphUI
             recvCodeCD.Delay(1);
             Manager.ins.SetCode(this);
         }
-        public override void ShowOutput(string output)
+
+        public void AddOutput(string output)
         {
-            this.output = output;
+            this.output += output;
             if (expanded)
-            {
-                outputText.overflowMode = TMPro.TextOverflowModes.Overflow;
-                outputText.text = output;
-                outputText.ForceMeshUpdate();
-                outputText.overflowMode = TMPro.TextOverflowModes.Truncate;
-                outputTextLayoutElement.minHeight = Mathf.Min(maxOutputHeight, outputText.textBounds.size.y);
-            }
+                UpdateOutputText();
+        }
+        public void ClearOutput()
+        {
+            this.output ="";
+            if (expanded)
+                UpdateOutputText();
+        }
+        void UpdateOutputText()
+        {
+            outputText.overflowMode = TMPro.TextOverflowModes.Overflow;
+            outputText.text = output;
+            outputText.ForceMeshUpdate();
+            outputText.overflowMode = TMPro.TextOverflowModes.Truncate;
+            outputTextLayoutElement.minHeight = Mathf.Min(maxOutputHeight, outputText.textBounds.size.y);
         }
     }
 }

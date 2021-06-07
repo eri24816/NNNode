@@ -263,14 +263,13 @@ public class Manager : MonoBehaviour
                 var message = JsonUtility.FromJson<APIMessage.Gid>(recived);
                 avaliableIds.Enqueue(message.id);
             }
+
             else if (command == "cod")
             {
                 var message = JsonUtility.FromJson<APIMessage.Cod>(recived);
                 Node node = Nodes[message.id];
                 if (node is CodeNode codeNode)
-                {
                     codeNode.Code = message.value;
-                }
             }
             else if (command == "act")
             {
@@ -294,13 +293,19 @@ public class Manager : MonoBehaviour
                         Flows[message.id].DisplayActivate();
                 }*/
             }
+            else if (command == "clr")
+            {
+                var message = JsonUtility.FromJson<APIMessage.Gid>(recived);
+                Node node = Nodes[message.id];
+                if (node is CodeNode codeNode)
+                    codeNode.ClearOutput();
+            }
             else if (command == "out")
             {
                 var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
-                if (Nodes.ContainsKey(message.id))
-                {
-                    Nodes[message.id].ShowOutput(message.value);
-                }
+                Node node = Nodes[message.id];
+                if (node is CodeNode codeNode)
+                    codeNode.AddOutput(message.value);
             }
         }
     }

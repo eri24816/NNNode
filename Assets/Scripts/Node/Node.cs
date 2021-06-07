@@ -260,9 +260,6 @@ namespace GraphUI
                 StopCoroutine(changeColor2);
             StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, outlinePendingColor));
         }
-        public virtual void ShowOutput(string output)
-        {
-            throw new System.NotImplementedException();
-        }
+
     }
 }

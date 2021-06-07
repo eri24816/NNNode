@@ -259,6 +259,7 @@ class CodeNode(Node):
     def start_running(self):
         self.output = ''
         self.env.Write_update_message(self.id,'act','2') # 2 means "running"
+        self.env.Write_update_message(self.id, 'clr') # clear output before running
     
     def flush_output(self): # called when client send 'upd'
         if self.added_output == '':
@@ -488,7 +489,7 @@ class Env():
         stt, None - start the environment
         new, info - new node or edge
         mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
-        rmV, info - remove node or edge
+        rmv, info - remove node or edge
         '''
         if self.lock_history:
             return
@@ -503,10 +504,23 @@ class Env():
         self.latest_history=History_item(type,content,self.latest_history,self.current_history_sequence_id)
 
     
-    def Write_update_message(self, id, name, v):
+    def Write_update_message(self, id, name, v = ''):
+        '''
+        out - output
+        cod - code
+        clr - clear_output
+        '''
         k=name+"/"+id
         for buffer in self.update_message_buffers:
-            buffer[k]=v
+            if name == 'out':
+                if k not in buffer:
+                    buffer[k] = ''
+                buffer[k]+=v
+            elif name == 'clr':
+                buffer["out/"+id] = ''
+                buffer[k]=v
+            else:
+                buffer[k]=v
 
     def Undo(self):
         if self.latest_history.last==None:
