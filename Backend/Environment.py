@@ -143,18 +143,23 @@ class Node:
 
     def activate(self):
         self.activated = True
-        #TODO: inform client to play animations
+        # inform client to play animations
 
     def deactivate(self):
         self.activated = False
-        #TODO: inform client to play animations
+        # inform client to play animations
 
 
 class CodeNode(Node):
     '''
     A node with editable code, like a block in jupyter notebook.
-    A CodeNode can be invoked either by an input control flow or by client(e.g. double click on the node) .
-    After running, it will activate its output control flow (if there is one).
+
+    The node will be invoked when every input dataflows and the input controlflow (if there is one) are all activated.
+    It can also be invoked directly by client(e.g. double click on the node).
+    After running, it will activate its output dataflows and ControlFlow (if there is one).
+
+    If the node has no in or out data port, it will just run the code in it.
+    If the node has DataPort, it will define a function.
     '''
     def __init__(self,info,env):
         '''
@@ -167,10 +172,27 @@ class CodeNode(Node):
         self.in_control=None # only 1 in_control is allowed
         self.out_control = []  # there can be more than one out_control
         
+        self.in_data={}
+        if 'in_data' in info:
+            for i in info['in_data']:
+                self.in_data.update({i:None})
+        self.out_data={}
+        if 'out_data' in info:
+            for i in info['out_data']:
+                self.out_data.update({i:[]})
+        '''
+        in_data,  { <var_name> : <connected dataflow > }
+        out_data: { <var_name> : [<connected dataflow 1>,<connected dataflow 2>...] }
+        In a graph file, the connections of nodes with dataflows are stored in dataflows,
+        so <connected dataflow> is None here.
+        '''
+
         self.already_activated=0
 
     def get_info(self):
-        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output}
+        in_data=[i for i in self.in_data] # get keys
+        out_data=[i for i in self.out_data] # get keys
+        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,"in_data":in_data,"out_data":out_data}
 
     def set_code(self,code):
         # code changes are logged in node history
@@ -184,6 +206,13 @@ class CodeNode(Node):
             self.in_control.remove()
         for i in self.out_control:
             i.remove()
+        for i in self.in_data:
+            if self.in_data[i]:
+                self.in_data[i].remove()
+        for i in self.out_data:
+            for j in self.out_data[i]:
+                j.remove()
+        # then remove the node itself
         super().remove()
 
     def Undo(self):
@@ -249,12 +278,7 @@ class FunctionNode(Node):
         if 'out_data' in info:
             for i in info['out_data']:
                 self.out_data.update({i:[]})
-        '''
-        in_data,  { <var_name> : <connected dataflow > }
-        out_data: { <var_name> : [<connected dataflow 1>,<connected dataflow 2>...] }
-        In a graph file, the connections of nodes with dataflows are stored in dataflows,
-          so <connected dataflow> is None here.
-        '''
+
         self.in_control=None # only 1 in_control is allowed
         self.out_control=[] # there can be more than one out_control
 
@@ -367,23 +391,29 @@ class ControlFlow(Edge):
         # inform the head node
         self.head.on_input_flow_activated()
 
+class num_iter:
+    def __init__(self,start=-1):
+        self.i=start
+    def __get__(self,obj, objtype=None):
+        self.i+=1
+        return self.i
 
 import queue
 
 # the environment to run the code in
 class Env():
+    
 
     def __init__(self,name):
         self.name=name
         self.thread=None
-       
+        self.id_iter = num_iter(-1)
         self.nodes={} # {id : Node}
         self.edges={} # {id : Edge}
         self.globals=globals()
         self.locals={}
         self.first_history=self.latest_history=History_item("stt") # first history item
-        self.lock_history=False # when undoing or redoing, lock_history set to True to avoid unwanted history change
-        self.id_num = 0
+        self.lock_history=False # when undoing or redoing, lock_history will be set to True to avoid unwanted history change
         
         self.current_history_sequence_id = -1
 
@@ -393,8 +423,11 @@ class Env():
         # it's a dictionary so replicated updates will overwrite
         self.update_message_buffers = []
 
+        self.output_cursor = 0
+
         # for run() thread
         self.nodes_to_run = queue.Queue()
+        
 
     class History_sequence():
         next_history_sequence_id = 0
@@ -438,7 +471,7 @@ class Env():
         stt, None - start the environment
         new, info - new node or edge
         mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
-        rem, info - remove node or edge
+        rmV, info - remove node or edge
         '''
         if self.lock_history:
             return
@@ -516,6 +549,10 @@ class Env():
             self.Redo()
 
         return 1
+
+    
+    def Read_output(self):
+        
 
     # run in another thread from the main thread (server.py)
     def run(self):

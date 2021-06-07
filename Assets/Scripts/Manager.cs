@@ -91,10 +91,11 @@ public class Manager : MonoBehaviour
         {
             env.Send(new APIMessage.NewCodeNode(node.id,node.name, node.transform.position).Json);
         }
-        if (node is CodeNode)
+        /*
+        if (node is FunctionNode)
         {
             env.Send(new APIMessage.NewFunctionNode(node.id, node.name, node.transform.position).Json);
-        }
+        }*/
     }
 
     public void RemoveNode(Node node)

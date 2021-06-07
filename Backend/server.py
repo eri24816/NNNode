@@ -220,8 +220,7 @@ async def env_ws(websocket, path):
             '''
             give client an unused id
             '''
-            await websocket.send(json.dumps({'command':"gid",'id':env.id_num}))
-            env.id_num+=1
+            await websocket.send(json.dumps({'command':"gid",'id':env.id_iter}))
 
 async def Update_client(ws,direction,history_item):
     '''
