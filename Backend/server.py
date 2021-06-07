@@ -53,7 +53,7 @@ router = websockets_routes.Router()
 
 @router.route("/env/{env_name}") #* interact with an env
 async def env_ws(websocket, path):
-    env=None
+    env : Environment.Env = None
     env_name=path.params["env_name"]
     if env_name in envs:
         env=envs[env_name]
@@ -149,6 +149,8 @@ async def env_ws(websocket, path):
                     env_history_client=env_history_client.last # move backward
                     env_history_client_version = env_history_client.version
 
+            if env.running_node:
+                env.running_node.flush_output()
             for key, value in update_message_buffer.copy().items():
                 command_, id = key[:3], key[4:]
                 if command_ == "cod":
@@ -220,7 +222,7 @@ async def env_ws(websocket, path):
             '''
             give client an unused id
             '''
-            await websocket.send(json.dumps({'command':"gid",'id':env.id_iter}))
+            await websocket.send(json.dumps({'command':"gid",'id':env.id_iter.next()}))
 
 async def Update_client(ws,direction,history_item):
     '''

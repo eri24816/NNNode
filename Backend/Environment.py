@@ -1,14 +1,25 @@
+from __future__ import annotations
 from abc import abstractmethod
 import sys
 from io import StringIO
 import ast
 import traceback
 
+
+
+class node_StringIO():
+    def __init__(self,node):
+        self.node = node
+    def write(self,value):
+        self.node.added_output += value
+
 # redirect stdout
 class stdoutIO():
+    def __init__(self,node):
+        self.node = node
     def __enter__(self):
         self.old = sys.stdout
-        stdout = StringIO()
+        stdout = node_StringIO(self.node)
         sys.stdout = stdout
         return stdout
     def __exit__(self, type, value, traceback):
@@ -73,7 +84,7 @@ class History_lock():
         self.o.lock_history = False
         
 class Node:
-    def __init__(self,info,env):
+    def __init__(self,info,env : Env):
         '''
         create a node
         '''
@@ -168,6 +179,7 @@ class CodeNode(Node):
         super().__init__(info,env) #*? usage of super?
         self.code=info['code']if 'code' in info else ''
         self.output=info['output']if 'output' in info else ''
+        self.added_output = '' # added lines of output when running, which will be send to client
 
         self.in_control=None # only 1 in_control is allowed
         self.out_control = []  # there can be more than one out_control
@@ -241,18 +253,26 @@ class CodeNode(Node):
         if self.already_activated: 
             return # prevent duplication in env.nodes_to_run
         self.env.nodes_to_run.put(self)
-        self.env.Write_update_message(self.id, 'act', '1')  # 1 means "pending"
+        self.env.Write_update_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
         self.already_activated=1
 
     def start_running(self):
-        self.env.Write_update_message(self.id,'act','2') # 2 means "running". This method is just for UI
+        self.output = ''
+        self.env.Write_update_message(self.id,'act','2') # 2 means "running"
     
-    def finish_running(self,output):
+    def flush_output(self): # called when client send 'upd'
+        if self.added_output == '':
+            return
+        self.output += self.added_output
+        self.env.Write_update_message(self.id, 'out', self.added_output) # send client only currently added lines of output
+        self.added_output = ''
+
+    def finish_running(self):
+        self.flush_output()
         self.deactivate()
         for out_control in self.out_control:
             out_control.activate()
         self.env.Write_update_message(self.id, 'act', '0')
-        self.env.Write_update_message(self.id, 'out', output)
         self.already_activated=0
 
 
@@ -394,7 +414,7 @@ class ControlFlow(Edge):
 class num_iter:
     def __init__(self,start=-1):
         self.i=start
-    def __get__(self,obj, objtype=None):
+    def next(self):
         self.i+=1
         return self.i
 
@@ -403,7 +423,6 @@ import queue
 # the environment to run the code in
 class Env():
     
-
     def __init__(self,name):
         self.name=name
         self.thread=None
@@ -423,12 +442,10 @@ class Env():
         # it's a dictionary so replicated updates will overwrite
         self.update_message_buffers = []
 
-        self.output_cursor = 0
-
         # for run() thread
         self.nodes_to_run = queue.Queue()
+        self.running_node : CodeNode = None
         
-
     class History_sequence():
         next_history_sequence_id = 0
         def __init__(self,env):
@@ -550,27 +567,17 @@ class Env():
 
         return 1
 
-    
-    def Read_output(self):
-        
 
     # run in another thread from the main thread (server.py)
     def run(self):
         self.flag_exit = 0
-        self.is_busy=0
         while not self.flag_exit:
-            node_to_run = self.nodes_to_run.get()
-            node_to_run.start_running()
-            self.is_busy = 1
-            output=""
+            self.running_node = self.nodes_to_run.get()
+            self.running_node.start_running()
             try:
-                with stdoutIO() as s:
-                    exec_(node_to_run.code,self.globals,self.locals) # run the code in the Node
-                    output = s.getvalue()
+                with stdoutIO(self.running_node) as s:
+                    exec_(self.running_node.code,self.globals,self.locals) # run the code in the Node
             except Exception:
-                output += traceback.format_exc()
-            self.is_busy=0
-            node_to_run.output = output
-            node_to_run.finish_running(output)
-            print(output)
+                self.running_node.added_output += traceback.format_exc()
+            self.running_node.finish_running()
             
