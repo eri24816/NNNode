@@ -73,19 +73,20 @@ namespace GraphUI
             {
                 UpdateOutputText();
             }
-            /*
-            if (expanded)
-            {
-                outputTextLayoutElement.minHeight = Mathf.Min(maxOutputHeight, outputText.textBounds.size.y);
-                ShowOutput(output);
-            }
-            else
-            {
-                outputTextLayoutElement.minHeight = 0;
-                outputText.text="";
-            }*/
+        }
+        public void AddInputPort()
+        {
 
         }
+        public void AddOutputPort()
+        {
+
+        }
+        public void RemovePort(DataPort port)
+        {
+
+        }
+
 
         public override Port GetPort(bool isInput = true, string var_name = "")
         {

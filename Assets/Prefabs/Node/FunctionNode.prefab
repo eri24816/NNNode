@@ -1104,8 +1104,6 @@ MonoBehaviour:
   outlinePendingColor: {r: 0, g: 0.73103523, b: 1, a: 0.74509805}
   lights:
   - {fileID: 6253532428769394442}
-  - {fileID: 0}
-  - {fileID: 0}
   dragging: 0
   expanded: 1
   nameInput: {fileID: 6472357831961444655}

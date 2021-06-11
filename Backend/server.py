@@ -15,11 +15,12 @@ API:
             2. Wait for a respond message from server
             3. 
             Send commands to server :
-                - cod "<node name>" <code> : Set code of a node
-                    1. Wait for a respond message from server
-                - exc <node name>: Run a node
-                - mov : Move a node
+                - new : create a node or a flow
+                - cod : modify code in a CodeNode
+                - act : activate a node
+                - mov : move a node
             Recieve messages form server : 
+                
 
 
 
@@ -63,7 +64,6 @@ async def env_ws(websocket, path):
         websocket.close()
         return
 
-    node_history_client={} # which node history is client on
     env_history_client=env.latest_history # which env history is client on
     env_history_client_version = 0
     update_message_buffer = {}
@@ -96,8 +96,7 @@ async def env_ws(websocket, path):
             
             env.Remove({"id" : m['id']})
             await websocket.send("msg %s removed" % m['id'])
-
-
+            
         elif command == "mov":
             '''
             move a node to pos
@@ -118,13 +117,6 @@ async def env_ws(websocket, path):
                 await websocket.send("msg changed node %s's code" % id)
             else:
                 await websocket.send("err no such node %s" % id)
-
-        elif command == "exc":
-            '''
-            run a node 
-                {command:"exc", id}
-            '''
-            env.tasks.put(m['id'],block=False)
 
         elif command == "upd":
             '''
@@ -209,7 +201,13 @@ async def env_ws(websocket, path):
             {command:"act",id}
             '''
             env.nodes[m['id']].activate()
-        #TODO
+
+        elif command == "gid":
+            '''
+            give client an unused id
+            '''
+            await websocket.send(json.dumps({'command':"gid",'id':env.id_iter.next()}))
+
         elif command == "sav":
             '''
             save the graph to disk
@@ -219,11 +217,6 @@ async def env_ws(websocket, path):
             '''
             load the graph from disk
             '''
-        elif command == "gid":
-            '''
-            give client an unused id
-            '''
-            await websocket.send(json.dumps({'command':"gid",'id':env.id_iter.next()}))
 
 async def Update_client(ws,direction,history_item):
     '''
@@ -254,9 +247,9 @@ async def Update_client(ws,direction,history_item):
 async def lobby(websocket, path):
 
     async for message in websocket:
-        prefix=message[:3]
+        command=message[:3]
         message=message[4:]
-        if prefix == "stt": # start a env
+        if command == "stt": # start a env
             env_name=message
             if env_name in envs:
                 await websocket.send("msg env %s is already running" % env_name)

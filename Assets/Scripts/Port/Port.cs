@@ -40,7 +40,7 @@ namespace GraphUI
         {
             return (flow.GetType() == flowType) && (Edges.Count < maxEdges) && (isInput ? flow.head == null : flow.tail == null);
         }
-        public void Remove() // Called when the node is going to be removed
+        public virtual void Remove() // Called when the node is going to be removed
         {
 
             foreach (Flow f in Edges)

@@ -16,7 +16,10 @@ namespace GraphUI
         {
             base.Update();
         }
-
+        public void RemoveButtonPressed()
+        {
+            ((CodeNode)node).RemovePort(this);
+        }
 
 
 
