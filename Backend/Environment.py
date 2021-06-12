@@ -1,137 +1,17 @@
 from __future__ import annotations
 from abc import abstractmethod
-import sys
-import ast
 import traceback
 from typing import Dict
 from history import *
 from nodes import *
 
-class node_StringIO():
-    def __init__(self,node):
-        self.node = node
-    def write(self,value):
-        self.node.added_output += value
 
-# redirect stdout
-class stdoutIO():
-    def __init__(self,node):
-        self.node = node
-    def __enter__(self):
-        self.old = sys.stdout
-        stdout = node_StringIO(self.node)
-        sys.stdout = stdout
-        return stdout
-    def __exit__(self, type, value, traceback):
-        sys.stdout = self.old
 
-# exec that prints correctly
-def exec_(script,globals=None, locals=None):
-    stmts = list(ast.iter_child_nodes(ast.parse(script)))
-    output=''
-    if not stmts:
-        return
-    if isinstance(stmts[-1], ast.Expr):
-        if len(stmts) > 1:
-            ast_module = ast.parse("")
-            ast_module.body=stmts[:-1]
-            exec(compile(ast_module, filename="<ast>", mode="exec"), globals, locals)
-        last = eval(compile(ast.Expression(body=stmts[-1].value), filename="<ast>", mode="eval"), globals, locals)
-        if last:
-            print(last)
-    else:    
-        exec(script, globals, locals)
-    return output
 
 
         
         
 
-
-
-class Edge(): # abstract class
-    def __init__(self,info,env):
-        '''
-        create an edge connecting two nodes
-        '''
-        self.type=info['type']
-        self.id=info['id']
-        self.tail=env.nodes[info['tail']]
-        self.head=env.nodes[info['head']]
-        self.info = info  # for remove history
-        self.env=env
-        self.env.Update_history("new", info)
-        self.activated=True
-    
-    def get_info(self):
-        return self.info
-
-    def remove(self):
-        self.env.edges.pop(self.id)
-        self.env.Update_history("rmv", self.info)
-        del self  #*?
-
-
-    '''
-    graph stuff 
-    '''        
-    def activate(self):
-        self.activated = True
-        #TODO: inform client to play animations
-
-    def deactivate(self):
-        self.activated = False
-        #TODO: inform client to play animations
-
-
-class DataFlow(Edge):
-    def __init__(self,info,env):
-        '''
-        info: {type=DataFlow,id,tail,head,tail_var,head_var}
-        '''
-        super().__init__(info,env)
-        self.activated=False
-        self.tail_var=info['tail_var']
-        self.head_var=info['head_var']
-        self.tail.out_data[self.tail_var].append(self)
-        self.head.in_data[self.head_var]=self
-        self.data=None
-        
-
-    def remove(self):
-        self.tail.out_data[self.tail_var].remove(self)
-        self.head.in_data[self.head_var]=None 
-        super().remove()      
-
-class ControlFlow(Edge):
-    def __init__(self,info,env):
-        '''
-        info: {type=ControlFlow,id,tail,head}
-        '''
-        super().__init__(info,env)
-        self.activated=False
-
-        # connect to tail and head node
-        if self.tail.type=='CodeNode' or self.tail.type=='FunctionNode':
-            self.tail.out_control.append(self)
-        else:
-            raise Exception('node type %s not supported'%self.tail.type)
-
-        if self.head.type=='CodeNode' or self.head.type=='FunctionNode':
-            assert self.head.in_control==None
-            self.head.in_control=self
-        else:
-            raise Exception('node type %s not supported'%self.tail.type)
-
-    def remove(self):
-        self.tail.out_control.remove(self)
-        self.head.in_control=None
-        super().remove()
-
-    def activate(self):
-        super().activate()
-        # inform the head node
-        self.head.on_input_flow_activated()
 
 class num_iter:
     def __init__(self,start=-1):
@@ -308,11 +188,5 @@ class Env():
         self.flag_exit = 0
         while not self.flag_exit:
             self.running_node = self.nodes_to_run.get()
-            self.running_node.start_running()
-            try:
-                with stdoutIO(self.running_node) as s:
-                    exec_(self.running_node.code,self.globals,self.locals) # run the code in the Node
-            except Exception:
-                self.running_node.added_output += traceback.format_exc()
-            self.running_node.finish_running()
+            self.running_node.run()
             
