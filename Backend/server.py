@@ -106,18 +106,6 @@ async def env_ws(websocket, path):
             env.Move(m['id'],m['pos'])
             await websocket.send("msg node %s moved to %s" % (m['id'],m['pos']))
 
-        elif command == "cod":
-            '''
-            set code of a node
-                {command:"cod",id,code}
-            '''
-            id=m['id']
-            if id in env.nodes:
-                env.nodes[id].set_code(m['value'])
-                await websocket.send("msg changed node %s's code" % id)
-            else:
-                await websocket.send("err no such node %s" % id)
-
         elif command == "upd":
             '''
             if there are changes after last upd command, send those changes to client
@@ -195,12 +183,6 @@ async def env_ws(websocket, path):
                 else:
                     await websocket.send("err no such node %s" % id)
 
-        elif command == "act":
-            '''
-            activate a node or an edge
-            {command:"act",id}
-            '''
-            env.nodes[m['id']].activate()
 
         elif command == "gid":
             '''
@@ -218,6 +200,19 @@ async def env_ws(websocket, path):
             load the graph from disk
             '''
 
+        else:
+            '''
+            Other commands are sent to the node directly
+            '''
+            id=m['id']
+            if id in env.nodes:
+                env.nodes[id].recive_command(m)
+                await websocket.send("msg changed node %s's code" % id)
+            else:
+                await websocket.send("err no such node %s" % id)
+
+
+        
 async def Update_client(ws,direction,history_item):
     '''
     for client that isn't on head,

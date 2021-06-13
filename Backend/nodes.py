@@ -120,8 +120,6 @@ class Node:
         except Exception:
             self.added_output += traceback.format_exc()
         self.flush_output()
-        
-        
 
     def _run(self):
         # Actually do what the node does
@@ -129,9 +127,14 @@ class Node:
 
 
     # for client ------------------------------
+    def recive_command(self,m):
+        command = m['command']
+        if command == "act":
+            self.activate()
+
     def get_info(self):
         pass
-
+    
     def move(self,pos):
         self.env.Update_history("mov",{"id":self.id,"old":self.pos,"new":pos})# node moves are logged in env history
         self.pos=pos
@@ -222,12 +225,18 @@ class CodeNode(Node):
         self.deactivate()
 
     # For client -----------------------------
+    def recive_command(self, m):
+        super().recive_command(m)
+        command = m['command']
+        if command =='cod':
+            self.set_code(m['value'])
+        
+
     def set_code(self,code):
         # code changes are logged in node history
         self.code=code
         self.Update_history("cod",{"id":self.id,"old":self.code,"new":code}) 
         self.env.Write_update_message(self.id,'cod','')
-
 
     def Undo(self):
         if self.latest_history.last:
@@ -241,6 +250,7 @@ class CodeNode(Node):
                 self.set_code(self.latest_history.content['new'])
             return 1
         return 0
+
 
 
 
@@ -280,19 +290,6 @@ class FunctionNode(Node):
         self.Update_history("cod",{"id":self.id,"old":self.code,"new":code})
         self.code=code
 
-    def remove(self):
-        # remove all conneced edges
-        if self.in_control:
-            self.in_control.remove()
-        for i in self.out_control:
-            i.remove()
-        for i in self.in_data:
-            if self.in_data[i]:
-                self.in_data[i].remove()
-        for i in self.out_data:
-            for j in self.out_data[i]:
-                j.remove()
-        super().remove()
 
 class Edge(): # abstract class
     def __init__(self,info,env):
@@ -343,7 +340,6 @@ class DataFlow(Edge):
         self.head.in_data[self.head_var]=self
         self.data=None
         
-
     def remove(self):
         self.tail.out_data[self.tail_var].remove(self)
         self.head.in_data[self.head_var]=None 

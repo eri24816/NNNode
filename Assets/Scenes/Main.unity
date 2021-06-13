@@ -348,7 +348,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc4511b5db293e4479475a83eed493eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connectToServer: 0
+  connectToServer: 1
   canvasTransform: {fileID: 216254001}
   prefabs:
   - {fileID: 243579921277508087, guid: d4675f0c469720e4b86410be1273a9b9, type: 3}
