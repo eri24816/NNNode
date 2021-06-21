@@ -263,9 +263,6 @@ class CodeNode(Node):
             return 1
         return 0
 
-
-
-
 class FunctionNode(Node):
     '''
     Similar to CodeNode, but a FunctionNode's code defines a function (start with "def").
@@ -274,37 +271,82 @@ class FunctionNode(Node):
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
     class Info(Node.Info):
-        in_data : List[str]
-        out_data : List[str]
+        pass
+
+    in_names : List[str] = []
+    out_names : List[str] = []
+    allow_multiple_in_data : List[bool] = []
 
     def __init__(self, info : Info ,env : Environment.Env):
         '''
-        info: {type=FunctionNode,id,name,pos,code,output,in_data,out_data}
+        info: {type=FunctionNode,id,name,pos,output}
         '''
         super().__init__(info,env)
-        self.code=info['code']if 'code' in info else ''
-        self.output=info['output']if 'output' in info else ''
-        self.in_data={}
-        if 'in_data' in info:
-            for i in info['in_data']:
-                self.in_data.update({i:None})
-        self.out_data={}
-        if 'out_data' in info:
-            for i in info['out_data']:
-                self.out_data.update({i:[]})
 
-        self.in_control=None # only 1 in_control is allowed
-        self.out_control=[] # there can be more than one out_control
+        # Data flows conntected. A Function node can have several in/out variables, 
+        # and each variable port can have one or more data flows connected.
+        self.in_data=[[]]*len(self.in_names)
+        self.out_data=[[]]*len(self.out_names)
 
     def get_info(self):
-        in_data=[i for i in self.in_data] # get keys
-        out_data=[i for i in self.out_data] # get keys
-        return {"type":"FunctionNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,"in_data":in_data,"out_data":out_data}
+        return {"type":"FunctionNode","id":self.id,"name":self.name,"pos":self.pos,"output":self.output}
 
     def set_code(self,code):
         # code changes are logged in node history
         self.Update_history("cod",{"id":self.id,"old":self.code,"new":code})
         self.code=code
 
+    def in_control_active(self):
+        # TODO: Ask for value
+        pass
 
-      
+    def in_data_active(self):
+        # A FunctionNode activates when all its input dataFlow is active.
+        for port in self.in_data:
+            for flow in port:
+                if not flow.active:
+                    return
+        # TODO: Ask for value
+        for port in self.in_data:
+            for flow in port:
+                if not flow.has_value:
+                    pass
+
+        self.activate()
+
+    def activate(self):
+        super().activate()
+        for port in self.in_data:
+            for flow in port:
+                flow.deactivate()
+
+    def _run(self):
+        # Gather data from input dataFlows
+        funcion_input = []
+        for port in self.in_data:
+            if len(port) == 0:
+                funcion_input.append(None) #TODO: Default value
+            elif len(port) == 1:
+                funcion_input.append(port[0].data)
+            else:
+                # More than 1 input flow on the port
+                funcion_input.append([flow.data] for flow in port)
+        
+        # Evaluate the function
+        result = self.function(*funcion_input)
+
+        # Send data to output dataFlows
+        i = 0
+        for result_item in result:
+            for flow in self.out_data[i]:
+                flow.recive_value(result_item)
+            i+=1
+        
+        self.deactivate()
+
+    @staticmethod
+    def function():
+        # Inherit FunctionNode to write different function.
+        # If one input port has more than one dataFlows connected, their data will input to this function as a list.
+        pass
+

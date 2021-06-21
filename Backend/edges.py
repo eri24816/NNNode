@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, TypedDict
+import inspect
 if TYPE_CHECKING:
     from nodes import Node
 
@@ -10,7 +11,7 @@ class Edge(): # abstract class
         tail : str # Tail node name
         head : str # Head node name
         
-    def __init__(self,info,env):
+    def __init__(self, info, env):
         '''
         create an edge connecting two nodes
         '''
@@ -86,7 +87,11 @@ class DataFlow(Edge):
         self.tail.out_data[self.tail_var].append(self)
         self.head.in_data[self.head_var].append(self)
         
-        
+    def recive_value(self,value):
+        self.data = value
+        self.has_value = True
+        self.activate()
+
     def remove(self):
         self.tail.out_data[self.tail_var].remove(self)
         self.head.in_data[self.head_var]=None 
