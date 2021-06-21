@@ -6,13 +6,6 @@ from history import *
 from nodes import *
 
 
-
-
-
-        
-        
-
-
 class num_iter:
     def __init__(self,start=-1):
         self.i=start

@@ -4,9 +4,10 @@ from history import *
 import datetime
 import sys
 import traceback
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
+    from edges import *
 
 class node_StringIO():
     def __init__(self,node):
@@ -47,7 +48,16 @@ def exec_(script,globals=None, locals=None):
 
 
 class Node:
-    def __init__(self,info,env : Environment.Env):
+    class Info(TypedDict):
+        type : str
+        id : int
+
+        # for client ------------------------------
+        name : str          # Just for frontend. In backend we never use it but use "id" instead
+        pos : List[float]   # While some nodes are not draggable
+        output : str        # Output is necessary for all classes of node to at least store exceptions occured in nodes
+
+    def __init__(self, info : Info, env : Environment.Env):
         '''
         Base class of node
         '''
@@ -114,6 +124,8 @@ class Node:
         # Env calls this method
         self.env.Write_update_message(self.id,'act','2') # 2 means "running"
         self.env.Write_update_message(self.id, 'clr') # Clear output
+
+        # Redirect printed outputs and error messages to client
         try:
             with stdoutIO(self):
                 self._run()
@@ -122,7 +134,7 @@ class Node:
         self.flush_output()
 
     def _run(self):
-        # Actually do what the node does
+        # Actually define what the type of node acts
         pass
 
 
@@ -190,9 +202,6 @@ class Node:
         del self  #*?
     
 
-
-
-
 class CodeNode(Node):
     '''
     A node with editable code, like a block in jupyter notebook.
@@ -202,7 +211,10 @@ class CodeNode(Node):
     It will just run the code in it.
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
-    def __init__(self,info,env):
+    class Info(Node.Info):
+        code : str
+
+    def __init__(self,info : Info ,env : Environment.Env):
         super().__init__(info,env)
         self.code=info['code']if 'code' in info else ''
 
@@ -210,7 +222,7 @@ class CodeNode(Node):
         return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output}
 
     def in_control_active(self):
-        # A code node can only have one input flow, so the node is activated as soon as its input flow is activated
+        # The node is activated as soon as its input flow is activated
         self.activate()
         
     def activate(self):
@@ -230,11 +242,11 @@ class CodeNode(Node):
         command = m['command']
         if command =='cod':
             self.set_code(m['value'])
-        
 
     def set_code(self,code):
         # code changes are logged in node history
         self.code=code
+
         self.Update_history("cod",{"id":self.id,"old":self.code,"new":code}) 
         self.env.Write_update_message(self.id,'cod','')
 
@@ -261,7 +273,11 @@ class FunctionNode(Node):
     It can also be invoked directly by client(e.g. double click on the node).
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
-    def __init__(self,info,env):
+    class Info(Node.Info):
+        in_data : List[str]
+        out_data : List[str]
+
+    def __init__(self, info : Info ,env : Environment.Env):
         '''
         info: {type=FunctionNode,id,name,pos,code,output,in_data,out_data}
         '''
@@ -291,78 +307,4 @@ class FunctionNode(Node):
         self.code=code
 
 
-class Edge(): # abstract class
-    def __init__(self,info,env):
-        '''
-        create an edge connecting two nodes
-        '''
-        self.env=env
-
-        self.tail : Node = env.nodes[info['tail']]
-        self.head : Node = env.nodes[info['head']]        
-
-        self.active=False
-
-        # for client --------------------------------
-        self.info = info  # for remove history
-        self.type=info['type']
-        self.id=info['id']
-        self.env.Update_history("new", info)
-
-    def get_info(self):
-        return self.info
-
-    
-
-    def activate(self):
-        self.active = True
-        #TODO: inform client to play animations
-
-    def deactivate(self):
-        self.active = False
-        #TODO: inform client to play animations
-
-def remove(self):
-        self.env.edges.pop(self.id)
-        self.env.Update_history("rmv", self.info)
-        del self  #*?
-
-class DataFlow(Edge):
-    def __init__(self,info,env):
-        '''
-        info: {type=DataFlow,id,tail,head,tail_var,head_var}
-        '''
-        super().__init__(info,env)
-        self.active=False
-        self.tail_var=info['tail_var']
-        self.head_var=info['head_var']
-        self.tail.out_data[self.tail_var].append(self)
-        self.head.in_data[self.head_var]=self
-        self.data=None
-        
-    def remove(self):
-        self.tail.out_data[self.tail_var].remove(self)
-        self.head.in_data[self.head_var]=None 
-        super().remove()      
-
-class ControlFlow(Edge):
-    def __init__(self,info,env):
-        '''
-        info: {type=ControlFlow,id,tail,head}
-        '''
-        super().__init__(info,env)
-
-        # Connect to the tail and head node
-        self.tail.out_control.append(self)
-        self.head.in_control.append(self)
-
-    def remove(self):
-        self.tail.out_control.remove(self)
-        self.head.in_control.remove(self)
-        super().remove()
-
-    def activate(self):
-        super().activate()
-        # inform the head node
-        self.head.in_control_active()
-
+      
