@@ -53,12 +53,12 @@ namespace APIMessage
             public string type;
             public string head;
             public string tail;
-            public string head_var;
-            public string tail_var;
+            public int head_var;
+            public int tail_var;
         }
         public Info info;
         public NewDataFlow(DataFlow flow) { info.id = flow.id; info.type = "ControlFlow"; info.head = flow.head.node.id; info.tail = flow.tail.node.id;
-            //TODO: head_var,tail_var
+            info.head_var = ((DataPort)flow.head).n_th_var; info.tail_var = ((DataPort)flow.tail).n_th_var;
                 }
         public string Json { get => JsonUtility.ToJson(this); }
     }

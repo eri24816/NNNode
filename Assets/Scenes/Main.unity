@@ -801,6 +801,7 @@ MonoBehaviour:
   - {fileID: 357937049128392484, guid: 0d68f42ac39b66249a27bd8e02c3ad2e, type: 3}
   - {fileID: 357937049128392484, guid: 68467c8094c2607468cda4fc6c6a7454, type: 3}
   - {fileID: 6961902779083875185, guid: 66bb7bc4260e73d49bac2a42d348617f, type: 3}
+  - {fileID: 6961902779083875185, guid: 477e4845705a09a4ea00839759d7bd9b, type: 3}
   demoNodeContainer: {fileID: 2014021046}
   state: 0
   nameNum: 0
@@ -1300,7 +1301,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1826560369}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.7613293
+  m_Size: 0.9999931
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1520,7 +1521,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 1.6754707}
+  m_AnchoredPosition: {x: 0, y: 0.0000064829464}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2014021047

@@ -24,6 +24,7 @@ namespace GraphUI
             {
                 var newPort = Instantiate(inDataPortPrefab, inputPanel.transform).GetComponent<DataPort>();
                 newPort.nameText.text = in_name;
+                newPort.n_th_var = i;
                 newPort.isInput = true;
                 newPort.maxEdges = info.allow_multiple_in_data[i] ? 64 : 1;
                 newPort.node = this;
@@ -35,6 +36,7 @@ namespace GraphUI
             {
                 var newPort = Instantiate(outDataPortPrefab, outputPanel.transform).GetComponent<DataPort>();
                 newPort.nameText.text = out_name;
+                newPort.n_th_var = i;
                 newPort.isInput = false;
                 newPort.maxEdges = 64;
                 newPort.node = this;

@@ -222,7 +222,8 @@ class CodeNode(Node):
     @classmethod
     def get_class_info(cls)->Info:
         return {
-            "type":cls.__name__,"id":-1,"name":cls.display_name,"pos":[0,0,0],"output":"","code":"",'frontend_type' : 'CodeNode',"in_names" : [],"out_names" : [],"allow_multiple_in_data" : []
+            "type":cls.__name__,"id":-1,"name":cls.display_name,"pos":[0,0,0],"output":"","code":"",'frontend_type' : 'CodeNode',
+            "in_names" : [],"out_names" : [],"allow_multiple_in_data" : []
         }
 
     def __init__(self,info : Info ,env : Environment.Env):
@@ -284,6 +285,32 @@ class CodeNode(Node):
                 self.set_code(self.latest_history.content['new'])
             return 1
         return 0
+
+class EvalNode(CodeNode):
+    @classmethod
+    def get_class_info(cls)->super().Info:
+        return {
+            "type":cls.__name__,"id":-1,"name":"","pos":[0,0,0],"output":"","code":"",'frontend_type' : 'EvalNode',
+            "in_names" : [],"out_names" : [''],"allow_multiple_in_data" : []
+        }
+
+    def get_info(self):
+        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,'frontend_type' : 'EvalNode',
+        "in_names" : [],"out_names" : [''],"allow_multiple_in_data" : []  # Items in this line doesn't work with CodeNode but for frontend convinience they're added here.
+        }
+
+    def _run(self):
+        fail = False
+        try:
+            result = eval(self.code,self.env.globals,self.env.locals)
+        except Exception:
+            self.added_output += traceback.format_exc()
+            fail = True
+
+        if not fail:
+            for flow in self.out_data[0]:
+                flow.recive_value(result)
+        self.deactivate()
 
 class FunctionNode(Node):
     '''
