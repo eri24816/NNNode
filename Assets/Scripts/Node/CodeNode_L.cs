@@ -66,10 +66,6 @@ namespace GraphUI
             expanded ^= true;
             foreach(GameObject g in toHideOnMinimize)
                 g.SetActive(expanded);
-            foreach (Port p in ins)
-                p.SetExpanded(expanded);
-            foreach (Port p in outs)
-                p.SetExpanded(expanded);
             ((RectTransform)transform).sizeDelta = new Vector2(expanded?expandedWidth:minimizedWidth,((RectTransform)transform).sizeDelta.y);
             if (expanded)
             {
@@ -87,11 +83,6 @@ namespace GraphUI
                 outputText.text="";
             }*/
                 
-        }
-
-        public override Port GetPort(bool isInput = true, string var_name = "")
-        {
-            return isInput ? ins[0] : outs[0];
         }
         protected override void OnDoubleClick()
         {

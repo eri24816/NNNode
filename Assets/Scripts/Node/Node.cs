@@ -36,20 +36,8 @@ namespace GraphUI
 {
     public class Node : Selectable, IEndDragHandler, IBeginDragHandler, IDragHandler
     {
-        [SerializeField]
-        protected List<Port> ins, outs;
-        public virtual void AddPort(Port port, bool isIn=true)
-        {
-            if (isIn)
-            {
-                ins.Add(port);
-            }
-            else
-            {
-                outs.Add(port);
-            }
-        }
-
+        public ControlPort inControl,outControl;
+        public List<DataPort> inData, outData;
 
         public string id, Name;
         [SerializeField] 
@@ -58,10 +46,34 @@ namespace GraphUI
         Color unselectedColor, hoverColor, selectedColor,outlineRunningColor,outlinePendingColor;
         [SerializeField]
         List<UnityEngine.UI.Graphic> lights;
-        public virtual Port GetPort(bool isInput = true, string var_name = "")
+
+        public string type; // class name in python
+        public bool isDemo;
+
+        APIMessage.NewNode.Info demoInfo;
+
+        public virtual void Init(APIMessage.NewNode.Info info)
         {
-            return isInput ? ins[0] : outs[0];
+            demoInfo = info;
+            type = info.type;
+            name = Name = info.name;
+            id = info.id;
+            transform.position = info.pos;
+
+            isDemo = id == "-1";
+            if(id != "-1")
+            {
+                transform.localScale = Vector3.one * 0.002f;
+                Manager.ins.Nodes.Add(id,this);
+            }
+            else
+            {
+                transform.localScale = Vector3.one * 0.5f;
+                Manager.ins.DemoNodes.Add(type, this);
+                transform.SetParent(Manager.ins.demoNodeContainer);
+            }
         }
+
         public virtual void Start()
         {
             targetPos = transform.position;
@@ -73,11 +85,13 @@ namespace GraphUI
             // Remove node from this client
             // Invoked by X button
             base.Remove();
-            for (int i = 0; i < ins.Count; i++)
-                ins[i].Remove();
+            inControl.Remove();
+            outControl.Remove();
+            for (int i = 0; i < inData.Count; i++)
+                inData[i].Remove();
 
-            for (int i = 0; i < outs.Count; i++)
-                outs[i].Remove();
+            for (int i = 0; i < outData.Count; i++)
+                outData[i].Remove();
 
             Manager.ins.RemoveNode(this);
             StartCoroutine(Removing()); // Play removing animation and destroy the game objecct
@@ -85,6 +99,7 @@ namespace GraphUI
 
         public virtual void Update()
         {
+            if (isDemo) return;
             if (dragging) 
                 if (Input.GetMouseButton(0) && !EventSystem.current.currentSelectedGameObject)
                 {
@@ -112,28 +127,39 @@ namespace GraphUI
         Vector3 targetPos;
 
         public bool dragging = false;
-        public void OnEndDrag(PointerEventData eventData)
-        {
-            if (eventData.button != 0) return;
-            foreach (Selectable s in Selectable.current)
-                if (s is Node node)
-                {
-                    node.dragging = false;
-                }
-        }
+
 
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != 0) return;
+            if (isDemo) // Create a new node
+            {
+                //ClearSelection();
+                Node newNode = Instantiate(gameObject).GetComponent<Node>();
+                newNode.id = Manager.ins.GetNewID();
+                newNode.isDemo = false;
+                //newNode.transform.position = CamControl.worldMouse;
+                newNode.transform.localScale = 0.002f * Vector3.one;
+                StartCoroutine(newNode.DragCreating());
+                return;
+            }
             if (!selected) OnPointerClick(eventData); // if not selected, select it first
-            foreach (Selectable s in Selectable.current)
+            foreach (Selectable s in current)
                 if (s is Node node)
                 {
                     node.dragging = true;
                     dragged = true; // Prevent Selectable from selecting
                 }
         }
-
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            if (eventData.button != 0) return;
+            foreach (Selectable s in current)
+                if (s is Node node)
+                {
+                    node.dragging = false;
+                }
+        }
         public void OnDrag(PointerEventData eventData) { }
 
         public void Move(Vector3 movement) // override this if some node classes shouldn't be moveable
@@ -147,13 +173,8 @@ namespace GraphUI
             recvMoveCD.Request();
             targetPos = p; // can't set transform.position outside update
         }
-        public void OnMouseDrag()
-        {
-            
-        }
 
-
-        public virtual IEnumerator Creating()//Drag and drop?
+        public virtual IEnumerator Creating()
         {
             yield return null;
             /*
@@ -164,13 +185,22 @@ namespace GraphUI
             }*/
             Manager.ins.AddNode(this);
         }
+        public virtual IEnumerator DragCreating()//Drag and drop
+        {
+            yield return null;
+            
+            while (Input.GetMouseButton(0))
+            {
+                transform.position = CamControl.worldMouse;
+                yield return null;
+            }
+            Manager.ins.AddNode(this);
+        }
         public virtual IEnumerator Removing()// SAO-like?
         {
             yield return null;
             Destroy(gameObject);
         }
-
-
 
         IEnumerator SmoothChangeColor(UnityEngine.UI.Outline outline,Color target,float speed=15)
         {

@@ -41,13 +41,13 @@ class Edge(): # abstract class
         self.active = False
         #TODO: inform client to play animations
 
-def remove(self):
+    def remove(self):
         self.env.edges.pop(self.id)
         self.env.Update_history("rmv", self.info)
         del self  #*?
 
 class ControlFlow(Edge):
-    class Info(Edge.info):
+    class Info(Edge.Info):
         pass
     def __init__(self, info : Info, env):
         '''
@@ -70,7 +70,7 @@ class ControlFlow(Edge):
         self.head.in_control_active()
 
 class DataFlow(Edge):
-    class Info(Edge.info):
+    class Info(Edge.Info):
         tail_var : int
         head_var : int
     def __init__(self, info : Info, env):

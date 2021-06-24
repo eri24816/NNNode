@@ -16,13 +16,13 @@ namespace GraphUI
         public int maxEdges;
         public bool isInput; // true: input false: output
         public System.Type flowType;
-        public string Name = "";
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
 
+
         protected virtual void Start()
         {
-            node = transform.parent.GetComponent<Node>();
+            //node = transform.parent.GetComponent<Node>();
         }
         public void SetExpanded(bool expanded) // currently only DataPort uses this
         {
@@ -38,6 +38,7 @@ namespace GraphUI
 
         public virtual bool AcceptEdge(Flow flow)
         {
+            if (node.isDemo) return false;
             return (flow.GetType() == flowType) && (Edges.Count < maxEdges) && (isInput ? flow.head == null : flow.tail == null);
         }
         public virtual void Remove() // Called when the node is going to be removed
@@ -59,6 +60,7 @@ namespace GraphUI
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (node.isDemo) return;
             if (Manager.ins.state == Manager.State.idle && Input.GetMouseButton(0))
             {
                 if (Edges.Count < maxEdges)

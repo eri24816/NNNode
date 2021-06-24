@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import Dict, List
 from history import *
 import datetime
 import sys
@@ -7,7 +7,7 @@ import traceback
 from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
-    from edges import *
+    import edges
 
 class node_StringIO():
     def __init__(self,node):
@@ -48,11 +48,15 @@ def exec_(script,globals=None, locals=None):
 
 
 class Node:
+    
+    display_name = 'Node'
+
     class Info(TypedDict):
         type : str
         id : int
 
         # for client ------------------------------
+        frontend_type : str # RectNode, RoundNode
         name : str          # Just for frontend. In backend we never use it but use "id" instead
         pos : List[float]   # While some nodes are not draggable
         output : str        # Output is necessary for all classes of node to at least store exceptions occured in nodes
@@ -65,10 +69,10 @@ class Node:
         self.env=env
 
         # The flows connected to the node
-        self.in_control : List[ControlFlow] = []
-        self.out_control : List[ControlFlow] = []
-        self.in_data : List[List[DataFlow]] = []
-        self.out_data : List[List[DataFlow]] = []
+        self.in_control : List[edges.ControlFlow] = []
+        self.out_control : List[edges.ControlFlow] = []
+        self.in_data : List[List[edges.DataFlow]] = []
+        self.out_data : List[List[edges.DataFlow]] = []
 
         # Is the node ready to run?
         self.active = False
@@ -76,7 +80,6 @@ class Node:
         # for client ------------------------------
         self.type=info['type']
         self.id=info['id']
-        self.name=info['name']
         self.pos=info['pos']
         self.output = info['output'] if 'output' in info else ''
 
@@ -84,7 +87,8 @@ class Node:
         self.in_ports : List[str] = []
         self.out_ports : List[str] = []
 
-        self.added_output = "" # added lines of output when running, which will be sent to client
+        # added lines of output when running, which will be sent to client
+        self.added_output = "" 
 
         self.env.Update_history("new", info)
         self.first_history = self.latest_history = History_item("stt")
@@ -126,11 +130,9 @@ class Node:
         self.env.Write_update_message(self.id, 'clr') # Clear output
 
         # Redirect printed outputs and error messages to client
-        try:
-            with stdoutIO(self):
-                self._run()
-        except Exception:
-            self.added_output += traceback.format_exc()
+        with stdoutIO(self):
+            self._run()
+        
         self.flush_output()
 
     def _run(self):
@@ -211,15 +213,27 @@ class CodeNode(Node):
     It will just run the code in it.
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
+
+    display_name = 'Code Node'
+
     class Info(Node.Info):
         code : str
 
+    @classmethod
+    def get_class_info(cls)->Info:
+        return {
+            "type":cls.__name__,"id":-1,"name":cls.display_name,"pos":[0,0,0],"output":"","code":"",'frontend_type' : 'CodeNode',"in_names" : [],"out_names" : [],"allow_multiple_in_data" : []
+        }
+
     def __init__(self,info : Info ,env : Environment.Env):
         super().__init__(info,env)
+        self.name=info['name']
         self.code=info['code']if 'code' in info else ''
 
     def get_info(self):
-        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output}
+        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,'frontend_type' : 'CodeNode',
+        "in_names" : [],"out_names" : [],"allow_multiple_in_data" : []  # Items in this line doesn't work with CodeNode but for frontend convinience they're added here.
+        }
 
     def in_control_active(self):
         # The node is activated as soon as its input flow is activated
@@ -227,13 +241,21 @@ class CodeNode(Node):
         
     def activate(self):
         super().activate()
+
+    def _run(self):
         if self.in_control.__len__()>0:
             self.in_control[0].deactivate()
 
-    def _run(self):
-        exec_(self.code,self.env.globals,self.env.locals)
-        if self.out_control.__len__()>0:
-            self.out_control[0].activate()
+        fail = False
+        try:
+            exec_(self.code,self.env.globals,self.env.locals)
+        except Exception:
+            self.added_output += traceback.format_exc()
+            fail = True
+
+        if not fail:
+            for flow in self.out_control:
+                flow.activate()
         self.deactivate()
 
     # For client -----------------------------
@@ -241,7 +263,7 @@ class CodeNode(Node):
         super().recive_command(m)
         command = m['command']
         if command =='cod':
-            self.set_code(m['value'])
+            self.set_code(m['info'])
 
     def set_code(self,code):
         # code changes are logged in node history
@@ -270,12 +292,27 @@ class FunctionNode(Node):
     It can also be invoked directly by client(e.g. double click on the node).
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
+
+    display_name = 'Function Node'
+
     class Info(Node.Info):
-        pass
+        in_names : List[str]
+        out_names : List[str]
+        allow_multiple_in_data : List[bool]
 
     in_names : List[str] = []
     out_names : List[str] = []
     allow_multiple_in_data : List[bool] = []
+
+    frontend_type = 'FunctionNode'
+
+    # For creating demo nodes
+    @classmethod
+    def get_class_info(cls)->Info:
+        return {
+            "type":cls.__name__,"id":-1,"name":cls.display_name,"pos":[0,0,0],"output":"",'frontend_type' : 'CodeNode','frontend_type' : cls.frontend_type,
+        "in_names" : cls.in_names,"out_names" : cls.out_names,"allow_multiple_in_data" : cls.allow_multiple_in_data
+        }
 
     def __init__(self, info : Info ,env : Environment.Env):
         '''
@@ -288,8 +325,11 @@ class FunctionNode(Node):
         self.in_data=[[]]*len(self.in_names)
         self.out_data=[[]]*len(self.out_names)
 
-    def get_info(self):
-        return {"type":"FunctionNode","id":self.id,"name":self.name,"pos":self.pos,"output":self.output}
+    def get_info(self) -> Dict[str]:
+        return {
+            "type":type(self).__name__,"id":self.id,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
+        "in_names" : self.in_names,"out_names" : self.out_names,"allow_multiple_in_data" : self.allow_multiple_in_data
+        }
 
     def set_code(self,code):
         # code changes are logged in node history
@@ -306,21 +346,24 @@ class FunctionNode(Node):
             for flow in port:
                 if not flow.active:
                     return
+        self.activate()
+
+    def activate(self):
+        super().activate()
+
         # TODO: Ask for value
+        # Or should it be put in _run() ?
         for port in self.in_data:
             for flow in port:
                 if not flow.has_value:
                     pass
 
-        self.activate()
 
-    def activate(self):
-        super().activate()
+    def _run(self):
         for port in self.in_data:
             for flow in port:
                 flow.deactivate()
 
-    def _run(self):
         # Gather data from input dataFlows
         funcion_input = []
         for port in self.in_data:

@@ -4,7 +4,7 @@ namespace APIMessage
 {
 
 
-    class NewCodeNode
+    public class NewNode
     {
         public string command = "new";
         [System.Serializable]
@@ -13,32 +13,21 @@ namespace APIMessage
             public string id;
             public string name;
             public string type;
+            public Vector3 pos;
+            public string[] in_names;
+            public string[] out_names;
+            public bool[] allow_multiple_in_data;
             public string code;
-            public float[] pos;
+            public string frontend_type;
         }
         public Info info;
         // TODO: directly take node as argument
-        public NewCodeNode(string id,string name,  Vector3 pos) { info.id = id; info.name = name; info.type = "CodeNode"; info.pos = new float[] { pos.x, pos.y, pos.z }; }
+        public NewNode(string id,string type,string name,  Vector3 pos) { info.id = id; info.name = name; info.type = type; info.pos = pos;}
         public string Json { get => JsonUtility.ToJson(this); }
     }
 
-    class NewFunctionNode
-    {
-        public string command = "new";
-        [System.Serializable]
-        public struct Info
-        {
-            public string id;
-            public string name;
-            public string type;
-            public float[] pos;
-        }
-        public Info info;
-        public NewFunctionNode(string id, string name, Vector3 pos) { info.id = id; info.name = name; info.type = "FunctionNode"; info.pos = new float[] { pos.x, pos.y, pos.z }; }
-        public string Json { get => JsonUtility.ToJson(this); }
-    }
 
-    class NewControlFlow
+    public class NewControlFlow
     {
         public string command = "new";
         [System.Serializable]
@@ -54,7 +43,7 @@ namespace APIMessage
         public string Json { get => JsonUtility.ToJson(this); }
     }
 
-    class NewDataFlow
+    public class NewDataFlow
     {
         public string command = "new";
         [System.Serializable]
@@ -75,7 +64,7 @@ namespace APIMessage
     }
 
 
-    class Mov
+    public class Mov
     {
         public Mov(string id,Vector3 pos)
         {
@@ -88,27 +77,27 @@ namespace APIMessage
 
     }
 
-    class Cod
+    public class Cod
     {
-        public Cod(string id, string value)
+        public Cod(string id, string info)
         {
-            this.id = id; this.value=value;
+            this.id = id; this.info=info;
         }
         public string command = "cod";
         public string id;
-        public string value;
+        public string info;
         public string Json { get => JsonUtility.ToJson(this); }
 
     }
 
-    class UpdateMessage
+    public class UpdateMessage
     {
         public string command;
         public string id;
-        public string value;
+        public string info;
     }
 
-    class Rmv
+    public class Rmv
     {
         public Rmv(string id)
         {
@@ -119,7 +108,7 @@ namespace APIMessage
         public string Json { get => JsonUtility.ToJson(this); }
          
     }
-    class Gid
+    public class Gid
     {
         
         public string command = "gid";

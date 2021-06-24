@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace GraphUI
 {
-    public class CodeNode : Node
+    public class CodeNode : FunctionNode
     {
         public bool expanded = false;
 
@@ -23,12 +23,20 @@ namespace GraphUI
         List<GameObject> toHideOnMinimize;
         [SerializeField]
         float expandedWidth, minimizedWidth;
-
-        readonly CoolDown recvCodeCD = new CoolDown(hz: 100);
-        string output = "";
         public float maxOutputHeight = 150;
+
+        readonly CoolDown recvCodeCD = new CoolDown(hz: 10);
+        string output = "";
+        
         string recievedCode;
         public string Code { get { return CodeEditorScript.text; } set { CodeEditorScript.SetTextWithoutNotify(value); } }
+
+        public override void Init(APIMessage.NewNode.Info info)
+        {
+            base.Init(info);
+            nameInput.text = name;
+            Code = info.code;
+        }
 
         public override void Update()
         {
@@ -64,39 +72,13 @@ namespace GraphUI
             expanded ^= true;
             foreach (GameObject g in toHideOnMinimize)
                 g.SetActive(expanded);
-            foreach (Port p in ins)
-                p.SetExpanded(expanded);
-            foreach (Port p in outs)
-                p.SetExpanded(expanded);
             ((RectTransform)transform).sizeDelta = new Vector2(expanded ? expandedWidth : minimizedWidth, ((RectTransform)transform).sizeDelta.y);
             if (expanded)
             {
                 UpdateOutputText();
             }
         }
-        public void AddInputPort()
-        {
 
-        }
-        public void AddOutputPort()
-        {
-
-        }
-        public void RemovePort(DataPort port)
-        {
-
-        }
-
-
-        public override Port GetPort(bool isInput = true, string var_name = "")
-        {
-            return isInput ? ins[0] : outs[0];
-        }
-        protected override void OnDoubleClick()
-        {
-            base.OnDoubleClick();
-            Manager.ins.Activate(this);
-        }
         public void SetCode()// called by the code editor
         {
             recvCodeCD.Delay(1);

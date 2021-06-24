@@ -3,9 +3,7 @@ using System.Collections;
 using UnityEngine;
 using WebSocketSharp;
 using GraphUI;
-
-
-
+using System.Collections.Concurrent;
 
 public class Manager : MonoBehaviour
 {
@@ -15,8 +13,11 @@ public class Manager : MonoBehaviour
     public Transform canvasTransform;
     public Dictionary<string,Node> Nodes;
     public Dictionary<string, Flow> Flows;
+    public Dictionary<string, Node> DemoNodes;
     public GameObject[] prefabs;
     public Dictionary<string, GameObject> prefabDict;
+
+    public Transform demoNodeContainer;
     
     public enum State
     {
@@ -28,16 +29,17 @@ public class Manager : MonoBehaviour
     string WSPath = "ws://localhost:1000/";
     string env_name = "my_env";
     WebSocket lobby, env;
-    Queue<string> messagesFromServer;
-    Queue<string> avaliableIds;
+    ConcurrentQueue<string> messagesFromServer;
+    ConcurrentQueue<string> avaliableIds;
     void Start()
     {
         Application.targetFrameRate = 60;
 
-        messagesFromServer = new Queue<string>();
-        avaliableIds = new Queue<string>();
+        messagesFromServer = new ConcurrentQueue<string>();
+        avaliableIds = new ConcurrentQueue<string>();
         Nodes = new Dictionary<string, Node>();
         Flows = new Dictionary<string, Flow>();
+        DemoNodes = new Dictionary<string, Node>();
         prefabDict = new Dictionary<string, GameObject>();
         foreach (GameObject prefab in prefabs)
             prefabDict.Add(prefab.name, prefab);
@@ -60,9 +62,15 @@ public class Manager : MonoBehaviour
         
     }
 
+    public string GetNewID()
+    {
+        Debug.Assert(avaliableIds.TryDequeue(out string id));
+        return id;
+    }
+
     public void AddFlow(Flow flow)
     {
-        flow.id = avaliableIds.Dequeue();
+        flow.id = GetNewID();
         Flows.Add(flow.id,flow);
         if (flow is ControlFlow controlFlow)
         {
@@ -84,17 +92,19 @@ public class Manager : MonoBehaviour
     public void AddNode(Node node) // Called by Node when the Creating corutine ends
     {
         // Tell server adding a node
-        node.id = avaliableIds.Dequeue();
+        node.id = GetNewID();
         Nodes.Add(node.id, node);
         if (!connectToServer) return;
+        env.Send(new APIMessage.NewNode(node.id, node.type, node.name, node.transform.position).Json);
+        /*
         if (node is CodeNode)
         {
-            env.Send(new APIMessage.NewCodeNode(node.id,node.name, node.transform.position).Json);
+            env.Send(new APIMessage.NewNode(node.id,node.type,node.name, node.transform.position).Json);
         }
-        /*
+        
         if (node is FunctionNode)
         {
-            env.Send(new APIMessage.NewFunctionNode(node.id, node.name, node.transform.position).Json);
+            env.Send(new APIMessage.NewFunctionNode(node.id, node.name, node.transform.position,"AddFunctionNode").Json);
         }*/
     }
 
@@ -145,7 +155,7 @@ public class Manager : MonoBehaviour
 
     public void Activate(Node node)
     {
-        if (connectToServer)
+        if (connectToServer&&node.id!="-1")
             env.Send("{\"command\":\"act\",\"id\":\"" + node.id + "\"}");
     }
     
@@ -185,66 +195,47 @@ public class Manager : MonoBehaviour
             else
                 avaliableIds.Enqueue((nameNum++).ToString());
         }
-        while (messagesFromServer.Count > 0)
+
+        while (messagesFromServer.TryDequeue(out string received))
         {
-            string recived = messagesFromServer.Dequeue();
-            print(WSPath + " says: " + recived);
-
-
-            string command = recived.Length >= 16 ? recived.Substring(13, 3) : "";
-
-
+            print(WSPath + " says: " + received);
+            string command = received.Length >= 16 ? received.Substring(13, 3) : "";
             if (command == "new")
             {
-                if (!Nodes.ContainsKey(FindString(recived, "id")) && !Flows.ContainsKey(FindString(recived, "id")))
+                var id = FindString(received, "id");
+                if (!Nodes.ContainsKey(id) && !Flows.ContainsKey(id))
                 {
 
-                    string type = FindString(recived, "type");
-                    if (type == "CodeNode")
+                    string type = FindString(received, "type");
+                    if (type == "ControlFlow")
                     {
-                        var message = JsonUtility.FromJson<APIMessage.NewCodeNode>(recived);
+                        var message = JsonUtility.FromJson<APIMessage.NewControlFlow>(received);
                         GameObject prefab = prefabDict[message.info.type];
-                        var script = Instantiate(prefab).GetComponent<CodeNode>();
-                        script.name = script.Name = message.info.name;
-                        script.id = message.info.id;
-                        script.Code = message.info.code;
-                        Nodes.Add(message.info.id, script);
-                        script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
+                        var flow = Instantiate(prefab).GetComponent<ControlFlow>();
+                        flow.id = message.info.id;
+                        flow.head = Nodes[message.info.head].inControl;
+                        flow.head.Edges.Add(flow);
+                        flow.tail = Nodes[message.info.tail].outControl;
+                        flow.tail.Edges.Add(flow);
+                        Flows.Add(message.info.id, flow);
                     }
-
-                    else if (type == "FunctionNode")
+                    else
                     {
-                        var message = JsonUtility.FromJson<APIMessage.NewFunctionNode>(recived);
-                        GameObject prefab = prefabDict[message.info.type];
-                        var script = Instantiate(prefab).GetComponent<CodeNode>();
-                        script.name = script.Name = message.info.name;
-                        script.id = message.info.id;
-                        Nodes.Add(message.info.id, script);
-                        script.transform.position = new Vector3(message.info.pos[0], message.info.pos[1], message.info.pos[2]);
-                    }
-                    else if (type == "ControlFlow")
-                    {
-                        var message = JsonUtility.FromJson<APIMessage.NewControlFlow>(recived);
-                        GameObject prefab = prefabDict[message.info.type];
-                        var script = Instantiate(prefab).GetComponent<ControlFlow>();
-                        script.id = message.info.id;
-                        script.head = Nodes[message.info.head].GetPort(true);
-                        script.head.Edges.Add(script);
-                        script.tail = Nodes[message.info.tail].GetPort(false);
-                        script.tail.Edges.Add(script);
-                        Flows.Add(message.info.id, script);
-
-                    }
+                        var message = JsonUtility.FromJson<APIMessage.NewNode>(received);
+                        GameObject prefab = prefabDict[message.info.frontend_type];
+                        var node = Instantiate(prefab).GetComponent<Node>();
+                        node.Init(message.info);
+                    } 
                 }
             }
             else if (command == "mov")
             {
-                var message = JsonUtility.FromJson<APIMessage.Mov>(recived);
+                var message = JsonUtility.FromJson<APIMessage.Mov>(received);
                 Nodes[message.id].RawMove(new Vector3(message.pos[0], message.pos[1], message.pos[2]));
             }
             else if (command == "rmv")
             {
-                var message = JsonUtility.FromJson<APIMessage.Rmv>(recived);
+                var message = JsonUtility.FromJson<APIMessage.Rmv>(received);
                 if (Nodes.ContainsKey(message.id))
                 {
                     StartCoroutine(Nodes[message.id].Removing());
@@ -260,52 +251,52 @@ public class Manager : MonoBehaviour
 
             else if (command == "gid")// get a unused id to assign to new nodes or flows
             {
-                var message = JsonUtility.FromJson<APIMessage.Gid>(recived);
+                var message = JsonUtility.FromJson<APIMessage.Gid>(received);
                 avaliableIds.Enqueue(message.id);
             }
 
             else if (command == "cod")
             {
-                var message = JsonUtility.FromJson<APIMessage.Cod>(recived);
+                var message = JsonUtility.FromJson<APIMessage.Cod>(received);
                 Node node = Nodes[message.id];
                 if (node is CodeNode codeNode)
-                    codeNode.Code = message.value;
+                    codeNode.Code = message.info;
             }
             else if (command == "act")
             {
-                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
+                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(received);
                 if (Nodes.ContainsKey(message.id))
                 {
-                    if (message.value == "0")
+                    if (message.info == "0")
                         Nodes[message.id].DisplayInactivate();
-                    if (message.value == "1")
+                    if (message.info == "1")
                         Nodes[message.id].DisplayPending();
-                    if (message.value == "2")
+                    if (message.info == "2")
                         Nodes[message.id].DisplayActivate();
                 }/* TODO
                 else
                 {
-                    if (message.value == "0")
+                    if (message.info == "0")
                         Flows[message.id].DisplayInactivate();
-                    if (message.value == "1")
+                    if (message.info == "1")
                         Flows[message.id].DisplayPending();
-                    if (message.value == "2")
+                    if (message.info == "2")
                         Flows[message.id].DisplayActivate();
                 }*/
             }
             else if (command == "clr")
             {
-                var message = JsonUtility.FromJson<APIMessage.Gid>(recived);
+                var message = JsonUtility.FromJson<APIMessage.Gid>(received);
                 Node node = Nodes[message.id];
                 if (node is CodeNode codeNode)
                     codeNode.ClearOutput();
             }
             else if (command == "out")
             {
-                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(recived);
+                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(received);
                 Node node = Nodes[message.id];
                 if (node is CodeNode codeNode)
-                    codeNode.AddOutput(message.value);
+                    codeNode.AddOutput(message.info);
             }
         }
     }

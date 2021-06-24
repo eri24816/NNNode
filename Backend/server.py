@@ -71,10 +71,14 @@ async def env_ws(websocket, path):
 
     #TODO: client load entire env
 
+    env.update_demo_nodes()
+    print(env.update_message_buffers[0])
+
     async for message in websocket:
         m=json.loads(message) # message is in Json
         command=m['command']
-        if command!='upd':
+
+        if command != 'upd':
             print(m)
         if command == "new":
             '''
@@ -86,7 +90,7 @@ async def env_ws(websocket, path):
             env.Create(m['info'])
             await websocket.send("msg %s %s created" % (m['info']['type'],m['info']['id']))
 
-        if command == "rmv":
+        elif command == "rmv":
             '''
             remove a new node or an edge
                 {command:"rmv",
@@ -135,7 +139,7 @@ async def env_ws(websocket, path):
                 command_, id = key[:3], key[4:]
                 if command_ == "cod":
                     value=env.nodes[id].code
-                await websocket.send(json.dumps({'command': command_, 'id': id, 'value': value}))
+                await websocket.send(json.dumps({'command': command_, 'id': id, 'info': value}))
                 #print({'command': command_, 'id': id, 'value': value})
             update_message_buffer.clear()
 
@@ -183,18 +187,17 @@ async def env_ws(websocket, path):
                 else:
                     await websocket.send("err no such node %s" % id)
 
-
         elif command == "gid":
             '''
             give client an unused id
             '''
             await websocket.send(json.dumps({'command':"gid",'id':env.id_iter.next()}))
-
+        #TODO
         elif command == "sav":
             '''
             save the graph to disk
             '''
-        #TODO
+       
         elif command == "lod":
             '''
             load the graph from disk
@@ -207,9 +210,6 @@ async def env_ws(websocket, path):
             id=m['id']
             if id in env.nodes:
                 env.nodes[id].recive_command(m)
-                await websocket.send("msg changed node %s's code" % id)
-            else:
-                await websocket.send("err no such node %s" % id)
 
 
         

@@ -5,7 +5,7 @@ namespace GraphUI
 {
     public class DataPort : Port
     {
-        public string varName;
+        public TMPro.TMP_Text nameText;
         override protected void Start()
         {
             base.Start();
@@ -16,12 +16,6 @@ namespace GraphUI
         {
             base.Update();
         }
-        public void RemoveButtonPressed()
-        {
-            ((CodeNode)node).RemovePort(this);
-        }
-
-
 
     }
 }

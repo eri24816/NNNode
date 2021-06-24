@@ -1,9 +1,10 @@
 from __future__ import annotations
-from abc import abstractmethod
-import traceback
 from typing import Dict
 from history import *
-from nodes import *
+import nodes
+import edges
+import built_in_FunctionNode
+import queue
 
 
 class num_iter:
@@ -13,16 +14,20 @@ class num_iter:
         self.i+=1
         return self.i
 
-import queue
+
 
 # the environment to run the code in
 class Env():
-    
+    node_classes = \
+    [
+        nodes.CodeNode,
+        built_in_FunctionNode.SumFunctionNode
+    ]
     def __init__(self,name):
         self.name=name
         self.thread=None
         self.id_iter = num_iter(-1)
-        self.nodes: Dict[str,Node] = {} # {id : Node}
+        self.nodes: Dict[str,nodes.Node] = {} # {id : Node}
         self.edges={} # {id : Edge}
         self.globals=globals()
         self.locals={}
@@ -39,7 +44,7 @@ class Env():
 
         # for run() thread
         self.nodes_to_run = queue.Queue()
-        self.running_node : CodeNode = None
+        self.running_node : nodes.Node = None
         
     class History_sequence():
         next_history_sequence_id = 0
@@ -51,12 +56,18 @@ class Env():
         def __exit__(self, type, value, traceback):
             self.env.current_history_sequence_id = -1   
     
-    def Create(self,info): # create any type of node or edge
+    def Create(self,info:nodes.Node.Info): # create any type of node or edge
         # info: {id, type, ...}
-        new_instance=globals()[info['type']](info,self)
+        type = info['type']
+        class_pool = [nodes,edges,built_in_FunctionNode]
+        c = None
+        for p in class_pool:
+            c = getattr(p,type,None)
+            if c != None:
+                break
+        new_instance = c(info,self)
+
         id=info['id']
-        
-        
         if info['type']=="DataFlow" or info['type']=="ControlFlow":
             assert id not in self.edges
             self.edges.update({id:new_instance})
@@ -98,19 +109,22 @@ class Env():
         self.latest_history=History_item(type,content,self.latest_history,self.current_history_sequence_id)
 
     
-    def Write_update_message(self, id, name, v = ''):
+    def Write_update_message(self, id, command, v = ''):
         '''
         out - output
         cod - code
         clr - clear_output
+        new - create a demo node
         '''
-        k=name+"/"+id
+        k=command+"/"+str(id)
+        if command == 'new':
+            k+='/'+v['type']
         for buffer in self.update_message_buffers:
-            if name == 'out':
+            if command == 'out':
                 if k not in buffer:
                     buffer[k] = ''
                 buffer[k]+=v
-            elif name == 'clr':
+            elif command == 'clr':
                 buffer["out/"+id] = ''
                 buffer[k]=v
             else:
@@ -175,6 +189,12 @@ class Env():
 
         return 1
 
+    def update_demo_nodes(self):
+        # In a regular create node process, we call self.Create() to generate a history item (command = "new"), 
+        # which will later be sent to client.
+        # However, demo nodes creation should not be undone, so here we put the message "new" in update_message buffer.
+        for node_class in self.node_classes:
+            self.Write_update_message(-1,'new',node_class.get_class_info())
 
     # run in another thread from the main thread (server.py)
     def run(self):
