@@ -1,4 +1,5 @@
 from __future__ import annotations
+from edges import Edge
 from typing import Dict, List
 from history import *
 import datetime
@@ -61,6 +62,34 @@ class Node:
         pos : List[float]   # While some nodes are not draggable
         output : str        # Output is necessary for all classes of node to at least store exceptions occured in nodes
 
+    @classmethod
+    def get_class_info(cls)->Info:
+        tempNode = cls({'id' : -1})
+        return tempNode.get_info()
+
+    def get_info(self) -> Dict[str]:
+        return {
+            "type":type(self).__name__,"id":self.id,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
+        'ports' : [port.get_dict for port in self.port_list]
+        }
+    
+    class Port():
+        '''
+        Different node classes might have Port classes that own different properties for frontend to read. 
+        In such case, inherit this
+        '''
+        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', discription : str = ''):
+            self.type = type
+            self.isInput = isInput
+            self.max_connections = max_connections
+            self.name = name
+            self.discription = discription 
+            self.connections : List[edges.ControlFlow] = [] 
+
+        def get_dict(self):
+            # for json.dump
+            return {'type':self.type, 'isInput' : self.isInput, 'max_connections' : self.max_connections, 'name': self.name, 'discription' : self.discription}
+
     def __init__(self, info : Info, env : Environment.Env):
         '''
         Base class of node
@@ -69,30 +98,36 @@ class Node:
         self.env=env
 
         # The flows connected to the node
+        '''
         self.in_control : List[edges.ControlFlow] = []
         self.out_control : List[edges.ControlFlow] = []
         self.in_data : List[List[edges.DataFlow]] = []
         self.out_data : List[List[edges.DataFlow]] = []
+        '''
+
+        # For the API, each ports of the node are identified by position in this list
+        # Create ports in __init__ then add all port into this list
+        self.port_list : List[self.Port] = []
 
         # Is the node ready to run?
         self.active = False
 
         # for client ------------------------------
-        self.type=info['type']
+        self.type=type(self).__name__
         self.id=info['id']
-        self.pos=info['pos']
+        self.pos=info['pos'] if 'pos' in info else [0,0,0]
         self.output = info['output'] if 'output' in info else ''
 
-        # Data port names
-        self.in_ports : List[str] = []
-        self.out_ports : List[str] = []
+        # Class name in C#
+        self.frontend_type : str
 
         # added lines of output when running, which will be sent to client
         self.added_output = "" 
 
-        self.env.Update_history("new", info)
-        self.first_history = self.latest_history = History_item("stt")
-        self.lock_history=False
+        if self.id != -1:
+            self.env.Update_history("new", info)
+            self.first_history = self.latest_history = History_item("stt")
+            self.lock_history=False
 
     def in_control_active(self):
         # check if the condition is satisfied that the node can be activated
@@ -219,22 +254,16 @@ class CodeNode(Node):
     class Info(Node.Info):
         code : str
 
-    @classmethod
-    def get_class_info(cls)->Info:
-        return {
-            "type":cls.__name__,"id":-1,"name":cls.display_name,"pos":[0,0,0],"output":"","code":"",'frontend_type' : 'CodeNode',
-            "in_names" : [],"out_names" : [],"allow_multiple_in_data" : []
-        }
-
     def __init__(self,info : Info ,env : Environment.Env):
         super().__init__(info,env)
         self.name=info['name']
-        self.code=info['code']if 'code' in info else ''
+        self.frontend_type = 'CodeNode'
 
-    def get_info(self):
-        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,'frontend_type' : 'CodeNode',
-        "in_names" : [],"out_names" : [],"allow_multiple_in_data" : []  # Items in this line doesn't work with CodeNode but for frontend convinience they're added here.
-        }
+        self.in_control = self.Port('ControlPort', True)
+        self.out_control = self.Port('ControlPort', True)
+        self.port_list = [self.in_control, self.out_control]
+
+        self.code=info['code']if 'code' in info else ''
 
     def in_control_active(self):
         # The node is activated as soon as its input flow is activated
@@ -245,7 +274,7 @@ class CodeNode(Node):
 
     def _run(self):
         if self.in_control.__len__()>0:
-            self.in_control[0].deactivate()
+            self.in_control.connections[0].deactivate()
 
         fail = False
         try:
@@ -255,7 +284,7 @@ class CodeNode(Node):
             fail = True
 
         if not fail:
-            for flow in self.out_control:
+            for flow in self.out_control.connections:
                 flow.activate()
         self.deactivate()
 
@@ -287,17 +316,6 @@ class CodeNode(Node):
         return 0
 
 class EvalNode(CodeNode):
-    @classmethod
-    def get_class_info(cls)->super().Info:
-        return {
-            "type":cls.__name__,"id":-1,"name":"","pos":[0,0,0],"output":"","code":"",'frontend_type' : 'EvalNode',
-            "in_names" : [],"out_names" : [''],"allow_multiple_in_data" : []
-        }
-
-    def get_info(self):
-        return {"type":"CodeNode","id":self.id,"name":self.name,"pos":self.pos,"code":self.code,"output":self.output,'frontend_type' : 'EvalNode',
-        "in_names" : [],"out_names" : [''],"allow_multiple_in_data" : []  # Items in this line doesn't work with CodeNode but for frontend convinience they're added here.
-        }
 
     def _run(self):
         fail = False
@@ -321,25 +339,19 @@ class FunctionNode(Node):
     '''
 
     display_name = 'Function Node'
+    frontend_type = 'FunctionNode'
 
     class Info(Node.Info):
         in_names : List[str]
         out_names : List[str]
         allow_multiple_in_data : List[bool]
 
+    # Most of the child classes of FunctionNode just differ in following three class properties and their function() method.
     in_names : List[str] = []
     out_names : List[str] = []
     allow_multiple_in_data : List[bool] = []
 
-    frontend_type = 'FunctionNode'
-
-    # For creating demo nodes
-    @classmethod
-    def get_class_info(cls)->Info:
-        return {
-            "type":cls.__name__,"id":-1,"name":cls.display_name,"pos":[0,0,0],"output":"",'frontend_type' : 'CodeNode','frontend_type' : cls.frontend_type,
-        "in_names" : cls.in_names,"out_names" : cls.out_names,"allow_multiple_in_data" : cls.allow_multiple_in_data
-        }
+    
 
     def __init__(self, info : Info ,env : Environment.Env):
         '''
@@ -347,21 +359,9 @@ class FunctionNode(Node):
         '''
         super().__init__(info,env)
 
-        # Data flows conntected. A Function node can have several in/out variables, 
-        # and each variable port can have one or more data flows connected.
-        self.in_data=[[]]*len(self.in_names)
-        self.out_data=[[]]*len(self.out_names)
-
-    def get_info(self) -> Dict[str]:
-        return {
-            "type":type(self).__name__,"id":self.id,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
-        "in_names" : self.in_names,"out_names" : self.out_names,"allow_multiple_in_data" : self.allow_multiple_in_data
-        }
-
-    def set_code(self,code):
-        # code changes are logged in node history
-        self.Update_history("cod",{"id":self.id,"old":self.code,"new":code})
-        self.code=code
+        self.in_data = [self.Port('DataPort',True,name = port_name)for port_name in self.in_names]
+        self.out_data = [self.Port('DataPort',True,name = port_name)for port_name in self.in_names]
+        self.port_list = self.in_data + self.out_data
 
     def in_control_active(self):
         # TODO: Ask for value
@@ -370,7 +370,7 @@ class FunctionNode(Node):
     def in_data_active(self):
         # A FunctionNode activates when all its input dataFlow is active.
         for port in self.in_data:
-            for flow in port:
+            for flow in port.connections:
                 if not flow.active:
                     return
         self.activate()
@@ -381,22 +381,22 @@ class FunctionNode(Node):
         # TODO: Ask for value
         # Or should it be put in _run() ?
         for port in self.in_data:
-            for flow in port:
+            for flow in port.connections:
                 if not flow.has_value:
                     pass
 
 
     def _run(self):
         for port in self.in_data:
-            for flow in port:
+            for flow in port.connections:
                 flow.deactivate()
 
         # Gather data from input dataFlows
         funcion_input = []
         for port in self.in_data:
-            if len(port) == 0:
+            if len(port.connections) == 0:
                 funcion_input.append(None) #TODO: Default value
-            elif len(port) == 1:
+            elif len(port.connections) == 1:
                 funcion_input.append(port[0].data)
             else:
                 # More than 1 input flow on the port
@@ -408,7 +408,7 @@ class FunctionNode(Node):
         # Send data to output dataFlows
         i = 0
         for result_item in result:
-            for flow in self.out_data[i]:
+            for flow in self.out_data[i].connections:
                 flow.recive_value(result_item)
             i+=1
         
