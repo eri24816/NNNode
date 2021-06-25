@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace GraphUI
 {
-    public class CodeNode : FunctionNode
+    public class CodeNode : Node
     {
         public bool expanded = false;
 
@@ -11,7 +11,7 @@ namespace GraphUI
         TMPro.TMP_InputField nameInput;
 
         [SerializeField]
-        GameObject CodeEditor;
+        GameObject CodeEditor; 
 
         [SerializeField]
         TMPro.CodeEditor CodeEditorScript;
@@ -36,6 +36,7 @@ namespace GraphUI
             base.Init(info);
             nameInput.text = name;
             Code = info.code;
+            
         }
 
         public override void Update()

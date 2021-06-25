@@ -6,6 +6,8 @@ namespace GraphUI
 {
     public class RoundNode : Node
     {
+
+
         [SerializeField]
         TMPro.TMP_Text nameText;
         [SerializeField]
@@ -18,34 +20,45 @@ namespace GraphUI
                 nameText.text = Name;
 
             float radius = ((RectTransform)transform).sizeDelta.x / 2;
-            float step = Mathf.PI / (1 + info.in_names.Length);
             int i = 0;
-            foreach (string in_name in info.in_names)
+            foreach (string portInfoJson in info.portInfos)
             {
-                var newPort = Instantiate(inDataPortPrefab, transform).GetComponent<DataPort>();
-                var angle = Mathf.PI / 2 + (1+i) * step;
-                
-                newPort.transform.localPosition = radius * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
-                newPort.nameText.text = "";
-                newPort.isInput = true;
-                newPort.maxEdges = info.allow_multiple_in_data[i] ? 64 : 1;
-                newPort.node = this;
-                i++;
+                PortInfo portInfo = JsonUtility.FromJson<PortInfo>(portInfoJson);
+                if (portInfo.type == "ControlPort")
+                {
+                    ControlPort newPort;
+                    if (portInfo.isInput)
+                        newPort = Instantiate(inDataPortPrefab, transform).GetComponent<ControlPort>();
+                    else
+                        newPort = Instantiate(outDataPortPrefab, transform).GetComponent<ControlPort>();
+                    ports.Add(newPort);
+                    newPort.transform.localPosition = radius * portInfo.pos;
+                    newPort.port_id = i; 
+                    newPort.isInput = portInfo.isInput;
+                    newPort.maxEdges = portInfo.max_connections;
+                    newPort.node = this;
+                    i++;
+                }
+                else if (portInfo.type == "DataPort")
+                {
+
+                    DataPort newPort;
+                    if (portInfo.isInput)
+                        newPort = Instantiate(inDataPortPrefab, transform).GetComponent<DataPort>();
+                    else
+                        newPort = Instantiate(outDataPortPrefab, transform).GetComponent<DataPort>();
+                    ports.Add(newPort);
+                    newPort.transform.localPosition = radius * portInfo.pos;
+                    print(portInfo.pos);
+                    newPort.nameText.text = "";
+                    newPort.port_id = i;
+                    newPort.isInput = portInfo.isInput;
+                    newPort.maxEdges = portInfo.max_connections;
+                    newPort.node = this;
+                    i++;
+                }
             }
 
-            step = Mathf.PI / (1 + info.out_names.Length);
-            i = 0;
-            foreach (string out_name in info.out_names)
-            {
-                var newPort = Instantiate(outDataPortPrefab,transform).GetComponent<DataPort>();
-                var angle = Mathf.PI / 2 - (1+i) * step;
-                newPort.transform.localPosition = radius * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
-                newPort.nameText.text = "";
-                newPort.isInput = false;
-                newPort.maxEdges = 64;
-                newPort.node = this;
-                i++;
-            }
         }
         protected override void OnDoubleClick()
         {

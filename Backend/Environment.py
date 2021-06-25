@@ -201,5 +201,7 @@ class Env():
         self.flag_exit = 0
         while not self.flag_exit:
             self.running_node = self.nodes_to_run.get()
+            if self.running_node == 'EXIT_SIGNAL':
+                return
             self.running_node.run()
             

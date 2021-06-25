@@ -255,9 +255,13 @@ async def lobby(websocket, path):
             new_thread=threading.Thread(target=new_env.run,name=env_name)
             new_env.thread=new_thread
             envs.update({env_name:new_env})
+            new_thread.setDaemon(True)
             new_thread.start()
 
 start_server = websockets.serve(router, "localhost", 1000)
 asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+try:
+    asyncio.get_event_loop().run_forever()
+except KeyboardInterrupt:
+    print('KeyboardInterrupt')
 

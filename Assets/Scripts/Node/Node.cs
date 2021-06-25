@@ -36,9 +36,7 @@ namespace GraphUI
 {
     public class Node : Selectable, IEndDragHandler, IBeginDragHandler, IDragHandler
     {
-        public ControlPort inControl,outControl;
-        public List<DataPort> inData, outData;
-
+        public List<Port> ports;
         public string id, Name;
         [SerializeField] 
         UnityEngine.UI.Outline outline_running;
@@ -52,6 +50,15 @@ namespace GraphUI
 
         APIMessage.NewNode.Info demoInfo;
 
+        protected struct PortInfo
+        {
+            public string type;
+            public bool isInput;
+            public int max_connections;
+            public string name;
+            public string discription;
+            public Vector3 pos;
+        }
         public virtual void Init(APIMessage.NewNode.Info info)
         {
             demoInfo = info;
@@ -85,14 +92,8 @@ namespace GraphUI
             // Remove node from this client
             // Invoked by X button
             base.Remove();
-            inControl.Remove();
-            outControl.Remove();
-            for (int i = 0; i < inData.Count; i++)
-                inData[i].Remove();
-
-            for (int i = 0; i < outData.Count; i++)
-                outData[i].Remove();
-
+            foreach (Port port in ports)
+                port.Remove();
             Manager.ins.RemoveNode(this);
             StartCoroutine(Removing()); // Play removing animation and destroy the game objecct
         }
@@ -121,6 +122,11 @@ namespace GraphUI
 
         public virtual void Reshape(float w, float l, float r) { }//Trapezoid shaped node
 
+        protected override void OnDoubleClick()
+        {
+            base.OnDoubleClick();
+            Manager.ins.Activate(this);
+        }
 
         readonly CoolDown recvMoveCD = new CoolDown(hz: 10);
         readonly CoolDown sendMoveCD = new CoolDown(hz: 10);
@@ -187,8 +193,6 @@ namespace GraphUI
         }
         public virtual IEnumerator DragCreating()//Drag and drop
         {
-            yield return null;
-            
             while (Input.GetMouseButton(0))
             {
                 transform.position = CamControl.worldMouse;

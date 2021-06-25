@@ -190,10 +190,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selected: 0
-  inControl: {fileID: 6376881634179836990}
-  outControl: {fileID: 6376881633271739144}
-  inData: []
-  outData: []
+  ports:
+  - {fileID: 6376881634179836990}
+  - {fileID: 6376881633271739144}
   id: 
   Name: 
   outline_running: {fileID: 2413096223860891035}
@@ -1916,6 +1915,10 @@ PrefabInstance:
       propertyPath: node
       value: 
       objectReference: {fileID: 413767771525424145}
+    - target: {fileID: 6565793792094981273, guid: 6381b8163b315c24d89a223756c2bf0c, type: 3}
+      propertyPath: port_id
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6565793792094981273, guid: 6381b8163b315c24d89a223756c2bf0c, type: 3}
       propertyPath: maxEdges
       value: 256

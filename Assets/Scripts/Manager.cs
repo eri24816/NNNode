@@ -72,17 +72,9 @@ public class Manager : MonoBehaviour
     {
         flow.id = GetNewID();
         Flows.Add(flow.id,flow);
-        if (flow is ControlFlow controlFlow)
-        {
-            if (connectToServer)
-                env.Send(new APIMessage.NewControlFlow(controlFlow).Json);
-        }
-        if (flow is DataFlow dataFlow)
-        {
-            if (connectToServer)
-                env.Send(new APIMessage.NewDataFlow(dataFlow).Json);
-        }
-        
+
+        if (connectToServer)
+            env.Send(new APIMessage.NewFlow(flow).Json);
     }
 
      
@@ -207,15 +199,15 @@ public class Manager : MonoBehaviour
                 {
 
                     string type = FindString(received, "type");
-                    if (type == "ControlFlow")
+                    if (type == "ControlFlow" || (type == "DataFlow"))
                     {
-                        var message = JsonUtility.FromJson<APIMessage.NewControlFlow>(received);
+                        var message = JsonUtility.FromJson<APIMessage.NewFlow>(received);
                         GameObject prefab = prefabDict[message.info.type];
-                        var flow = Instantiate(prefab).GetComponent<ControlFlow>();
+                        var flow = Instantiate(prefab).GetComponent<Flow>();
                         flow.id = message.info.id;
-                        flow.head = Nodes[message.info.head].inControl;
+                        flow.head = Nodes[message.info.head].ports[message.info.head_port_id];
                         flow.head.Edges.Add(flow);
-                        flow.tail = Nodes[message.info.tail].outControl;
+                        flow.tail = Nodes[message.info.tail].ports[message.info.tail_port_id];
                         flow.tail.Edges.Add(flow);
                         Flows.Add(message.info.id, flow);
                     }
@@ -231,7 +223,7 @@ public class Manager : MonoBehaviour
             else if (command == "mov")
             {
                 var message = JsonUtility.FromJson<APIMessage.Mov>(received);
-                Nodes[message.id].RawMove(new Vector3(message.pos[0], message.pos[1], message.pos[2]));
+                Nodes[message.id].RawMove(message.pos);
             }
             else if (command == "rmv")
             {

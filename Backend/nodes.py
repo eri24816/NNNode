@@ -1,4 +1,7 @@
 from __future__ import annotations
+import math
+import numpy as np
+import json
 from edges import Edge
 from typing import Dict, List
 from history import *
@@ -47,9 +50,13 @@ def exec_(script,globals=None, locals=None):
         exec(script, globals, locals)
     return output
 
+def v3(x,y,z):
+    return {'x':x,'y':y,'z':z}
 
 class Node:
-    
+    '''
+    Base class of all types of nodes
+    '''
     display_name = 'Node'
 
     class Info(TypedDict):
@@ -57,20 +64,25 @@ class Node:
         id : int
 
         # for client ------------------------------
-        frontend_type : str # RectNode, RoundNode
-        name : str          # Just for frontend. In backend we never use it but use "id" instead
-        pos : List[float]   # While some nodes are not draggable
-        output : str        # Output is necessary for all classes of node to at least store exceptions occured in nodes
+        frontend_type : str     # CodeNode, FunctionNode, RoundNode
+        name : str              # Just for frontend. In backend we never use it but use "id" instead
+        pos : List[float]       # While some nodes are not draggable e.g. their positions are determined by its adjacent nodes
+        output : str            # Output is necessary for all classes of node to at least store exceptions occured in nodes
+        portInfos : List[Dict]  # PortInfos are determined by server side Node classes and is used to tell client how to set up ports
 
+    # When creating demo node, this is sent to client
     @classmethod
     def get_class_info(cls)->Info:
-        tempNode = cls({'id' : -1})
+        tempNode = cls({'id' : -1, 'name' : ''},env = None)
         return tempNode.get_info()
 
+    # Node info
+    # History item "new" stores this. When creating new node, this is sent to all clients.
+    # And when client sends "rdo", the node can be recreated from it. 
     def get_info(self) -> Dict[str]:
         return {
             "type":type(self).__name__,"id":self.id,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
-        'ports' : [port.get_dict for port in self.port_list]
+        'portInfos' : [json.dumps(port.get_dict()) for port in self.port_list]
         }
     
     class Port():
@@ -78,22 +90,28 @@ class Node:
         Different node classes might have Port classes that own different properties for frontend to read. 
         In such case, inherit this
         '''
-        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', discription : str = ''):
+        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', discription : str = '',pos = [0,0,0], on_edge_activate = lambda : None):
             self.type = type
             self.isInput = isInput
             self.max_connections = max_connections
             self.name = name
             self.discription = discription 
-            self.connections : List[edges.ControlFlow] = [] 
+            self.pos = pos
+            self.on_edge_activate = on_edge_activate
+            self.flows : List[edges.ControlFlow] = [] 
 
         def get_dict(self):
             # for json.dump
-            return {'type':self.type, 'isInput' : self.isInput, 'max_connections' : self.max_connections, 'name': self.name, 'discription' : self.discription}
+            return {
+                'type':self.type,
+                'isInput' : self.isInput,
+                'max_connections' : self.max_connections,
+                'name': self.name,
+                'discription' : self.discription,
+                'pos' : self.pos
+                }
 
     def __init__(self, info : Info, env : Environment.Env):
-        '''
-        Base class of node
-        '''
         # The environment
         self.env=env
 
@@ -125,17 +143,9 @@ class Node:
         self.added_output = "" 
 
         if self.id != -1:
-            self.env.Update_history("new", info)
+            self.env.Update_history("new", self.get_info())
             self.first_history = self.latest_history = History_item("stt")
             self.lock_history=False
-
-    def in_control_active(self):
-        # check if the condition is satisfied that the node can be activated
-        pass
-
-    def in_data_active(self):
-        # check if the condition is satisfied that the node can be activated
-        pass
 
     def activate(self):
         if self.active: 
@@ -180,9 +190,6 @@ class Node:
         command = m['command']
         if command == "act":
             self.activate()
-
-    def get_info(self):
-        pass
     
     def move(self,pos):
         self.env.Update_history("mov",{"id":self.id,"old":self.pos,"new":pos})# node moves are logged in env history
@@ -224,15 +231,8 @@ class Node:
         return 1
 
     def remove(self):
-        for flow in self.in_control:
-            flow.remove()
-        for flow in self.out_control:
-            flow.remove()
-        for port in self.in_data:
-            for flow in port:
-                flow.remove()
-        for port in self.out_data:
-            for flow in port:
+        for port in self.port_list:
+            for flow in port.flows:
                 flow.remove()
         self.env.nodes.pop(self.id)
         self.env.Update_history("rmv",self.get_info())
@@ -250,6 +250,7 @@ class CodeNode(Node):
     '''
 
     display_name = 'Code Node'
+    frontend_type = 'CodeNode'
 
     class Info(Node.Info):
         code : str
@@ -259,13 +260,13 @@ class CodeNode(Node):
         self.name=info['name']
         self.frontend_type = 'CodeNode'
 
-        self.in_control = self.Port('ControlPort', True)
-        self.out_control = self.Port('ControlPort', True)
+        self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate)
+        self.out_control = self.Port('ControlPort', False)
         self.port_list = [self.in_control, self.out_control]
 
         self.code=info['code']if 'code' in info else ''
 
-    def in_control_active(self):
+    def in_control_activate(self):
         # The node is activated as soon as its input flow is activated
         self.activate()
         
@@ -273,8 +274,8 @@ class CodeNode(Node):
         super().activate()
 
     def _run(self):
-        if self.in_control.__len__()>0:
-            self.in_control.connections[0].deactivate()
+        for flow in self.in_control.flows:
+            flow.deactivate()
 
         fail = False
         try:
@@ -284,7 +285,7 @@ class CodeNode(Node):
             fail = True
 
         if not fail:
-            for flow in self.out_control.connections:
+            for flow in self.out_control.flows:
                 flow.activate()
         self.deactivate()
 
@@ -346,12 +347,11 @@ class FunctionNode(Node):
         out_names : List[str]
         allow_multiple_in_data : List[bool]
 
-    # Most of the child classes of FunctionNode just differ in following three class properties and their function() method.
+    # Most of the child classes of FunctionNode just differ in following 4 class properties and their function() method.
+    frontend_type = 'FunctionNode' # FunctionNode, RoundNode
     in_names : List[str] = []
     out_names : List[str] = []
-    allow_multiple_in_data : List[bool] = []
-
-    
+    max_in_data : List[int] = []
 
     def __init__(self, info : Info ,env : Environment.Env):
         '''
@@ -359,18 +359,23 @@ class FunctionNode(Node):
         '''
         super().__init__(info,env)
 
-        self.in_data = [self.Port('DataPort',True,name = port_name)for port_name in self.in_names]
-        self.out_data = [self.Port('DataPort',True,name = port_name)for port_name in self.in_names]
+        if self.frontend_type == 'RoundNode':
+            in_port_pos = [v3(math.cos(t),math.sin(t),0.0)for t in [np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]]
+            out_port_pos = [v3(math.cos(t),math.sin(t),0.0)for t in [np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]]
+        else :
+            in_port_pos = [[0,0,0]]*len(self.in_names)
+            out_port_pos = [[0,0,0]]*len(self.out_names)
+        
+        # Initialize ports from self.in_names, self.out_names and self.max_in_data
+        self.in_data = [self.Port('DataPort',True,name = port_name,max_connections= max_in_data,
+         on_edge_activate = self.in_data_activate, pos= pos)for (port_name,max_in_data,pos) in zip(self.in_names,self.max_in_data,in_port_pos)]
+        self.out_data = [self.Port('DataPort',False,name = port_name, pos = pos)for port_name,pos in zip(self.out_names,out_port_pos)]
         self.port_list = self.in_data + self.out_data
 
-    def in_control_active(self):
-        # TODO: Ask for value
-        pass
-
-    def in_data_active(self):
-        # A FunctionNode activates when all its input dataFlow is active.
+    def in_data_activate(self):
+        # A functionNode activates when all its input dataFlow is active.
         for port in self.in_data:
-            for flow in port.connections:
+            for flow in port.flows:
                 if not flow.active:
                     return
         self.activate()
@@ -381,22 +386,22 @@ class FunctionNode(Node):
         # TODO: Ask for value
         # Or should it be put in _run() ?
         for port in self.in_data:
-            for flow in port.connections:
+            for flow in port.flows:
                 if not flow.has_value:
                     pass
 
 
     def _run(self):
         for port in self.in_data:
-            for flow in port.connections:
+            for flow in port.flows:
                 flow.deactivate()
 
         # Gather data from input dataFlows
         funcion_input = []
         for port in self.in_data:
-            if len(port.connections) == 0:
+            if len(port.flows) == 0:
                 funcion_input.append(None) #TODO: Default value
-            elif len(port.connections) == 1:
+            elif len(port.flows) == 1:
                 funcion_input.append(port[0].data)
             else:
                 # More than 1 input flow on the port
@@ -408,7 +413,7 @@ class FunctionNode(Node):
         # Send data to output dataFlows
         i = 0
         for result_item in result:
-            for flow in self.out_data[i].connections:
+            for flow in self.out_data[i].flows:
                 flow.recive_value(result_item)
             i+=1
         

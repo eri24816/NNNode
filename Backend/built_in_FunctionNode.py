@@ -7,7 +7,7 @@ class SumFunctionNode(FunctionNode):
 
     in_names = ["input"]
     out_names = ["sum"]
-    allow_multiple_in_data = [True]
+    max_in_data = [64]
 
     frontend_type = 'RoundNode'
 

@@ -12,6 +12,7 @@ namespace GraphUI
         */
 
         public Node node;
+        public int port_id;
         public List<Flow> Edges; // some type of port accepts multiple edges
         public int maxEdges;
         public bool isInput; // true: input false: output

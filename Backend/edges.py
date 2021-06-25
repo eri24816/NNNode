@@ -10,6 +10,8 @@ class Edge(): # abstract class
         id : int
         tail : str # Tail node name
         head : str # Head node name
+        tail_port_id : int
+        head_port_id : int
         
     def __init__(self, info, env):
         '''
@@ -20,13 +22,19 @@ class Edge(): # abstract class
         self.tail : Node = env.nodes[info['tail']]
         self.head : Node = env.nodes[info['head']]        
 
-        self.active=False
+        self.tail_port = self.tail.port_list[info['tail_port_id']]
+        self.head_port = self.head.port_list[info['head_port_id']]
 
+        self.tail_port.flows.append(self)
+        self.head_port.flows.append(self)
+
+        self.active=False
         # for client --------------------------------
         self.info = info  # for remove history
         self.type=info['type']
         self.id=info['id']
         self.env.Update_history("new", info)
+
 
     def get_info(self):
         return self.info
@@ -35,6 +43,7 @@ class Edge(): # abstract class
 
     def activate(self):
         self.active = True
+        self.head_port.on_edge_activate() # Imform head node
         #TODO: inform client to play animations
 
     def deactivate(self):
@@ -42,6 +51,9 @@ class Edge(): # abstract class
         #TODO: inform client to play animations
 
     def remove(self):
+        self.tail_port.flows.remove(self)
+        self.head_port.flows.remove(self)
+
         self.env.edges.pop(self.id)
         self.env.Update_history("rmv", self.info)
         del self  #*?
@@ -55,44 +67,19 @@ class ControlFlow(Edge):
         '''
         super().__init__(info,env)
 
-        # Connect to the tail and head node
-        self.tail.out_control.append(self)
-        self.head.in_control.append(self)
-
-    def remove(self):
-        self.tail.out_control.remove(self)
-        self.head.in_control.remove(self)
-        super().remove()
-
     def activate(self):
         super().activate()
         # inform the head node
-        self.head.in_control_active()
+        self.head_port.on_edge_activate()
 
 class DataFlow(Edge):
-    class Info(Edge.Info):
-        tail_var : int
-        head_var : int
-    def __init__(self, info : Info, env):
-        '''
-        info: {type=DataFlow,id,tail,head,tail_var:int,head_var:int}
-        '''
+    def __init__(self, info : Edge.Info, env):
         super().__init__(info,env)
         self.active = False
         self.has_value = False
         self.data=None
         
-        self.tail_var=info['tail_var']
-        self.head_var=info['head_var']
-        self.tail.out_data[self.tail_var].append(self)
-        self.head.in_data[self.head_var].append(self)
-        
     def recive_value(self,value):
         self.data = value
         self.has_value = True
         self.activate()
-
-    def remove(self):
-        self.tail.out_data[self.tail_var].remove(self)
-        self.head.in_data[self.head_var]=None 
-        super().remove()

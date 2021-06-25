@@ -6,7 +6,7 @@ namespace GraphUI
     public class DataPort : Port
     {
         public TMPro.TMP_Text nameText;
-        public int n_th_var;
+        
         override protected void Start()
         {
             base.Start();

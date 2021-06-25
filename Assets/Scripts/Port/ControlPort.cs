@@ -5,7 +5,7 @@ namespace GraphUI
 {
     public class ControlPort : Port
     {
-
+        
         override protected void Start()
         {
             base.Start();

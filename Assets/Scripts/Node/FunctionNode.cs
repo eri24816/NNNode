@@ -20,33 +20,24 @@ namespace GraphUI
                 nameText.text = Name;
 
             int i = 0;
-            foreach (string in_name in info.in_names)
+            foreach (string portInfoJson in info.portInfos)
             {
-                var newPort = Instantiate(inDataPortPrefab, inputPanel.transform).GetComponent<DataPort>();
-                newPort.nameText.text = in_name;
-                newPort.n_th_var = i;
-                newPort.isInput = true;
-                newPort.maxEdges = info.allow_multiple_in_data[i] ? 64 : 1;
+                PortInfo portInfo = JsonUtility.FromJson<PortInfo>(portInfoJson);
+                DataPort newPort;
+                
+                if(portInfo.isInput)
+                    newPort = Instantiate(inDataPortPrefab, inputPanel.transform).GetComponent<DataPort>();
+                else
+                    newPort = Instantiate(outDataPortPrefab, outputPanel.transform).GetComponent<DataPort>();
+                ports.Add(newPort);
+                newPort.nameText.text = portInfo.name;
+                newPort.port_id = i;
+                newPort.isInput = portInfo.isInput;
+                newPort.maxEdges = portInfo.max_connections;
                 newPort.node = this;
                 i++;
             }
+        }
 
-            i = 0;
-            foreach (string out_name in info.out_names)
-            {
-                var newPort = Instantiate(outDataPortPrefab, outputPanel.transform).GetComponent<DataPort>();
-                newPort.nameText.text = out_name;
-                newPort.n_th_var = i;
-                newPort.isInput = false;
-                newPort.maxEdges = 64;
-                newPort.node = this;
-                i++;
-            }
-        }
-        protected override void OnDoubleClick()
-        {
-            base.OnDoubleClick();
-            Manager.ins.Activate(this);
-        }
     }
 }
