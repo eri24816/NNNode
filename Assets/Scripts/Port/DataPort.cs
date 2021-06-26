@@ -5,7 +5,7 @@ namespace GraphUI
 {
     public class DataPort : Port
     {
-        public TMPro.TMP_Text nameText;
+        
         
         override protected void Start()
         {

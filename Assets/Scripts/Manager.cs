@@ -15,6 +15,7 @@ public class Manager : MonoBehaviour
     public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
     public GameObject[] prefabs;
+    public GameObject inDataPortPrefab, outDataPortPrefab,inControlPortPrefab,outControlPortPrefab;
     public Dictionary<string, GameObject> prefabDict;
 
     public Transform demoNodeContainer;
@@ -191,6 +192,7 @@ public class Manager : MonoBehaviour
         while (messagesFromServer.TryDequeue(out string received))
         {
             print(WSPath + " says: " + received);
+            if (received[0] != '{') return;
             string command = received.Length >= 16 ? received.Substring(13, 3) : "";
             if (command == "new")
             {

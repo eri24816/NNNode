@@ -21,7 +21,8 @@ class Env():
     node_classes = \
     [
         nodes.CodeNode,
-        built_in_FunctionNode.SumFunctionNode
+        built_in_FunctionNode.SumFunctionNode,
+        nodes.EvalNode
     ]
     def __init__(self,name):
         self.name=name
@@ -56,7 +57,10 @@ class Env():
         def __exit__(self, type, value, traceback):
             self.env.current_history_sequence_id = -1   
     
-    def Create(self,info:nodes.Node.Info): # create any type of node or edge
+    def Create(self,info:nodes.Node.Info): 
+        '''
+        Create any type of node or edge in the environment
+        '''
         # info: {id, type, ...}
         type = info['type']
         class_pool = [nodes,edges,built_in_FunctionNode]
@@ -91,10 +95,10 @@ class Env():
     def Update_history(self,type,content):
         '''
         type, content:
-        stt, None - start the environment
-        new, info - new node or edge
-        mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
-        rmv, info - remove node or edge
+            stt, None - start the environment
+            new, info - new node or edge
+            mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
+            rmv, info - remove node or edge
         '''
         if self.lock_history:
             return

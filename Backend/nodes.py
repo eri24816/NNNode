@@ -8,6 +8,7 @@ from history import *
 import datetime
 import sys
 import traceback
+import copy
 from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
@@ -108,7 +109,7 @@ class Node:
                 'max_connections' : self.max_connections,
                 'name': self.name,
                 'discription' : self.discription,
-                'pos' : self.pos
+                'pos' : v3(*self.pos)
                 }
 
     def __init__(self, info : Info, env : Environment.Env):
@@ -232,7 +233,7 @@ class Node:
 
     def remove(self):
         for port in self.port_list:
-            for flow in port.flows:
+            for flow in copy.copy(port.flows):
                 flow.remove()
         self.env.nodes.pop(self.id)
         self.env.Update_history("rmv",self.get_info())
@@ -260,8 +261,8 @@ class CodeNode(Node):
         self.name=info['name']
         self.frontend_type = 'CodeNode'
 
-        self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate)
-        self.out_control = self.Port('ControlPort', False)
+        self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
+        self.out_control = self.Port('ControlPort', False, pos = [1,0,0])
         self.port_list = [self.in_control, self.out_control]
 
         self.code=info['code']if 'code' in info else ''
@@ -297,7 +298,7 @@ class CodeNode(Node):
             self.set_code(m['info'])
 
     def set_code(self,code):
-        # code changes are logged in node history
+        # Code changes are logged in node history
         self.code=code
 
         self.Update_history("cod",{"id":self.id,"old":self.code,"new":code}) 
@@ -317,6 +318,12 @@ class CodeNode(Node):
         return 0
 
 class EvalNode(CodeNode):
+    frontend_type = 'CodeNode'
+
+    def __init__(self, info: Node.Info, env: Environment.Env):
+        super().__init__(info, env)
+        self.out_data = self.Port('DataPort',False,64,pos = [1,0,0])
+        self.port_list = [self.out_data]
 
     def _run(self):
         fail = False
@@ -327,7 +334,7 @@ class EvalNode(CodeNode):
             fail = True
 
         if not fail:
-            for flow in self.out_data[0]:
+            for flow in self.out_data.flows:
                 flow.recive_value(result)
         self.deactivate()
 
@@ -360,8 +367,8 @@ class FunctionNode(Node):
         super().__init__(info,env)
 
         if self.frontend_type == 'RoundNode':
-            in_port_pos = [v3(math.cos(t),math.sin(t),0.0)for t in [np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]]
-            out_port_pos = [v3(math.cos(t),math.sin(t),0.0)for t in [np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]]
+            in_port_pos = [[math.cos(t),math.sin(t),0.0] for t in [np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]]
+            out_port_pos = [[math.cos(t),math.sin(t),0.0] for t in [np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]]
         else :
             in_port_pos = [[0,0,0]]*len(self.in_names)
             out_port_pos = [[0,0,0]]*len(self.out_names)
@@ -399,23 +406,30 @@ class FunctionNode(Node):
         # Gather data from input dataFlows
         funcion_input = []
         for port in self.in_data:
-            if len(port.flows) == 0:
-                funcion_input.append(None) #TODO: Default value
-            elif len(port.flows) == 1:
-                funcion_input.append(port[0].data)
+            if self.max_in_data == 1:
+                if len(port.flows) == 0:
+                    funcion_input.append(None) #TODO: Default value
+                else:
+                    funcion_input.append(port.flows[0].data)
             else:
-                # More than 1 input flow on the port
-                funcion_input.append([flow.data] for flow in port)
+                # Gather inpute data into a list
+                funcion_input.append([flow.data for flow in port.flows])
         
         # Evaluate the function
         result = self.function(*funcion_input)
 
         # Send data to output dataFlows
-        i = 0
-        for result_item in result:
-            for flow in self.out_data[i].flows:
-                flow.recive_value(result_item)
-            i+=1
+        if len(self.out_data) == 1:
+            for flow in self.out_data[0].flows:
+                flow.recive_value(result)
+
+        # result is tuple
+        elif len(self.out_data) > 1:
+            i=0
+            for result_item in result:
+                for flow in self.out_data[i].flows:
+                    flow.recive_value(result_item)
+                i+=1
         
         self.deactivate()
 

@@ -17,13 +17,14 @@ namespace GraphUI
         public int maxEdges;
         public bool isInput; // true: input false: output
         public System.Type flowType;
+        public TMPro.TMP_Text nameText;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
 
-
+        public Vector3 desiredLocalPos;
         protected virtual void Start()
         {
-            //node = transform.parent.GetComponent<Node>();
+            
         }
         public void SetExpanded(bool expanded) // currently only DataPort uses this
         {
@@ -33,7 +34,7 @@ namespace GraphUI
 
         protected virtual void Update()
         {
-
+            ((RectTransform)transform).localPosition = desiredLocalPos;
         }
 
 

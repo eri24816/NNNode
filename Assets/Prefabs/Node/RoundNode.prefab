@@ -280,10 +280,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selected: 0
-  inControl: {fileID: 0}
-  outControl: {fileID: 0}
-  inData: []
-  outData: []
+  ports: []
   id: 
   Name: 
   outline_running: {fileID: 4792376665988671261}
@@ -292,7 +289,8 @@ MonoBehaviour:
   selectedColor: {r: 0, g: 1, b: 0, a: 0}
   outlineRunningColor: {r: 0, g: 0.627451, b: 1, a: 0.24313726}
   outlinePendingColor: {r: 0, g: 0.7294118, b: 1, a: 0.74509805}
-  lights: []
+  lights:
+  - {fileID: 6253532428769394442}
   type: 
   isDemo: 0
   dragging: 0

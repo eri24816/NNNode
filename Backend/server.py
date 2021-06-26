@@ -65,7 +65,7 @@ async def env_ws(websocket, path):
         return
 
     env_history_client=env.latest_history # which env history is client on
-    env_history_client_version = 0
+    env_history_client_version = env.latest_history.version
     update_message_buffer = {}
     env.update_message_buffers.append(update_message_buffer) # register to env so the buffer will be updated
 

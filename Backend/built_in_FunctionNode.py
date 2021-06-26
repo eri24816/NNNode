@@ -5,7 +5,7 @@ class SumFunctionNode(FunctionNode):
 
     display_name = 'Σ'
 
-    in_names = ["input"]
+    in_names = ["items"]
     out_names = ["sum"]
     max_in_data = [64]
 
