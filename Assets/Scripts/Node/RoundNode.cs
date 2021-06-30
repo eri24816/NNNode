@@ -48,11 +48,11 @@ namespace GraphUI
                     else
                         newPort = Instantiate(outDataPortPrefab, transform).GetComponent<DataPort>();
                     ports.Add(newPort);
-                    newPort.desiredLocalPos = radius * portInfo.pos;
+                    ((RectTransform)newPort.transform).anchorMin = ((RectTransform)newPort.transform).anchorMax = new Vector2(portInfo.pos.x / 2 + .5f, portInfo.pos.y / 2 + .5f);
                     newPort.nameText.text = "";
                     newPort.port_id = i;
                     newPort.isInput = portInfo.isInput;
-                    newPort.maxEdges = portInfo.max_connections;
+                    newPort.maxEdges = portInfo.max_connections; 
                     newPort.node = this;
                     i++;
                 }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5927074540317843815}
   - component: {fileID: 1620003143055559280}
   - component: {fileID: 306119004577571569}
+  - component: {fileID: -3096629027906928019}
   m_Layer: 5
   m_Name: ControlPort
   m_TagString: Untagged
@@ -38,7 +39,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -0.5, y: -0.275}
-  m_SizeDelta: {x: 25, y: 25}
+  m_SizeDelta: {x: 15, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7867955957104366067
 CanvasRenderer:
@@ -111,6 +112,26 @@ MonoBehaviour:
   nameText: {fileID: 3992700085260280384}
   toHideOnMinimize: []
   desiredLocalPos: {x: 0, y: 0, z: 0}
+--- !u!114 &-3096629027906928019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7867955957104366070}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 1
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &8430846837281729777
 GameObject:
   m_ObjectHideFlags: 0

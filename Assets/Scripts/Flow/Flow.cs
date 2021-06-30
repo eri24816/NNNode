@@ -40,6 +40,13 @@ namespace GraphUI
             }
         }
 
+        public void SetDir(bool isTail,Vector3 dir)
+        {
+            if (isTail) line.Tail_dir = dir;
+            else line.Head_dir = dir;
+
+        }
+
         public IEnumerator Creating()
         {
             Manager.ins.state = Manager.State.draggingFlow;
@@ -51,14 +58,21 @@ namespace GraphUI
             }
             bool dragTail = head;
 
-            Port targetPort = null;
+            Port targetPort = null, p_targetPort = null;
             while (Input.GetMouseButton(0)) // while mouse hold
             {
+                if(p_targetPort != targetPort && p_targetPort != null)
+                {
+                    p_targetPort.RecalculateEdgeDir();
+                }
+                p_targetPort = targetPort;
                 targetPort = null;
                 if (CamControl.colliderHover)
                     targetPort = CamControl.colliderHover.GetComponent<Port>();
                 if (targetPort)
                     if (!targetPort.AcceptEdge(this)) targetPort = null;
+                if (targetPort)
+                    targetPort.RecalculateEdgeDir(this, targetPort.GetNewEdgeOrder(CamControl.worldMouse));
                 Vector3 dragPos;
                 dragPos = targetPort ? targetPort.transform.position : CamControl.worldMouse;
 
@@ -85,9 +99,10 @@ namespace GraphUI
                 else
                     head = targetPort;
 
-                targetPort.Edges.Add(this);
+                targetPort.Edges.Insert(targetPort.GetNewEdgeOrder(CamControl.worldMouse),this);
                 Manager.ins.AddFlow(this);
                 Manager.ins.state = Manager.State.idle;
+                targetPort.RecalculateEdgeDir();
                 yield break;
             }
             else
@@ -104,8 +119,8 @@ namespace GraphUI
         }
         public void RawRemove()
         {
-            if (tail) tail.Disconnect(this);
-            if (head) head.Disconnect(this);
+            if (tail) { tail.Disconnect(this); tail.RecalculateEdgeDir(); }
+            if (head) { head.Disconnect(this); head.RecalculateEdgeDir(); }
 
             Destroy(gameObject);
         }

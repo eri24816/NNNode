@@ -12,11 +12,5 @@ namespace GraphUI
             base.Start();
             flowType = typeof(DataFlow);
         }
-
-        override protected void Update()
-        {
-            base.Update();
-        }
-
     }
 }

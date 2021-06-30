@@ -36,7 +36,33 @@ namespace GraphUI
                 }
             }
         }
+        public Vector3 Head_dir
+        {
+            set
+            {
+                if (value != head_vel)
+                {
+                    head_vel = value;
+                    head_vel.Normalize();
+                    SetVerticesDirty();
+                }
+            }
+        }
+        public Vector3 Tail_dir
+        {
+            set
+            {
+                if (value != tail_vel)
+                {
+                    tail_vel = value;
+                    tail_vel.Normalize();
+                    SetVerticesDirty();
+                }
+            }
+        }
+
         Vector3 tail, head;
+        Vector3 tail_vel = Vector3.right, head_vel = Vector3.left;
 
         public float shapeVel = 0.5f;
         public float curveDist = 0.8f,width=0.2f;
@@ -59,13 +85,13 @@ namespace GraphUI
             {
                 float t = ((float)i) / resolution / Mathf.Max(dist, 1) * curveDist;
                 float u = 1 - t;
-                points[i] = tail * u * u * u + (tail + Vector3.right * vel) * 3 * u * u * t + (head + Vector3.left * vel) * 3 * u * t * t + head * t * t * t;
+                points[i] = tail * u * u * u + (tail + tail_vel * vel) * 3 * u * u * t + (head + head_vel * vel) * 3 * u * t * t + head * t * t * t;
             }
             for (int i = resolution / 2; i < resolution; i++)
             {
                 float u = ((float)(resolution - i - 1)) / resolution / Mathf.Max(dist, 1) * curveDist;
                 float t = 1 - u;
-                points[i] = tail * u * u * u + (tail + Vector3.right * vel) * 3 * u * u * t + (head + Vector3.left * vel) * 3 * u * t * t + head * t * t * t;
+                points[i] = tail * u * u * u + (tail + tail_vel * vel) * 3 * u * u * t + (head + head_vel * vel) * 3 * u * t * t + head * t * t * t;
             }
 
             delta = new Vector3[resolution - 1];

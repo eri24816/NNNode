@@ -18,13 +18,48 @@ namespace GraphUI
         public bool isInput; // true: input false: output
         public System.Type flowType;
         public TMPro.TMP_Text nameText;
+        float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
 
         public Vector3 desiredLocalPos;
+        public Vector3 dirVec(float dir)
+        {
+            return new Vector3(Mathf.Cos(dir), Mathf.Sin(dir), 0);
+        }
+        public float Cosine(float a,float b)
+        {
+            return Vector3.Dot(dirVec(a), dirVec(b));
+        }
+        float pi = Mathf.PI;
         protected virtual void Start()
         {
-            
+            RectTransform rt = (RectTransform)transform;
+            float a, b, c, d;
+            a = rt.anchorMin.x;
+            b = 1-rt.anchorMin.x;
+            c = rt.anchorMin.y;
+            d = 1-rt.anchorMin.y;
+            if (a < b && a < c && a < d)
+            {
+                minDir = pi / 2;
+                maxDir = pi * 3 / 2;
+            }
+            else if (b < a && b < c && b < d)
+            {
+                minDir = -pi / 2;
+                maxDir = pi / 2;
+            }
+            else if (c < b && c < a && c < d)
+            {
+                minDir = pi;
+                maxDir = pi*2;
+            }
+            else if (d < b && d < c && d < a)
+            {
+                minDir = 0;
+                maxDir = pi;
+            }
         }
         public void SetExpanded(bool expanded) // currently only DataPort uses this
         {
@@ -32,12 +67,35 @@ namespace GraphUI
                 g.SetActive(expanded);
         }
 
-        protected virtual void Update()
+        public void RecalculateEdgeDir(Flow addedFlow = null, int order = int.MaxValue)
         {
-            ((RectTransform)transform).localPosition = desiredLocalPos;
+            int intervalCount = Edges.Count + 1;
+            if (addedFlow != null) intervalCount += 1;
+            float interval = (maxDir - minDir) / intervalCount;
+            float currentDir = minDir;
+            for(int i = 0; i < intervalCount-1; i++)
+            {
+                currentDir += interval;
+                if (i < order) Edges[i].SetDir(!isInput, new Vector3(Mathf.Cos(currentDir), Mathf.Sin(currentDir), 0));
+                else if (i == order) addedFlow.SetDir(!isInput, new Vector3(Mathf.Cos(currentDir), Mathf.Sin(currentDir), 0));
+                else  Edges[i-1].SetDir(!isInput, new Vector3(Mathf.Cos(currentDir), Mathf.Sin(currentDir), 0));
+            }
+        } 
+
+        public int GetNewEdgeOrder(Vector3 pos)
+        {
+            var delta = pos - transform.position;
+            delta.z = 0;
+            float dir = Vector3.SignedAngle(Vector3.right, delta,Vector3.forward)*Mathf.Deg2Rad;
+            var mid = (maxDir + minDir)/ 2;
+            if (Mathf.Abs(dir + 2 * pi - mid) < Mathf.Abs(dir - mid)) dir += 2 * pi;
+            else if (Mathf.Abs(dir - 2 * pi - mid) < Mathf.Abs(dir - mid)) dir -= 2 * pi;
+
+            if (dir < minDir) return 0;
+            if (dir >= maxDir) return Edges.Count;
+            return (int)((dir-minDir)/(maxDir-minDir)*(1f+Edges.Count));
         }
-
-
+         
         public virtual bool AcceptEdge(Flow flow)
         {
             if (node.isDemo) return false;
@@ -70,8 +128,10 @@ namespace GraphUI
                     Flow newEdge = Instantiate(Manager.ins.prefabDict[flowType.Name]).GetComponent<Flow>();
                     if (isInput) newEdge.head = this;
                     else newEdge.tail = this;
+                    RecalculateEdgeDir(newEdge, GetNewEdgeOrder(CamControl.worldMouse));
                     Edges.Add(newEdge);
                     StartCoroutine(newEdge.Creating());
+                    
                 }
             }
         }

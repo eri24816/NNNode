@@ -253,7 +253,7 @@ public class Manager : MonoBehaviour
             {
                 var message = JsonUtility.FromJson<APIMessage.Cod>(received);
                 Node node = Nodes[message.id];
-                if (node is CodeNode codeNode)
+                if (node is SimpleCodeNode codeNode)
                     codeNode.Code = message.info;
             }
             else if (command == "act")
@@ -282,15 +282,13 @@ public class Manager : MonoBehaviour
             {
                 var message = JsonUtility.FromJson<APIMessage.Gid>(received);
                 Node node = Nodes[message.id];
-                if (node is CodeNode codeNode)
-                    codeNode.ClearOutput();
+                node.ClearOutput();
             }
             else if (command == "out")
             {
                 var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(received);
                 Node node = Nodes[message.id];
-                if (node is CodeNode codeNode)
-                    codeNode.AddOutput(message.info);
+                node.AddOutput(message.info);
             }
         }
     }

@@ -38,6 +38,7 @@ namespace GraphUI
     {
         public List<Port> ports;
         public string id, Name;
+        protected string output = "";
         [SerializeField] 
         UnityEngine.UI.Outline outline_running;
         [SerializeField]
@@ -108,7 +109,7 @@ namespace GraphUI
                     {
                         Move(CamControl.worldMouseDelta);
                     }
-                }
+                } 
             if (recvMoveCD.Update())
             {
                 transform.position = targetPos;
@@ -119,6 +120,14 @@ namespace GraphUI
             }
         }
 
+        public virtual void AddOutput(string output)
+        {
+            this.output += output;
+        }
+        public virtual void ClearOutput()
+        {
+            output = "";
+        }
 
         public virtual void Reshape(float w, float l, float r) { }//Trapezoid shaped node
 

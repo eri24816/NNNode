@@ -71,16 +71,20 @@ class Node:
         output : str            # Output is necessary for all classes of node to at least store exceptions occured in nodes
         portInfos : List[Dict]  # PortInfos are determined by server side Node classes and is used to tell client how to set up ports
 
-    # When creating demo node, this is sent to client
     @classmethod
     def get_class_info(cls)->Info:
+        '''
+        When creating demo node, this is sent to client
+        '''
         tempNode = cls({'id' : -1, 'name' : ''},env = None)
         return tempNode.get_info()
-
-    # Node info
-    # History item "new" stores this. When creating new node, this is sent to all clients.
-    # And when client sends "rdo", the node can be recreated from it. 
+    
     def get_info(self) -> Dict[str]:
+        '''
+        Node info
+        History item "new" stores this. When creating new node, this is sent to all clients.
+        And when client sends "rdo", the node can be recreated from it. 
+        '''
         return {
             "type":type(self).__name__,"id":self.id,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
         'portInfos' : [json.dumps(port.get_dict()) for port in self.port_list]
@@ -177,14 +181,23 @@ class Node:
 
         # Redirect printed outputs and error messages to client
         with stdoutIO(self):
-            self._run()
+            try:
+                self._run()
+            except Exception:
+                self.running_finished(False)
+                self.added_output += traceback.format_exc()
+                self.flush_output()
+            else:
+                self.running_finished(True)
+
         
-        self.flush_output()
 
     def _run(self):
         # Actually define what the type of node acts
         pass
-
+    
+    def running_finished(self,success = True):
+        pass
 
     # for client ------------------------------
     def recive_command(self,m):
@@ -237,8 +250,7 @@ class Node:
                 flow.remove()
         self.env.nodes.pop(self.id)
         self.env.Update_history("rmv",self.get_info())
-        del self  #*?
-    
+        del self  #*?    
 
 class CodeNode(Node):
     '''
@@ -250,22 +262,29 @@ class CodeNode(Node):
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
 
-    display_name = 'Code Node'
     frontend_type = 'CodeNode'
+    display_name = 'Code Node'
+    
 
     class Info(Node.Info):
         code : str
 
     def __init__(self,info : Info ,env : Environment.Env):
-        super().__init__(info,env)
-        self.name=info['name']
-        self.frontend_type = 'CodeNode'
 
+        self.code=info['code']if 'code' in info else ''
+        self.name=info['name']
+        super().__init__(info,env)
+        
         self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
         self.out_control = self.Port('ControlPort', False, pos = [1,0,0])
         self.port_list = [self.in_control, self.out_control]
 
-        self.code=info['code']if 'code' in info else ''
+        
+
+    def get_info(self) -> Dict[str]:
+        t = super().get_info()
+        t.update({'code':self.code})
+        return t
 
     def in_control_activate(self):
         # The node is activated as soon as its input flow is activated
@@ -278,14 +297,11 @@ class CodeNode(Node):
         for flow in self.in_control.flows:
             flow.deactivate()
 
-        fail = False
-        try:
-            exec_(self.code,self.env.globals,self.env.locals)
-        except Exception:
-            self.added_output += traceback.format_exc()
-            fail = True
+        exec_(self.code,self.env.globals,self.env.locals)
 
-        if not fail:
+    def running_finished(self, success = True):
+        self.flush_output()
+        if success:
             for flow in self.out_control.flows:
                 flow.activate()
         self.deactivate()
@@ -318,26 +334,42 @@ class CodeNode(Node):
         return 0
 
 class EvalNode(CodeNode):
-    frontend_type = 'CodeNode'
+    frontend_type = 'SimpleCodeNode'
+    display_name = 'eval'
 
     def __init__(self, info: Node.Info, env: Environment.Env):
         super().__init__(info, env)
+        self.in_data = self.Port('DataPort',True,64,pos = [-1,0,0],on_edge_activate = self.in_data_active)
         self.out_data = self.Port('DataPort',False,64,pos = [1,0,0])
-        self.port_list = [self.out_data]
+        self.port_list = [self.in_data, self.out_data]
+
+    def in_data_active(self):
+        #TODO : Check if in data is empty and ask for value
+        self.activate()
 
     def _run(self):
-        fail = False
-        try:
-            result = eval(self.code,self.env.globals,self.env.locals)
-        except Exception:
-            self.added_output += traceback.format_exc()
-            fail = True
+        if len(self.in_data.flows)>0:
+            for flow in self.in_data.flows:
+                flow.deactivate()
 
-        if not fail:
+            if len(self.in_data.flows) == 1:
+                self.value = self.in_data.flows[0].data
+            else:
+                self.value = []
+                for flow in self.in_data.flows:
+                    self.value.append(flow.data)
+            #exec_(self.code + " = __value", self.env.globals, {'__value' : self.value})
+            self.env.globals.update({self.code: self.value})
+        else:
+            self.value = eval(self.code,self.env.globals,self.env.locals)
+        
+
+    def running_finished(self, success = True):
+        if success:
             for flow in self.out_data.flows:
-                flow.recive_value(result)
+                flow.recive_value(self.value)
         self.deactivate()
-
+        
 class FunctionNode(Node):
     '''
     Similar to CodeNode, but a FunctionNode's code defines a function (start with "def").
@@ -430,7 +462,8 @@ class FunctionNode(Node):
                 for flow in self.out_data[i].flows:
                     flow.recive_value(result_item)
                 i+=1
-        
+
+    def running_finished(self, success = True):
         self.deactivate()
 
     @staticmethod

@@ -79,7 +79,7 @@ MonoBehaviour:
   resolution: 20
   shapeVel: 0.5
   curveDist: 0.8
-  width: 0.02
+  width: 0.005
   raycastThreshold: 1.2
   longerEndPoint: 0
 --- !u!222 &-4346185509392050690

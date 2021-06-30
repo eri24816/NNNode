@@ -27,7 +27,7 @@ namespace GraphUI
         float expandedWidth, minimizedWidth;
 
         readonly CoolDown recvCodeCD=new CoolDown(hz:100);
-        string output="";
+        //string output="";
         public float maxOutputHeight = 150;
         string recievedCode;
         public string Code { get { return CodeEditorScript.text; } set { CodeEditorScript.SetTextWithoutNotify(value); } }
