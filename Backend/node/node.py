@@ -11,7 +11,6 @@ import copy
 from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
-    import edges
 
 class node_StringIO():
     def __init__(self,node):

@@ -1,8 +1,8 @@
-from nodes import FunctionNode
+from .node import FunctionNode
 
 class AddFunctionNode(FunctionNode):
     '''
-    Add two or more items
+    Add two or more items together
     ''' 
 
     display_name = '+'
@@ -24,7 +24,7 @@ class AddFunctionNode(FunctionNode):
 
 class MultiplyFunctionNode(FunctionNode):
     '''
-    Multiply two or more items
+    Multiply two or more items together
     '''
 
     display_name = '×'

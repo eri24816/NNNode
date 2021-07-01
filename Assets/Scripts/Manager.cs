@@ -244,7 +244,7 @@ public class Manager : MonoBehaviour
             {
                 var message = JsonUtility.FromJson<APIMessage.Cod>(received);
                 Node node = Nodes[message.id];
-                if (node is SimpleCodeNode codeNode)
+                if (node is CodeNode codeNode)
                     codeNode.Code = message.info;
             }
             else if (command == "act")

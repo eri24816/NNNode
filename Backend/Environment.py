@@ -1,9 +1,8 @@
 from __future__ import annotations
 from typing import Dict
 from history import *
-from node import nodes
-from node import edges
-from node import built_in_FunctionNode
+import edge
+from node import node,function, visual
 import queue
 import inspect
 
@@ -19,11 +18,11 @@ class num_iter:
 
 # the environment to run the code in
 class Env():
-    node_modules = [built_in_FunctionNode]
+    node_modules = [function,visual]
     node_classes = \
     [
-        nodes.CodeNode,
-        nodes.EvalAssignNode
+        node.CodeNode,
+        node.EvalAssignNode
     ]
     module = ''
     for module in node_modules:
