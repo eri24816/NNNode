@@ -16,13 +16,19 @@ namespace GraphUI
         public List<Flow> Edges; // some type of port accepts multiple edges
         public int maxEdges;
         public bool isInput; // true: input false: output
+        public bool with_order;
         public System.Type flowType;
         public TMPro.TMP_Text nameText;
         float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
-
-        public Vector3 desiredLocalPos;
+        public void Init(Node node,Node.PortInfo info)
+        {
+            isInput = info.isInput;
+            maxEdges = info.max_connections;
+            this.node = node;
+            with_order = info.with_order;
+        }
         public Vector3 dirVec(float dir)
         {
             return new Vector3(Mathf.Cos(dir), Mathf.Sin(dir), 0);
@@ -37,10 +43,11 @@ namespace GraphUI
             RectTransform rt = (RectTransform)transform;
             float a, b, c, d;
             a = rt.anchorMin.x;
-            b = 1-rt.anchorMin.x;
+            b = 1 - rt.anchorMin.x;
             c = rt.anchorMin.y;
-            d = 1-rt.anchorMin.y;
-            if (isInput) {
+            d = 1 - rt.anchorMin.y;
+            if (with_order)
+            {
                 if (a < b && a < c && a < d)
                 {
 
@@ -87,7 +94,6 @@ namespace GraphUI
                     maxDir = pi / 2;
                 }
             }
-
 
         }
         public void SetExpanded(bool expanded) // currently only DataPort uses this

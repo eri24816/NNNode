@@ -36,10 +36,6 @@ PrefabInstance:
       value: output
       objectReference: {fileID: 0}
     - target: {fileID: 3854655476210449440, guid: 1d7afe3453bd49c469bd5b7fc74f9b9c, type: 3}
-      propertyPath: m_text
-      value: "output\u200B"
-      objectReference: {fileID: 0}
-    - target: {fileID: 3854655476210449440, guid: 1d7afe3453bd49c469bd5b7fc74f9b9c, type: 3}
       propertyPath: m_HorizontalAlignment
       value: 4
       objectReference: {fileID: 0}

@@ -2,7 +2,6 @@ from __future__ import annotations
 import math
 import numpy as np
 import json
-from edges import Edge
 from typing import Dict, List
 from history import *
 import datetime
@@ -98,7 +97,7 @@ class Node:
         Different node classes might have Port classes that own different properties for frontend to read. 
         In such case, inherit this
         '''
-        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None):
+        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False):
             self.type = type
             self.isInput = isInput
             self.max_connections = max_connections
@@ -107,6 +106,7 @@ class Node:
             self.pos = pos
             self.on_edge_activate = on_edge_activate
             self.flows : List[edges.ControlFlow] = [] 
+            self.with_order = with_order
 
         def get_dict(self):
             # for json.dump
@@ -114,9 +114,11 @@ class Node:
                 'type':self.type,
                 'isInput' : self.isInput,
                 'max_connections' : self.max_connections,
+                'with_order' : self.with_order,
                 'name': self.name,
                 'description' : self.description,
                 'pos' : v3(*self.pos)
+                
                 }
 
     def __init__(self, info : Info, env : Environment.Env):

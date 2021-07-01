@@ -30,40 +30,6 @@ namespace GraphUI
             base.Init(info);
             nameInput.text = name;
             Code = info.code;
-            int i = 0;
-            foreach (string portInfoJson in info.portInfos)
-            {
-                PortInfo portInfo = JsonUtility.FromJson<PortInfo>(portInfoJson);
-                Port newPort;
-                GameObject prefab;
-
-                if (portInfo.type == "ControlPort")
-                    prefab = portInfo.isInput ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
-                else
-                    prefab = portInfo.isInput ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
-                
-                Transform parent = null;
-                if (portInfo.pos == Vector3.left)
-                    parent = left;
-                else if (portInfo.pos == Vector3.right)
-                    parent = right;
-                else if (portInfo.pos == Vector3.up)
-                    parent = top;
-                else if (portInfo.pos == Vector3.down)
-                    parent = buttom;
-
-                newPort = Instantiate(prefab, parent).GetComponent<Port>();
-
-                ports.Add(newPort);
-                newPort.port_id = i;
-                newPort.isInput = portInfo.isInput;
-                newPort.maxEdges = portInfo.max_connections;
-                newPort.node = this;
-                newPort.name = portInfo.name;
-                newPort.nameText.text = "";
-                i++;
-
-            }
         }
 
         public override void Update()

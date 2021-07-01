@@ -109,9 +109,9 @@ MonoBehaviour:
   Edges: []
   maxEdges: 0
   isInput: 1
+  with_order: 0
   nameText: {fileID: 3992700085260280384}
   toHideOnMinimize: []
-  desiredLocalPos: {x: 0, y: 0, z: 0}
 --- !u!114 &-3096629027906928019
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,7 +198,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "input\u200B"
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 837013bcecdce9e44bcd2f5ceb195825, type: 2}
   m_sharedMaterial: {fileID: -8337939114255242952, guid: 837013bcecdce9e44bcd2f5ceb195825, type: 2}

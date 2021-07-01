@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using GraphUI;
+using UnityEngine.EventSystems;
 
 public class CamControl : MonoBehaviour
 {
+    public static CamControl ins;
     public static bool ctrlDown, shiftDown;
     public float scroll = 0.1f,zoom=0.1f;
     public bool touchPadMode=false;
@@ -14,6 +16,7 @@ public class CamControl : MonoBehaviour
     Camera cam;
     private void Start()
     {
+        ins = this;
         focusPlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         cam = GetComponent<Camera>();
     }
@@ -51,9 +54,8 @@ public class CamControl : MonoBehaviour
                 worldMouse = WorldPoint();
             }
 
-            if(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject==null)
-                transform.Translate(new Vector3(0, 0, Input.mouseScrollDelta.y * zoom*focusPlane.GetDistanceToPoint(transform.position)));
-            transform.Translate(worldMouse - WorldPoint());
+            
+            transform.Translate(worldMouse - WorldPoint()); // make center of the camera stick to a point
         }
 
         //touch pad mode
@@ -88,5 +90,13 @@ public class CamControl : MonoBehaviour
         if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Manager.ins.Redo(Selectable.TheOnlySelectedNode());
         if (Input.GetKeyDown(KeyCode.Delete))
             Selectable.Delete();
+    }
+
+    public void OnBackgroundScroll(PointerEventData e)
+    {
+        worldMouse = WorldPoint();
+        if (UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == null)
+            transform.Translate(new Vector3(0, 0, e.scrollDelta.y * zoom * focusPlane.GetDistanceToPoint(transform.position)));
+        transform.Translate(worldMouse - WorldPoint()); // make center of the camera stick to a point
     }
 }

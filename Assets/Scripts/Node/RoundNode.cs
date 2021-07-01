@@ -20,43 +20,6 @@ namespace GraphUI
                 nameText.text = Name;
 
             float radius = ((RectTransform)transform).sizeDelta.x / 2;
-            int i = 0;
-            foreach (string portInfoJson in info.portInfos)
-            {
-                PortInfo portInfo = JsonUtility.FromJson<PortInfo>(portInfoJson);
-                if (portInfo.type == "ControlPort")
-                {
-                    ControlPort newPort;
-                    if (portInfo.isInput)
-                        newPort = Instantiate(inDataPortPrefab, transform).GetComponent<ControlPort>();
-                    else
-                        newPort = Instantiate(outDataPortPrefab, transform).GetComponent<ControlPort>();
-                    ports.Add(newPort);
-                    newPort.desiredLocalPos = radius * portInfo.pos;
-                    newPort.port_id = i; 
-                    newPort.isInput = portInfo.isInput;
-                    newPort.maxEdges = portInfo.max_connections;
-                    newPort.node = this;
-                    i++;
-                }
-                else if (portInfo.type == "DataPort")
-                {
-
-                    DataPort newPort;
-                    if (portInfo.isInput)
-                        newPort = Instantiate(inDataPortPrefab, transform).GetComponent<DataPort>();
-                    else
-                        newPort = Instantiate(outDataPortPrefab, transform).GetComponent<DataPort>();
-                    ports.Add(newPort);
-                    ((RectTransform)newPort.transform).anchorMin = ((RectTransform)newPort.transform).anchorMax = new Vector2(portInfo.pos.x / 2 + .5f, portInfo.pos.y / 2 + .5f);
-                    newPort.nameText.text = "";
-                    newPort.port_id = i;
-                    newPort.isInput = portInfo.isInput;
-                    newPort.maxEdges = portInfo.max_connections; 
-                    newPort.node = this;
-                    i++;
-                }
-            }
 
         }
         protected override void OnDoubleClick()

@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Dict
 from history import *
-import nodes
-import edges
-import built_in_FunctionNode
+from node import nodes
+from node import edges
+from node import built_in_FunctionNode
 import queue
 import inspect
 

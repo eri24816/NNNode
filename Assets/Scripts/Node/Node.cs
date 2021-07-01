@@ -51,11 +51,12 @@ namespace GraphUI
 
         APIMessage.NewNode.Info demoInfo;
 
-        protected struct PortInfo
+        public struct PortInfo
         {
             public string type;
             public bool isInput;
             public int max_connections;
+            public bool with_order;
             public string name;
             public string discription;
             public Vector3 pos;
@@ -80,6 +81,25 @@ namespace GraphUI
                 Manager.ins.DemoNodes.Add(type, this);
                 transform.SetParent( Manager.ins.FindCategoryPanel(info.category));
             }
+            int i = 0;
+            foreach (string portInfoJson in info.portInfos)
+            {
+                PortInfo portInfo = JsonUtility.FromJson<PortInfo>(portInfoJson);
+
+                GameObject prefab;
+                if (portInfo.type == "ControlPort")
+                    prefab = portInfo.isInput ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
+                else
+                    prefab = portInfo.isInput ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
+
+                Port newPort = Instantiate(prefab, transform).GetComponent<Port>();
+                ports.Add(newPort);
+                ((RectTransform)newPort.transform).anchorMin = ((RectTransform)newPort.transform).anchorMax = new Vector2(portInfo.pos.x / 2 + .5f, portInfo.pos.y / 2 + .5f);
+                newPort.port_id = i;
+                newPort.Init(this, portInfo);
+                i++;
+                }
+                
         }
 
         public virtual void Start()
