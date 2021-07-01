@@ -12,6 +12,7 @@ namespace APIMessage
         {
             public string id;
             public string name;
+            public string category;
             public string type;
             public Vector3 pos;
             public string code;

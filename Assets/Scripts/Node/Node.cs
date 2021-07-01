@@ -76,9 +76,9 @@ namespace GraphUI
             }
             else
             {
-                transform.localScale = Vector3.one * 0.5f;
+                transform.localScale = Vector3.one * 0.7f;
                 Manager.ins.DemoNodes.Add(type, this);
-                transform.SetParent(Manager.ins.demoNodeContainer);
+                transform.SetParent( Manager.ins.FindCategoryPanel(info.category));
             }
         }
 
@@ -155,7 +155,9 @@ namespace GraphUI
                 newNode.isDemo = false;
                 //newNode.transform.position = CamControl.worldMouse;
                 newNode.transform.localScale = 0.002f * Vector3.one;
+                //newNode.transform.position = CamControl.worldMouse;
                 StartCoroutine(newNode.DragCreating());
+                //Manager.ins.AddNode(newNode);
                 return;
             }
             if (!selected) OnPointerClick(eventData); // if not selected, select it first
@@ -202,12 +204,14 @@ namespace GraphUI
         }
         public virtual IEnumerator DragCreating()//Drag and drop
         {
+            Manager.ins.AddNode(this);
             while (Input.GetMouseButton(0))
             {
                 transform.position = CamControl.worldMouse;
                 yield return null;
             }
-            Manager.ins.AddNode(this);
+            dragging = false; 
+            
         }
         public virtual IEnumerator Removing()// SAO-like?
         {

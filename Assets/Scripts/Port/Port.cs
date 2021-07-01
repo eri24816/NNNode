@@ -40,26 +40,55 @@ namespace GraphUI
             b = 1-rt.anchorMin.x;
             c = rt.anchorMin.y;
             d = 1-rt.anchorMin.y;
-            if (a < b && a < c && a < d)
-            {
-                minDir = pi / 2;
-                maxDir = pi * 3 / 2;
+            if (isInput) {
+                if (a < b && a < c && a < d)
+                {
+
+                    minDir = pi / 2;
+                    maxDir = pi * 3 / 2;
+                }
+                else if (b < a && b < c && b < d)
+                {
+                    minDir = -pi / 2;
+                    maxDir = pi / 2;
+                }
+                else if (c < b && c < a && c < d)
+                {
+                    minDir = pi;
+                    maxDir = pi * 2;
+                }
+                else
+                {
+                    minDir = 0;
+                    maxDir = pi;
+                }
             }
-            else if (b < a && b < c && b < d)
+            else
             {
-                minDir = -pi / 2;
-                maxDir = pi / 2;
+                if (a < b && a < c && a < d)
+                {
+
+                    minDir = pi;
+                    maxDir = pi;
+                }
+                else if (b < a && b < c && b < d)
+                {
+                    minDir = 0;
+                    maxDir = 0;
+                }
+                else if (c < b && c < a && c < d)
+                {
+                    minDir = pi * 3 / 2;
+                    maxDir = pi * 3 / 2;
+                }
+                else
+                {
+                    minDir = pi / 2;
+                    maxDir = pi / 2;
+                }
             }
-            else if (c < b && c < a && c < d)
-            {
-                minDir = pi;
-                maxDir = pi*2;
-            }
-            else if (d < b && d < c && d < a)
-            {
-                minDir = 0;
-                maxDir = pi;
-            }
+
+
         }
         public void SetExpanded(bool expanded) // currently only DataPort uses this
         {
@@ -84,6 +113,8 @@ namespace GraphUI
 
         public int GetNewEdgeOrder(Vector3 pos)
         {
+            if (maxDir == minDir) return Edges.Count;
+
             var delta = pos - transform.position;
             delta.z = 0;
             float dir = Vector3.SignedAngle(Vector3.right, delta,Vector3.forward)*Mathf.Deg2Rad;

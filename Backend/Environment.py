@@ -5,6 +5,7 @@ import nodes
 import edges
 import built_in_FunctionNode
 import queue
+import inspect
 
 
 class num_iter:
@@ -18,12 +19,18 @@ class num_iter:
 
 # the environment to run the code in
 class Env():
+    node_modules = [built_in_FunctionNode]
     node_classes = \
     [
         nodes.CodeNode,
-        built_in_FunctionNode.SumFunctionNode,
-        nodes.EvalNode
+        nodes.EvalAssignNode
     ]
+    module = ''
+    for module in node_modules:
+        for m in inspect.getmembers(module, inspect.isclass):
+            if m[1].__module__ == module.__name__:
+                node_classes.append(m[1])
+
     def __init__(self,name):
         self.name=name
         self.thread=None

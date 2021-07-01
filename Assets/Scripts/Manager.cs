@@ -19,6 +19,7 @@ public class Manager : MonoBehaviour
     public Dictionary<string, GameObject> prefabDict;
 
     public Transform demoNodeContainer;
+    public GameObject containerPrefab;
     
     public enum State
     {
@@ -84,21 +85,11 @@ public class Manager : MonoBehaviour
 
     public void AddNode(Node node) // Called by Node when the Creating corutine ends
     {
-        // Tell server adding a node
+        // Tell server to add a node
         node.id = GetNewID();
         Nodes.Add(node.id, node);
         if (!connectToServer) return;
         env.Send(new APIMessage.NewNode(node.id, node.type, node.name, node.transform.position).Json);
-        /*
-        if (node is CodeNode)
-        {
-            env.Send(new APIMessage.NewNode(node.id,node.type,node.name, node.transform.position).Json);
-        }
-        
-        if (node is FunctionNode)
-        {
-            env.Send(new APIMessage.NewFunctionNode(node.id, node.name, node.transform.position,"AddFunctionNode").Json);
-        }*/
     }
 
     public void RemoveNode(Node node)
@@ -291,5 +282,26 @@ public class Manager : MonoBehaviour
                 node.AddOutput(message.info);
             }
         }
+    }
+
+    public Transform FindCategoryPanel(string categoryString)
+    {
+        print(categoryString);
+        string[] cat = categoryString.Split('/');
+        Transform panel = demoNodeContainer;
+        foreach(string n in cat)
+        {
+            print(n);
+            var t = panel.Find(n);
+            if (t) panel = t;
+            else
+            {
+                panel = Instantiate(containerPrefab, panel).transform;
+                panel.SetSiblingIndex(panel.parent.childCount - 2);
+                panel.GetComponentInChildren<TMPro.TMP_Text>().text = n;
+                panel.name = n;
+            }
+        }
+        return panel.Find("NodePanel");
     }
 }

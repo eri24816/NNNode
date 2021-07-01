@@ -59,6 +59,7 @@ class Node:
     Base class of all types of nodes
     '''
     display_name = 'Node'
+    category = ''
 
     class Info(TypedDict):
         type : str
@@ -66,6 +67,8 @@ class Node:
 
         # for client ------------------------------
         frontend_type : str     # CodeNode, FunctionNode, RoundNode
+        category : str
+        doc : str
         name : str              # Just for frontend. In backend we never use it but use "id" instead
         pos : List[float]       # While some nodes are not draggable e.g. their positions are determined by its adjacent nodes
         output : str            # Output is necessary for all classes of node to at least store exceptions occured in nodes
@@ -86,7 +89,7 @@ class Node:
         And when client sends "rdo", the node can be recreated from it. 
         '''
         return {
-            "type":type(self).__name__,"id":self.id,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
+            "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
         'portInfos' : [json.dumps(port.get_dict()) for port in self.port_list]
         }
     
@@ -95,12 +98,12 @@ class Node:
         Different node classes might have Port classes that own different properties for frontend to read. 
         In such case, inherit this
         '''
-        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', discription : str = '',pos = [0,0,0], on_edge_activate = lambda : None):
+        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None):
             self.type = type
             self.isInput = isInput
             self.max_connections = max_connections
             self.name = name
-            self.discription = discription 
+            self.description = description 
             self.pos = pos
             self.on_edge_activate = on_edge_activate
             self.flows : List[edges.ControlFlow] = [] 
@@ -112,7 +115,7 @@ class Node:
                 'isInput' : self.isInput,
                 'max_connections' : self.max_connections,
                 'name': self.name,
-                'discription' : self.discription,
+                'description' : self.description,
                 'pos' : v3(*self.pos)
                 }
 
@@ -256,14 +259,13 @@ class CodeNode(Node):
     '''
     A node with editable code, like a block in jupyter notebook.
 
-    The node will be invoked when every input dataflows and the input controlflow (if there is one) are all activated.
-    It can also be invoked directly by client(e.g. double click on the node).
-    It will just run the code in it.
-    After running, it will activate its output dataflows and ControlFlow (if there is one).
+    The node will be invoked when its input Controlflow is activated or double click on the node.
+    It will execute its code and activate its output ControlFlow (if there is one).
     '''
 
     frontend_type = 'CodeNode'
-    display_name = 'Code Node'
+    category = 'basic'
+    display_name = 'Code'
     
 
     class Info(Node.Info):
@@ -333,9 +335,11 @@ class CodeNode(Node):
             return 1
         return 0
 
-class EvalNode(CodeNode):
+class EvalAssignNode(CodeNode):
+
     frontend_type = 'SimpleCodeNode'
-    display_name = 'eval'
+    category = 'basic'
+    display_name = 'Evaluate or Assign'
 
     def __init__(self, info: Node.Info, env: Environment.Env):
         super().__init__(info, env)
@@ -378,7 +382,8 @@ class FunctionNode(Node):
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
 
-    display_name = 'Function Node'
+    display_name = 'Function'
+    category = 'function'
     frontend_type = 'FunctionNode'
 
     class Info(Node.Info):
@@ -397,10 +402,9 @@ class FunctionNode(Node):
         info: {type=FunctionNode,id,name,pos,output}
         '''
         super().__init__(info,env)
-
         if self.frontend_type == 'RoundNode':
-            in_port_pos = [[math.cos(t),math.sin(t),0.0] for t in [np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]]
-            out_port_pos = [[math.cos(t),math.sin(t),0.0] for t in [np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]]
+            in_port_pos = [[math.cos(t),math.sin(t),0.0] for t in np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]
+            out_port_pos = [[math.cos(t),math.sin(t),0.0] for t in np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]
         else :
             in_port_pos = [[0,0,0]]*len(self.in_names)
             out_port_pos = [[0,0,0]]*len(self.out_names)
