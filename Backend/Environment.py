@@ -18,7 +18,7 @@ class num_iter:
 
 # the environment to run the code in
 class Env():
-    node_modules = [function,visual]
+    node_modules = [function]
     node_classes = \
     [
         node.CodeNode,
@@ -34,7 +34,7 @@ class Env():
         self.name=name
         self.thread=None
         self.id_iter = num_iter(-1)
-        self.nodes: Dict[str,nodes.Node] = {} # {id : Node}
+        self.nodes: Dict[str,node.Node] = {} # {id : Node}
         self.edges={} # {id : Edge}
         self.globals=globals()
         self.locals={}
@@ -51,7 +51,7 @@ class Env():
 
         # for run() thread
         self.nodes_to_run = queue.Queue()
-        self.running_node : nodes.Node = None
+        self.running_node : node.Node = None
         
     class History_sequence():
         next_history_sequence_id = 0
@@ -63,13 +63,13 @@ class Env():
         def __exit__(self, type, value, traceback):
             self.env.current_history_sequence_id = -1   
     
-    def Create(self,info:nodes.Node.Info): 
+    def Create(self,info:node.Node.Info): 
         '''
         Create any type of node or edge in the environment
         '''
         # info: {id, type, ...}
         type = info['type']
-        class_pool = [nodes,edges,built_in_FunctionNode]
+        class_pool = Env.node_classes+[edge]
         c = None
         for p in class_pool:
             c = getattr(p,type,None)

@@ -4,6 +4,7 @@ using UnityEngine;
 using WebSocketSharp;
 using GraphUI;
 using System.Collections.Concurrent;
+using Newtonsoft.Json;
 
 public class Manager : MonoBehaviour
 {
@@ -62,6 +63,11 @@ public class Manager : MonoBehaviour
             StartCoroutine(AskForUpdate(hz: 5)); // repeat getting update message from server
         }
         
+    }
+
+    public void SendCommand(object obj)
+    {
+        env.Send(JsonUtility.ToJson(obj));
     }
 
     public string GetNewID()
@@ -206,9 +212,11 @@ public class Manager : MonoBehaviour
                     }
                     else
                     {
-                        var message = JsonUtility.FromJson<APIMessage.NewNode>(received);
+                        var message = JsonUtility.FromJson<APIMessage.NewNode>(received);  
+
                         GameObject prefab = prefabDict[message.info.frontend_type];
                         var node = Instantiate(prefab).GetComponent<Node>();
+
                         node.Init(message.info);
                     } 
                 }
