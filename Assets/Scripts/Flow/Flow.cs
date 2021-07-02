@@ -5,8 +5,39 @@ using UnityEngine.EventSystems;
 
 namespace GraphUI
 {
-    public class Flow : Selectable
+    public class Flow : Selectable, IUpdateMessageReciever
     {
+        public class API_new
+        {
+            public string command = "new";
+            public Info info;
+            [System.Serializable]
+            public struct Info
+            {
+                public string id;
+                public string type;
+                public string head;
+                public string tail;
+                public int head_port_id;
+                public int tail_port_id;
+            }
+            
+            public API_new(Flow flow)
+            {
+                info.id = flow.id; info.type = flow.GetType().Name; info.head = flow.head.node.id; info.tail = flow.tail.node.id;
+                info.head_port_id = flow.head.port_id; info.tail_port_id = flow.tail.port_id;
+            }
+        }
+        public class API_update_message
+        {
+            public API_update_message(string id, string command, string info)
+            {
+                this.id = id; this.command = command; this.info = info;
+            }
+            public string command;
+            public string id;
+            public string info;
+        }
 
         public string id;
         public Port tail, head;
@@ -100,7 +131,9 @@ namespace GraphUI
                     head = targetPort;
 
                 targetPort.Edges.Insert(targetPort.GetNewEdgeOrder(CamControl.worldMouse),this);
-                Manager.ins.AddFlow(this);
+                id = Manager.ins.GetNewID();
+                Manager.ins.SendToServer(new API_new(this));
+                Manager.ins.Flows.Add(id, this);
                 Manager.ins.state = Manager.State.idle;
                 targetPort.RecalculateEdgeDir();
                 yield break;
@@ -114,13 +147,14 @@ namespace GraphUI
         public override void Remove()
         {
             base.Remove();
-            Manager.ins.RemoveFlow(this);
+            Manager.ins.SendToServer(new API_update_message(id,"rmv",""));
             RawRemove();
         }
         public void RawRemove()
         {
             if (tail) { tail.Disconnect(this); tail.RecalculateEdgeDir(); }
             if (head) { head.Disconnect(this); head.RecalculateEdgeDir(); }
+            Manager.ins.Flows.Remove(id);
 
             Destroy(gameObject);
         }
@@ -161,6 +195,17 @@ namespace GraphUI
             if (changeColor != null)
                 StopCoroutine(changeColor);
             StartCoroutine(changeColor = line.ChangeColor(colorUnselected));
+        }
+
+        public void RecieveUpdateMessage(string message, string command)
+        {
+            switch (command)
+            {
+                case "rmv":
+                    RawRemove();
+                    Manager.ins.Flows.Remove(id);
+                    break;
+            }
         }
         // TODO !!!!!!!!!!!!!!!!!!!
         /*

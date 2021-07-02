@@ -10,6 +10,17 @@ namespace GraphUI
             Child game object of a node.
             Handle edges connected to the node.
         */
+        [System.Serializable]
+        public struct Info
+        {
+            public string type;
+            public bool isInput;
+            public int max_connections;
+            public bool with_order;
+            public string name;
+            public string discription;
+            public Vector3 pos;
+        }
 
         public Node node;
         public int port_id;
@@ -22,7 +33,7 @@ namespace GraphUI
         float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
-        public void Init(Node node,Node.PortInfo info)
+        public void Init(Node node,Info info)
         {
             isInput = info.isInput;
             maxEdges = info.max_connections;

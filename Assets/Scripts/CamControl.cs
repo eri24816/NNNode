@@ -89,7 +89,10 @@ public class CamControl : MonoBehaviour
         if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Manager.ins.Undo(Selectable.TheOnlySelectedNode());
         if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Manager.ins.Redo(Selectable.TheOnlySelectedNode());
         if (Input.GetKeyDown(KeyCode.Delete))
+        {
             Selectable.Delete();
+        }
+            
     }
 
     public void OnBackgroundScroll(PointerEventData e)

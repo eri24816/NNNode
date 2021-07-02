@@ -11,6 +11,7 @@ import copy
 from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
+    import edge
 
 class node_StringIO():
     def __init__(self,node):
@@ -88,7 +89,7 @@ class Node:
         '''
         return {
             "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
-        'portInfos' : [json.dumps(port.get_dict()) for port in self.port_list]
+        'portInfos' : [port.get_dict() for port in self.port_list]
         }
     
     class Port():
@@ -104,7 +105,7 @@ class Node:
             self.description = description 
             self.pos = pos
             self.on_edge_activate = on_edge_activate
-            self.flows : List[edges.ControlFlow] = [] 
+            self.flows : List[edge.ControlFlow] = [] 
             self.with_order = with_order
 
         def get_dict(self):
@@ -281,8 +282,7 @@ class CodeNode(Node):
         self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
         self.out_control = self.Port('ControlPort', False, pos = [1,0,0])
         self.port_list = [self.in_control, self.out_control]
-
-        
+       
 
     def get_info(self) -> Dict[str]:
         t = super().get_info()

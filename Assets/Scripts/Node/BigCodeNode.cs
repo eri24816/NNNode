@@ -23,13 +23,14 @@ namespace GraphUI
         public float maxOutputHeight = 150;
 
         readonly CoolDown recvCodeCD = new CoolDown(hz: 10);
-        
 
-        public override void Init(APIMessage.NewNode.Info info)
+
+        public override void Init(string infoJSON)
         {
-            base.Init(info);
+            base.Init(infoJSON);
+
             nameInput.text = name;
-            Code = info.code;
+            
         }
 
         public override void Update()

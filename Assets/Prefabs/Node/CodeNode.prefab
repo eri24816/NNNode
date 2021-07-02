@@ -174,7 +174,7 @@ MonoBehaviour:
   - {fileID: 17475914941190146}
   type: 
   isDemo: 0
-  dragging: 1
+  dragging: 0
   CodeEditorScript: {fileID: 5729784863857506007}
   expanded: 1
   nameInput: {fileID: 4192451250957532073}

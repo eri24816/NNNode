@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Dict
 from history import *
 import edge
-from node import node,function, visual
+import node
 import queue
 import inspect
 
@@ -18,6 +18,7 @@ class num_iter:
 
 # the environment to run the code in
 class Env():
+    '''
     node_modules = [function]
     node_classes = \
     [
@@ -29,6 +30,10 @@ class Env():
         for m in inspect.getmembers(module, inspect.isclass):
             if m[1].__module__ == module.__name__:
                 node_classes.append(m[1])
+   '''
+    node_classes = {}
+    for m in inspect.getmembers(node, inspect.isclass):
+        node_classes.update({m[0]:m[1]})
 
     def __init__(self,name):
         self.name=name
@@ -69,12 +74,12 @@ class Env():
         '''
         # info: {id, type, ...}
         type = info['type']
-        class_pool = Env.node_classes+[edge]
-        c = None
-        for p in class_pool:
-            c = getattr(p,type,None)
-            if c != None:
-                break
+        if type == 'ControlFlow':
+            c = edge.ControlFlow
+        elif type == 'DataFlow':
+            c = edge.DataFlow
+        else:
+            c = self.node_classes[type]
         new_instance = c(info,self)
 
         id=info['id']
@@ -203,7 +208,7 @@ class Env():
         # In a regular create node process, we call self.Create() to generate a history item (command = "new"), 
         # which will later be sent to client.
         # However, demo nodes creation should not be undone, so here we put the message "new" in update_message buffer.
-        for node_class in self.node_classes:
+        for node_class in self.node_classes.values():
             self.Write_update_message(-1,'new',node_class.get_class_info())
 
     # run in another thread from the main thread (server.py)

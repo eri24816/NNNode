@@ -4,15 +4,19 @@ using UnityEngine;
 using WebSocketSharp;
 using GraphUI;
 using System.Collections.Concurrent;
-using Newtonsoft.Json;
+
+public interface IUpdateMessageReciever
+{
+    public void RecieveUpdateMessage(string message, string command);
+}
 
 public class Manager : MonoBehaviour
 {
-    public bool connectToServer=true;// Set this to false when debugging and don't want to connect to server.
+    public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
 
     public static Manager ins;
     public Transform canvasTransform;
-    public Dictionary<string,Node> Nodes;
+    public Dictionary<string, Node> Nodes;
     public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
     public GameObject[] prefabs;
@@ -65,9 +69,10 @@ public class Manager : MonoBehaviour
         
     }
 
-    public void SendCommand(object obj)
+    public void SendToServer(object obj)
     {
-        env.Send(JsonUtility.ToJson(obj));
+        if(connectToServer)
+            env.Send(JsonUtility.ToJson(obj));
     }
 
     public string GetNewID()
@@ -75,49 +80,8 @@ public class Manager : MonoBehaviour
         Debug.Assert(avaliableIds.TryDequeue(out string id));
         return id;
     }
-
-    public void AddFlow(Flow flow)
-    {
-        flow.id = GetNewID();
-        Flows.Add(flow.id,flow);
-
-        if (connectToServer)
-            env.Send(new APIMessage.NewFlow(flow).Json);
-    }
-
      
     public int nameNum = 0;
-
-
-    public void AddNode(Node node) // Called by Node when the Creating corutine ends
-    {
-        // Tell server to add a node
-        node.id = GetNewID();
-        Nodes.Add(node.id, node);
-        if (!connectToServer) return;
-        env.Send(new APIMessage.NewNode(node.id, node.type, node.name, node.transform.position).Json);
-    }
-
-    public void RemoveNode(Node node)
-    {
-        Nodes.Remove(node.id);
-        if (connectToServer)
-            env.Send(new APIMessage.Rmv(node.id).Json);
-    }
-
-    public void RemoveFlow(Flow flow)
-    {
-        Flows.Remove(flow.id);
-        if (connectToServer)
-            env.Send(new APIMessage.Rmv(flow.id).Json);
-    }
-
-    public void MoveNode(Node node,Vector3 pos)
-    {
-        if (connectToServer)
-            env.Send(new APIMessage.Mov(node.id,pos).Json);
-    }
-
 
     public void Undo(Node node = null)
     {
@@ -131,16 +95,6 @@ public class Manager : MonoBehaviour
         string id = node ? node.id : "";
         if (connectToServer)
             env.Send("{\"command\":\"rdo\",\"id\":\"" + id + "\"}");
-    }
-
-    public void SetCode(Node node)
-    {
-        if (!connectToServer) return;
-        if (node is CodeNode codeNode)
-        {
-            env.Send(new APIMessage.Cod(node.id, codeNode.Code).Json);
-        }
-        
     }
 
     public void Activate(Node node)
@@ -196,7 +150,6 @@ public class Manager : MonoBehaviour
                 var id = FindString(received, "id");
                 if (!Nodes.ContainsKey(id) && !Flows.ContainsKey(id))
                 {
-
                     string type = FindString(received, "type");
                     if (type == "ControlFlow" || (type == "DataFlow"))
                     {
@@ -217,29 +170,9 @@ public class Manager : MonoBehaviour
                         GameObject prefab = prefabDict[message.info.frontend_type];
                         var node = Instantiate(prefab).GetComponent<Node>();
 
-                        node.Init(message.info);
+                        node.Init(received);
                     } 
                 }
-            }
-            else if (command == "mov")
-            {
-                var message = JsonUtility.FromJson<APIMessage.Mov>(received);
-                Nodes[message.id].RawMove(message.pos);
-            }
-            else if (command == "rmv")
-            {
-                var message = JsonUtility.FromJson<APIMessage.Rmv>(received);
-                if (Nodes.ContainsKey(message.id))
-                {
-                    StartCoroutine(Nodes[message.id].Removing());
-                    Nodes.Remove(message.id);
-                }
-                if (Flows.ContainsKey(message.id))
-                {
-                    Flows[message.id].RawRemove();
-                    Flows.Remove(message.id);
-                }
-
             }
 
             else if (command == "gid")// get a unused id to assign to new nodes or flows
@@ -248,46 +181,13 @@ public class Manager : MonoBehaviour
                 avaliableIds.Enqueue(message.id);
             }
 
-            else if (command == "cod")
+            else // directly send update messages to node
             {
-                var message = JsonUtility.FromJson<APIMessage.Cod>(received);
-                Node node = Nodes[message.id];
-                if (node is CodeNode codeNode)
-                    codeNode.Code = message.info;
-            }
-            else if (command == "act")
-            {
-                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(received);
-                if (Nodes.ContainsKey(message.id))
-                {
-                    if (message.info == "0")
-                        Nodes[message.id].DisplayInactivate();
-                    if (message.info == "1")
-                        Nodes[message.id].DisplayPending();
-                    if (message.info == "2")
-                        Nodes[message.id].DisplayActivate();
-                }/* TODO
-                else
-                {
-                    if (message.info == "0")
-                        Flows[message.id].DisplayInactivate();
-                    if (message.info == "1")
-                        Flows[message.id].DisplayPending();
-                    if (message.info == "2")
-                        Flows[message.id].DisplayActivate();
-                }*/
-            }
-            else if (command == "clr")
-            {
-                var message = JsonUtility.FromJson<APIMessage.Gid>(received);
-                Node node = Nodes[message.id];
-                node.ClearOutput();
-            }
-            else if (command == "out")
-            {
-                var message = JsonUtility.FromJson<APIMessage.UpdateMessage>(received);
-                Node node = Nodes[message.id];
-                node.AddOutput(message.info);
+                var id = JsonUtility.FromJson<APIMessage.UpdateMessage>(received).id;
+                if (Nodes.ContainsKey(id))
+                    Nodes[id].RecieveUpdateMessage(received, command);
+                else if(Flows.ContainsKey(id))
+                    Flows[id].RecieveUpdateMessage(received, command);
             }
         }
     }

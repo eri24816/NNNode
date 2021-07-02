@@ -6,11 +6,5 @@ namespace GraphUI
     public class SimpleCodeNode : CodeNode
     {
 
-
-        public override void Init(APIMessage.NewNode.Info info)
-        {
-            base.Init(info);
-            Code = info.code;
-        }
     }
 }
