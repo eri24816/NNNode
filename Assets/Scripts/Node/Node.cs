@@ -98,14 +98,15 @@ namespace GraphUI
         {
             struct API_atr { public string id, command, name; public dataType value; }
 
-            dataType value;
+            dataType value; // If delegate GetValue is not null, this field will not be used.
             readonly string name, nodeId;
-            readonly CoolDown recvCD;
+            readonly CoolDown recvCD,sendCD;
             dataType recievedValue;
 
             // Delay recieving value after sending value
-            float delay = 1;
+            readonly float delay = 1;
 
+            // Like get set of a property
             public delegate void SetValue(dataType value);
             SetValue setValue;
             public delegate dataType GetValue();
@@ -118,16 +119,18 @@ namespace GraphUI
                 this.setValue = setValue;
                 this.getValue = getValue;
                 recvCD = new CoolDown(3);
+                sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
                 node.nodeAttr.Add(name,this);
             }
             public void Set(dataType value)
             {
-                this.value = value;
+                if(getValue == null)
+                    this.value = value;
                 setValue?.Invoke(value);
             }
             public dataType Get()
             {
-                if (getValue != null) return (getValue());
+                if (getValue != null) return getValue();
                 return value;
             }
             public void Recieve(string Json)
@@ -137,7 +140,7 @@ namespace GraphUI
             }
             public void Send()
             {
-                Manager.ins.SendToServer(new API_atr { id = nodeId, command = "atr", name = name, value = Get() });
+                sendCD.Request();
                 recvCD.Delay(delay);
             }
 
@@ -147,6 +150,10 @@ namespace GraphUI
                 if (recvCD.Update())
                 {
                     Set(recievedValue);
+                }
+                if (sendCD.Update())
+                {
+                    Manager.ins.SendToServer(new API_atr { id = nodeId, command = "atr", name = name, value = Get() });
                 }
             }
         }

@@ -70,22 +70,7 @@ public class CamControl : MonoBehaviour
         }
         Physics.Raycast(cam.ScreenPointToRay(mouse), out RaycastHit hit);
         colliderHover = hit.collider;
-        /*
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            Node newNode = Instantiate(Manager.ins.prefabDict["CodeNode"]).GetComponent<Node>();
-            newNode.Name = newNode.name = $"CodeNode {Manager.ins.nameNum++}";
-            newNode.transform.position = worldMouse;
-            StartCoroutine(newNode.Creating());
-        }
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            Node newNode = Instantiate(Manager.ins.prefabDict["FunctionNode"]).GetComponent<Node>();
-            newNode.Name = newNode.name = $"FunctionNode {Manager.ins.nameNum++}";
-            newNode.transform.position = worldMouse;
-            StartCoroutine(newNode.Creating());
-        }
-        */
+
         if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Manager.ins.Undo(Selectable.TheOnlySelectedNode());
         if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Manager.ins.Redo(Selectable.TheOnlySelectedNode());
         if (Input.GetKeyDown(KeyCode.Delete))
