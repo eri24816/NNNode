@@ -59,7 +59,9 @@ class Node:
     '''
     display_name = 'Node'
     category = ''
-    default_attr = {}
+    default_attr = {
+        'pos':v3(0,0,0)
+    }
 
     class Info(TypedDict):
         type : str
@@ -147,6 +149,7 @@ class Node:
         # Each types of node have different attributes. Client can set them by sending "atr" command.
         # Changes of attributes will create update messages and send to clients with "atr" command.
         self.attributes = self.default_attr.copy()
+        
         if 'attr' in info:
             self.attributes.update(info['attr'])
 
@@ -217,6 +220,7 @@ class Node:
         if command == "act":
             self.activate()
         if command =='atr':
+            print('\n'+str(m)+'\n')
             self.set_attribute(m['name'],m['value'])
     
     
@@ -224,6 +228,7 @@ class Node:
         # Attribute changes are logged in node history
         self.Update_history("atr",{"id":self.id,"name": attr_name,"old":self.attributes[attr_name],"new":value}) 
         self.attributes.update({attr_name: value})
+        print('\n\nset attribute {} set to {}\n self.attribute = {}\n\n'.format(attr_name,value,self.attributes))
         self.env.Write_update_message(self.id,'atr',attr_name)
 
     def move(self,pos):
@@ -294,7 +299,8 @@ class CodeNode(Node):
     category = 'basic'
     display_name = 'Code'
 
-    default_attr = {'code':''}
+    default_attr = Node.default_attr.copy()
+    default_attr.update( {'code':''})
     
     class Info(Node.Info):
         code : str

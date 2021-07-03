@@ -135,6 +135,8 @@ class Env():
         k=command+"/"+str(id)
         if command == 'new':
             k+='/'+v['type']
+        if command == 'atr':
+            k+='/'+v
         for buffer in self.update_message_buffers:
             if command == 'out':
                 if k not in buffer:

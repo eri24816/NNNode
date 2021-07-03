@@ -60,16 +60,6 @@ namespace GraphUI
                 line.Head = head.transform.position;
             }
         }
-        public void Move(Vector3 movement)
-        {
-            transform.Translate(movement);
-            if (hard)
-            {
-                tail.node.Move(movement);
-                head.node.Move(movement);
-                
-            }
-        }
 
         public void SetDir(bool isTail,Vector3 dir)
         {

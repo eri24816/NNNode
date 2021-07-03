@@ -40,6 +40,7 @@ namespace GraphUI
         public string id, Name;
         [SerializeField]
         protected Dictionary<string, INodeAttr> nodeAttr;
+        NodeAttr<Vector3> Pos;
         protected string output = "";
         [SerializeField]  
         UnityEngine.UI.Outline outline_running;
@@ -82,16 +83,7 @@ namespace GraphUI
             public string id;
             public string info;
         }
-        public class API_mov
-        {
-            public API_mov(string id, Vector3 pos)
-            {
-                this.id = id; this.pos = pos;
-            }
-            public string command = "mov";
-            public string id;
-            public Vector3 pos;
-        }
+
         public struct API_atr { public string name; }
         protected interface INodeAttr { public void Recieve(string Json); public void Update(); }
         protected class NodeAttr<dataType>: INodeAttr
@@ -122,11 +114,12 @@ namespace GraphUI
                 sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
                 node.nodeAttr.Add(name,this);
             }
-            public void Set(dataType value)
+            public void Set(dataType value, bool send = true)
             {
                 if(getValue == null)
                     this.value = value;
                 setValue?.Invoke(value);
+                if (send) Send();
             }
             public dataType Get()
             {
@@ -149,7 +142,7 @@ namespace GraphUI
             {
                 if (recvCD.Update())
                 {
-                    Set(recievedValue);
+                    Set(recievedValue, false);
                 }
                 if (sendCD.Update())
                 {
@@ -157,21 +150,25 @@ namespace GraphUI
                 }
             }
         }
-
+         
         public virtual void Init(string infoJSON,string id_ = null)
         {
             /*
              Though infoJson already contains id, but when cloning from a demo node, I am too lazy to change the id in json. So in that case
              id is passed as an argument.
-             */
-            nodeAttr = new Dictionary<string, INodeAttr>();
+            */
+
             API_new.Info info  = JsonUtility.FromJson<API_new>(infoJSON).info;
 
             type = info.type;
             name = Name = info.name;
             id = info.id;
-            if (id_ != null) id = id_; 
-            transform.position = info.pos;
+            if (id_ != null) id = id_;
+
+            nodeAttr = new Dictionary<string, INodeAttr>();
+            Pos = new NodeAttr<Vector3>(this, "pos", (v) => { transform.position = v; }, () => { return transform.position; });
+
+            //transform.position = info.pos;
 
             isDemo = id == "-1";
             if(id != "-1")
@@ -231,9 +228,6 @@ namespace GraphUI
                         case "2": DisplayActivate(); break;
                     }
                     break;
-                case "mov":
-                    RawMove(JsonUtility.FromJson<API_mov>(message).pos);
-                    break;
                 case "atr":
                     nodeAttr[JsonUtility.FromJson<API_atr>(message).name].Recieve(message);
                     break;
@@ -263,17 +257,10 @@ namespace GraphUI
                 {
                     if (CamControl.worldMouseDelta.sqrMagnitude > 0)
                     {
-                        Move(CamControl.worldMouseDelta);
+                        Pos.Set(transform.position + CamControl.worldMouseDelta);
                     }
                 } 
-            if (recvMoveCD.Update())
-            {
-                transform.position = targetPos;
-            }
-            if (sendMoveCD.Update())
-            {
-                Manager.ins.SendToServer(new API_mov(id, transform.position));
-            }
+
             foreach(var attr in nodeAttr)
             {
                 attr.Value.Update();
@@ -297,8 +284,7 @@ namespace GraphUI
             Manager.ins.Activate(this);
         }
 
-        readonly CoolDown recvMoveCD = new CoolDown(hz: 10);
-        readonly CoolDown sendMoveCD = new CoolDown(hz: 10);
+
         Vector3 targetPos;
 
         bool dragging = false;
@@ -340,17 +326,6 @@ namespace GraphUI
         }
         public void OnDrag(PointerEventData eventData) { }
 
-        public void Move(Vector3 movement) // override this if some node classes shouldn't be moveable
-        {
-            transform.Translate(movement);// Although the server will send a move message back soon, to avoid a bad UX, the node in frontend moves in advance.
-            sendMoveCD.Request();
-            recvMoveCD.Delay(1);
-        }
-        public void RawMove(Vector3 p)
-        {
-            recvMoveCD.Request();
-            targetPos = p; // can't set transform.position outside update
-        }
         public virtual IEnumerator DragCreating()//Drag and drop
         {
             moveable = false;
@@ -364,6 +339,7 @@ namespace GraphUI
             moveable = true;
             //Manager.ins.Nodes.Add(id, this);
             Manager.ins.SendToServer(new API_new(this));
+            Pos.Send();
         }
         public virtual IEnumerator Removing()// SAO-like?
         {
