@@ -165,12 +165,7 @@ public class Manager : MonoBehaviour
                     }
                     else
                     {
-                        var message = JsonUtility.FromJson<APIMessage.NewNode>(received);  
-
-                        GameObject prefab = prefabDict[message.info.frontend_type];
-                        var node = Instantiate(prefab).GetComponent<Node>();
-
-                        node.Init(received);
+                        CreateNode(received);
                     } 
                 }
             }
@@ -191,7 +186,15 @@ public class Manager : MonoBehaviour
             }
         }
     }
+    public Node CreateNode(string json,string id = null)
+    {
+        var message = JsonUtility.FromJson<APIMessage.NewNode>(json);
 
+        GameObject prefab = prefabDict[message.info.frontend_type];
+        var node = Instantiate(prefab).GetComponent<Node>();
+        node.Init(json,id);
+        return node;
+    }
     public Transform FindCategoryPanel(string categoryString)
     {
         print(categoryString);

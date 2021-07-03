@@ -19,7 +19,7 @@ public class CoolDown
     public void Delay(float t=-1)
     {
         waitTime = Time.time + (t == -1 ? span : t);
-        pending = false;
+        //pending = false;
     }
     public bool Update()
     {
@@ -38,8 +38,10 @@ namespace GraphUI
     {
         public List<Port> ports;
         public string id, Name;
+        [SerializeField]
+        protected Dictionary<string, INodeAttr> nodeAttr;
         protected string output = "";
-        [SerializeField] 
+        [SerializeField]  
         UnityEngine.UI.Outline outline_running;
         [SerializeField]
         Color unselectedColor, hoverColor, selectedColor,outlineRunningColor,outlinePendingColor;
@@ -49,6 +51,8 @@ namespace GraphUI
         public string type; // class name in python
         public bool isDemo;
         bool moveable = true;
+
+        string newCommandJson;
 
         public class API_new
         {
@@ -78,7 +82,6 @@ namespace GraphUI
             public string id;
             public string info;
         }
-
         public class API_mov
         {
             public API_mov(string id, Vector3 pos)
@@ -89,14 +92,78 @@ namespace GraphUI
             public string id;
             public Vector3 pos;
         }
-
-        public virtual void Init(string infoJSON)
+        public struct API_atr { public string name; }
+        protected interface INodeAttr { public void Recieve(string Json); public void Update(); }
+        protected class NodeAttr<dataType>: INodeAttr
         {
+            struct API_atr { public string id, command, name; public dataType value; }
+
+            dataType value;
+            readonly string name, nodeId;
+            readonly CoolDown recvCD;
+            dataType recievedValue;
+
+            // Delay recieving value after sending value
+            float delay = 1;
+
+            public delegate void SetValue(dataType value);
+            SetValue setValue;
+            public delegate dataType GetValue();
+            GetValue getValue;
+
+            public NodeAttr(Node node, string name,SetValue setValue = null,GetValue getValue = null)
+            {
+                this.name = name;
+                nodeId = node.id;
+                this.setValue = setValue;
+                this.getValue = getValue;
+                recvCD = new CoolDown(3);
+                node.nodeAttr.Add(name,this);
+            }
+            public void Set(dataType value)
+            {
+                this.value = value;
+                setValue?.Invoke(value);
+            }
+            public dataType Get()
+            {
+                if (getValue != null) return (getValue());
+                return value;
+            }
+            public void Recieve(string Json)
+            {
+                recievedValue = JsonUtility.FromJson<API_atr>(Json).value;
+                recvCD.Request();
+            }
+            public void Send()
+            {
+                Manager.ins.SendToServer(new API_atr { id = nodeId, command = "atr", name = name, value = Get() });
+                recvCD.Delay(delay);
+            }
+
+            // Call this constantly
+            public void Update()
+            {
+                if (recvCD.Update())
+                {
+                    Set(recievedValue);
+                }
+            }
+        }
+
+        public virtual void Init(string infoJSON,string id_ = null)
+        {
+            /*
+             Though infoJson already contains id, but when cloning from a demo node, I am too lazy to change the id in json. So in that case
+             id is passed as an argument.
+             */
+            nodeAttr = new Dictionary<string, INodeAttr>();
             API_new.Info info  = JsonUtility.FromJson<API_new>(infoJSON).info;
 
             type = info.type;
             name = Name = info.name;
             id = info.id;
+            if (id_ != null) id = id_; 
             transform.position = info.pos;
 
             isDemo = id == "-1";
@@ -107,6 +174,7 @@ namespace GraphUI
             }
             else
             {
+                newCommandJson = infoJSON;
                 transform.localScale = Vector3.one * 0.7f;
                 Manager.ins.DemoNodes.Add(type, this);
                 transform.SetParent( Manager.ins.FindCategoryPanel(info.category));
@@ -159,10 +227,11 @@ namespace GraphUI
                 case "mov":
                     RawMove(JsonUtility.FromJson<API_mov>(message).pos);
                     break;
+                case "atr":
+                    nodeAttr[JsonUtility.FromJson<API_atr>(message).name].Recieve(message);
+                    break;
                 case "rmv":
-                    
                     StartCoroutine(Removing());
-                    
                     break;
                     
             }
@@ -198,6 +267,10 @@ namespace GraphUI
             {
                 Manager.ins.SendToServer(new API_mov(id, transform.position));
             }
+            foreach(var attr in nodeAttr)
+            {
+                attr.Value.Update();
+            }
         }
 
         public virtual void AddOutput(string output)
@@ -230,14 +303,13 @@ namespace GraphUI
 
             if (isDemo) // Create a new node
             {
-                Node newNode = Instantiate(gameObject).GetComponent<Node>();
-                newNode.id = Manager.ins.GetNewID();
-                newNode.isDemo = false;
+                //Node newNode = Instantiate(gameObject).GetComponent<Node>();newNode.id = Manager.ins.GetNewID();newNode.isDemo = false;
+                Node newNode = Manager.ins.CreateNode(newCommandJson, Manager.ins.GetNewID());
                 newNode.transform.localScale = 0.002f * Vector3.one;
                 StartCoroutine(newNode.DragCreating());
 
                 return;
-            }
+            }  
             else if(moveable)
             {
                 if (!selected) OnPointerClick(eventData); // if not selected, select it first
@@ -283,7 +355,7 @@ namespace GraphUI
                 yield return null;
             }
             moveable = true;
-            Manager.ins.Nodes.Add(id, this);
+            //Manager.ins.Nodes.Add(id, this);
             Manager.ins.SendToServer(new API_new(this));
         }
         public virtual IEnumerator Removing()// SAO-like?

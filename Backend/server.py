@@ -137,9 +137,11 @@ async def env_ws(websocket, path):
                 env.running_node.flush_output()
             for key, value in sorted(update_message_buffer.copy().items()):
                 command_, id = key[:3], key[4:]
-                if command_ == "cod":
-                    value=env.nodes[id].code
-                await websocket.send(json.dumps({'command': command_, 'id': id, 'info': value}))
+
+                if command_ == "atr":
+                    await websocket.send(json.dumps({'command': command_, 'id': id, 'name':value,'value':env.nodes[id].attributes[value]}))
+                else:
+                    await websocket.send(json.dumps({'command': command_, 'id': id, 'info': value}))
                 #print({'command': command_, 'id': id, 'value': value})
             update_message_buffer.clear()
 

@@ -25,9 +25,9 @@ namespace GraphUI
         readonly CoolDown recvCodeCD = new CoolDown(hz: 10);
 
 
-        public override void Init(string infoJSON)
+        public override void Init(string infoJSON, string id = null)
         {
-            base.Init(infoJSON);
+            base.Init(infoJSON,id);
 
             nameInput.text = name;
             
@@ -36,10 +36,6 @@ namespace GraphUI
         public override void Update()
         {
             base.Update();
-            if (recvCodeCD.Update())
-            {
-                Code = recievedCode;
-            }
         }
         public override void Start()
         {

@@ -110,6 +110,7 @@ class Env():
             new, info - new node or edge
             mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
             rmv, info - remove node or edge
+            atr, name, old, new
         '''
         if self.lock_history:
             return

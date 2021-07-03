@@ -59,6 +59,7 @@ class Node:
     '''
     display_name = 'Node'
     category = ''
+    default_attr = {}
 
     class Info(TypedDict):
         type : str
@@ -85,11 +86,11 @@ class Node:
         '''
         Node info
         History item "new" stores this. When creating new node, this is sent to all clients.
-        And when client sends "rdo", the node can be recreated from it. 
+        And when client sends redo, the node can be recreated from it. 
         '''
         return {
             "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
-        'portInfos' : [port.get_dict() for port in self.port_list]
+        'portInfos' : [port.get_dict() for port in self.port_list],'attr': self.attributes
         }
     
     class Port():
@@ -118,20 +119,11 @@ class Node:
                 'name': self.name,
                 'description' : self.description,
                 'pos' : v3(*self.pos)
-                
                 }
 
     def __init__(self, info : Info, env : Environment.Env):
         # The environment
         self.env=env
-
-        # The flows connected to the node
-        '''
-        self.in_control : List[edges.ControlFlow] = []
-        self.out_control : List[edges.ControlFlow] = []
-        self.in_data : List[List[edges.DataFlow]] = []
-        self.out_data : List[List[edges.DataFlow]] = []
-        '''
 
         # For the API, each ports of the node are identified by position in this list
         # Create ports in __init__ then add all port into this list
@@ -152,10 +144,21 @@ class Node:
         # added lines of output when running, which will be sent to client
         self.added_output = "" 
 
+        # Each types of node have different attributes. Client can set them by sending "atr" command.
+        # Changes of attributes will create update messages and send to clients with "atr" command.
+        self.attributes = self.default_attr.copy()
+        if 'attr' in info:
+            self.attributes.update(info['attr'])
+
         if self.id != -1:
+            
             self.env.Update_history("new", self.get_info())
             self.first_history = self.latest_history = History_item("stt")
             self.lock_history=False
+
+            # For technical issues (C# bad), client won't read node attributes("atr") in "new" command. So update node attributes on client additionaly
+            for attr_name in self.attributes.keys():
+                self.env.Write_update_message(self.id,'atr',attr_name)
 
     def activate(self):
         if self.active: 
@@ -206,11 +209,25 @@ class Node:
 
     # for client ------------------------------
     def recive_command(self,m):
+        '''
+        {'id',command' : 'act'}
+        {'id',command' : 'atr', 'name', 'value'}
+        '''
         command = m['command']
         if command == "act":
             self.activate()
+        if command =='atr':
+            self.set_attribute(m['name'],m['value'])
     
+    
+    def set_attribute(self,attr_name, value):
+        # Attribute changes are logged in node history
+        self.Update_history("atr",{"id":self.id,"name": attr_name,"old":self.attributes[attr_name],"new":value}) 
+        self.attributes.update({attr_name: value})
+        self.env.Write_update_message(self.id,'atr',attr_name)
+
     def move(self,pos):
+        # TODO: take pos as a attribute
         self.env.Update_history("mov",{"id":self.id,"old":self.pos,"new":pos})# node moves are logged in env history
         self.pos=pos
 
@@ -218,12 +235,12 @@ class Node:
         '''
         type, content:
         stt, None - create the node
-        cod, {name, old, new} - change code
+        atr, {name, old, new} - change attribute
         '''
         if self.lock_history:
             return
-        # don't repeat cod history within 3 seconds 
-        if type=="cod" and self.latest_history.type=="cod" and content['id'] == self.latest_history.content['id']:
+        # don't repeat atr history within 3 seconds 
+        if type=="atr" and self.latest_history.type=="atr" and content['id'] == self.latest_history.content['id']:
             if (datetime.datetime.now() - self.latest_history.time).seconds<3:
                 self.latest_history.content['new']=content['new']
                 self.latest_history.version+=1
@@ -233,12 +250,16 @@ class Node:
         self.latest_history=History_item(type,content,self.latest_history) 
 
     def Undo(self):
-        
         if self.latest_history.last==None:
             return 0 # nothing to undo
+
+        if self.latest_history.type=="atr":
+            self.set_attribute(self.latest_history.content['name'],self.latest_history.content['old'])
+        
         self.latest_history.head_direction=-1
         self.latest_history=self.latest_history.last
         self.latest_history.head_direction = 0
+
         return 1
     
     def Redo(self):
@@ -247,6 +268,10 @@ class Node:
         self.latest_history.head_direction=1
         self.latest_history=self.latest_history.next
         self.latest_history.head_direction=0
+
+        if self.latest_history.type=="atr":
+            self.set_attribute(self.latest_history.content['name'],self.latest_history.content['new'])
+
         return 1
 
     def remove(self):
@@ -268,15 +293,16 @@ class CodeNode(Node):
     frontend_type = 'CodeNode'
     category = 'basic'
     display_name = 'Code'
-    
 
+    default_attr = {'code':''}
+    
     class Info(Node.Info):
         code : str
 
     def __init__(self,info : Info ,env : Environment.Env):
 
-        self.code=info['code']if 'code' in info else ''
         self.name=info['name']
+        
         super().__init__(info,env)
         
         self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
@@ -286,7 +312,7 @@ class CodeNode(Node):
 
     def get_info(self) -> Dict[str]:
         t = super().get_info()
-        t.update({'code':self.code})
+        t.update({'attr':self.attributes})
         return t
 
     def in_control_activate(self):
@@ -300,7 +326,7 @@ class CodeNode(Node):
         for flow in self.in_control.flows:
             flow.deactivate()
 
-        exec_(self.code,self.env.globals,self.env.locals)
+        exec_(self.attributes['code'],self.env.globals,self.env.locals)
 
     def running_finished(self, success = True):
         self.flush_output()
@@ -310,31 +336,7 @@ class CodeNode(Node):
         self.deactivate()
 
     # For client -----------------------------
-    def recive_command(self, m):
-        super().recive_command(m)
-        command = m['command']
-        if command =='cod':
-            self.set_code(m['info'])
 
-    def set_code(self,code):
-        # Code changes are logged in node history
-        self.code=code
-
-        self.Update_history("cod",{"id":self.id,"old":self.code,"new":code}) 
-        self.env.Write_update_message(self.id,'cod','')
-
-    def Undo(self):
-        if self.latest_history.last:
-            if self.latest_history.type=="cod":
-                self.set_code(self.latest_history.content['old'])
-        return super().Undo()
-
-    def Redo(self):
-        if super().Redo():
-            if self.latest_history.type=="cod":
-                self.set_code(self.latest_history.content['new'])
-            return 1
-        return 0
 
 class EvalAssignNode(CodeNode):
 
@@ -363,10 +365,10 @@ class EvalAssignNode(CodeNode):
                 self.value = []
                 for flow in self.in_data.flows:
                     self.value.append(flow.data)
-            #exec_(self.code + " = __value", self.env.globals, {'__value' : self.value})
-            self.env.globals.update({self.code: self.value})
+            #exec_(self.attributes['code'] + " = __value", self.env.globals, {'__value' : self.value})
+            self.env.globals.update({self.attributes['code']: self.value})
         else:
-            self.value = eval(self.code,self.env.globals,self.env.locals)
+            self.value = eval(self.attributes['code'],self.env.globals,self.env.locals)
         
 
     def running_finished(self, success = True):

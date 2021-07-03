@@ -12,9 +12,9 @@ namespace GraphUI
         TMPro.TMP_Text nameText;
         [SerializeField]
         GameObject inDataPortPrefab, outDataPortPrefab;
-        public override void Init(string infoJSON)
+        public override void Init(string infoJSON,string id = null)
         {
-            base.Init(infoJSON);
+            base.Init(infoJSON,id);
 
             if (nameText)
                 nameText.text = Name;
