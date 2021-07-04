@@ -98,17 +98,12 @@ class Env():
             with self.History_sequence(self): # removing a node may cause some edges also being removed. When undoing and redoing, these multiple actions should be done in a sequence.
                 self.nodes[info['id']].remove()
 
-
-    def Move(self,id,pos):
-        self.nodes[id].move(pos)
-
     
     def Update_history(self,type,content):
         '''
         type, content:
             stt, None - start the environment
             new, info - new node or edge
-            mov, {id, old:[oldx,oldy,oldz], new:[newx,newy,newz]} - move node
             rmv, info - remove node or edge
             atr, name, old, new
         '''

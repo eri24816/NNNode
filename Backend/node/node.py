@@ -1,7 +1,6 @@
 from __future__ import annotations
 import math
 import numpy as np
-import json
 from typing import Dict, List
 from history import *
 import datetime
@@ -59,9 +58,26 @@ class Node:
     '''
     display_name = 'Node'
     category = ''
+
     default_attr = {
+        # <name> : <default value>
         'pos':v3(0,0,0)
     }
+    
+    components = []
+
+    class Component:
+        '''
+        Like a slider or an input field
+        '''
+        def __init__(self,node : Node,type,target_attr):
+            node.components.append(self)
+            self.type = type
+            self.target_attr = target_attr
+        
+        def dict(self):
+            return {'type' : self.type, 'target_attr' : self.target_attr}
+
 
     class Info(TypedDict):
         type : str
@@ -231,11 +247,6 @@ class Node:
         print('\n\nset attribute {} set to {}\n self.attribute = {}\n\n'.format(attr_name,value,self.attributes))
         self.env.Write_update_message(self.id,'atr',attr_name)
 
-    def move(self,pos):
-        # TODO: take pos as a attribute
-        self.env.Update_history("mov",{"id":self.id,"old":self.pos,"new":pos})# node moves are logged in env history
-        self.pos=pos
-
     def Update_history(self, type, content):
         '''
         type, content:
@@ -314,12 +325,6 @@ class CodeNode(Node):
         self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
         self.out_control = self.Port('ControlPort', False, pos = [1,0,0])
         self.port_list = [self.in_control, self.out_control]
-       
-
-    def get_info(self) -> Dict[str]:
-        t = super().get_info()
-        t.update({'attr':self.attributes})
-        return t
 
     def in_control_activate(self):
         # The node is activated as soon as its input flow is activated

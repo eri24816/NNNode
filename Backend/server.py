@@ -101,14 +101,6 @@ async def env_ws(websocket, path):
             env.Remove({"id" : m['id']})
             await websocket.send("msg %s removed" % m['id'])
             
-        elif command == "mov":
-            '''
-            move a node to pos
-                {command:"mov",id,pos}
-            '''
-            
-            env.Move(m['id'],m['pos'])
-            await websocket.send("msg node %s moved to %s" % (m['id'],m['pos']))
 
         elif command == "upd":
             '''
