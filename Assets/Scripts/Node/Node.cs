@@ -129,6 +129,7 @@ namespace GraphUI
             public void Recieve(string Json)
             {
                 recievedValue = JsonUtility.FromJson<API_atr>(Json).value;
+                print("recievedValue: " + recievedValue);
                 recvCD.Request();
             }
             public void Send()

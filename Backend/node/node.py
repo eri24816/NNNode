@@ -52,32 +52,51 @@ def exec_(script,globals=None, locals=None):
 def v3(x,y,z):
     return {'x':x,'y':y,'z':z}
 
+class Attribute:
+    '''
+    State of node
+    '''
+    def __init__(self,node : Node,name,type, value):
+        node.attributes[name]=self
+        self.name = name
+        self.node = node
+        self.type = type # string, float, etc.
+        self.value = value
+    
+    def set(self,value):
+        # Attribute changes are logged in node history
+        self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value}) 
+
+        self.value = value
+
+        print('\n\nset attribute {} set to {}\n\n'.format(self.name,value))
+        self.node.env.Write_update_message(self.node.id,'atr',self.name)
+
+    def dict(self):
+        return {'name' : self.name, 'type' : self.type, 'value' : self.value}
+    
+class Component:
+    '''
+    Like a slider or an input field
+    A component connnects to an attribute.
+    Componte class have no set() method. When component value is modified, client should send "atr" command which will lead to Attribute.set()
+    '''
+    def __init__(self,node : Node,type,target_attr):
+        node.components.append(self)
+        self.type = type
+        self.target_attr = target_attr
+    
+    def dict(self):
+        return {'type' : self.type, 'target_attr' : self.target_attr}
+
+
 class Node:
     '''
     Base class of all types of nodes
     '''
     display_name = 'Node'
+    frontend_type : str = ''
     category = ''
-
-    default_attr = {
-        # <name> : <default value>
-        'pos':v3(0,0,0)
-    }
-    
-    components = []
-
-    class Component:
-        '''
-        Like a slider or an input field
-        '''
-        def __init__(self,node : Node,type,target_attr):
-            node.components.append(self)
-            self.type = type
-            self.target_attr = target_attr
-        
-        def dict(self):
-            return {'type' : self.type, 'target_attr' : self.target_attr}
-
 
     class Info(TypedDict):
         type : str
@@ -88,7 +107,6 @@ class Node:
         category : str
         doc : str
         name : str              # Just for frontend. In backend we never use it but use "id" instead
-        pos : List[float]       # While some nodes are not draggable e.g. their positions are determined by its adjacent nodes
         output : str            # Output is necessary for all classes of node to at least store exceptions occured in nodes
         portInfos : List[Dict]  # PortInfos are determined by server side Node classes and is used to tell client how to set up ports
 
@@ -107,10 +125,11 @@ class Node:
         And when client sends redo, the node can be recreated from it. 
         '''
         return {
-            "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"pos":self.pos,"output":self.output,'frontend_type' : self.frontend_type,
-        'portInfos' : [port.get_dict() for port in self.port_list],'attr': self.attributes
+            "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'frontend_type' : self.frontend_type,
+        'portInfos' : [port.get_dict() for port in self.port_list],'attr': [attr.dict()for _, attr in self.attributes.items()]
         }
     
+    # TODO: auto append into node.port_list
     class Port():
         '''
         Different node classes might have Port classes that own different properties for frontend to read. 
@@ -140,6 +159,9 @@ class Node:
                 }
 
     def __init__(self, info : Info, env : Environment.Env):
+        '''
+        For child classes, DO NOT override this. Override initialize() instead.
+        '''
         # The environment
         self.env=env
 
@@ -147,37 +169,42 @@ class Node:
         # Create ports in __init__ then add all port into this list
         self.port_list : List[self.Port] = []
 
+        # Each types of node have different attributes. Client can set them by sending "atr" command.
+        # Changes of attributes will create update messages and send to clients with "atr" command.
+        self.attributes : Dict[str,Attribute] = {}
+        self.components : List[Attribute] = []
+
+        self.type=type(self).__name__
+        self.id=info['id']
+
         # Is the node ready to run?
         self.active = False
 
-        # for client ------------------------------
-        self.type=type(self).__name__
-        self.id=info['id']
-        self.pos=info['pos'] if 'pos' in info else [0,0,0]
         self.output = info['output'] if 'output' in info else ''
-
-        # Class name in C#
-        self.frontend_type : str
 
         # added lines of output when running, which will be sent to client
         self.added_output = "" 
 
-        # Each types of node have different attributes. Client can set them by sending "atr" command.
-        # Changes of attributes will create update messages and send to clients with "atr" command.
-        self.attributes = self.default_attr.copy()
-        
-        if 'attr' in info:
-            self.attributes.update(info['attr'])
-
         if self.id != -1:
-            
             self.env.Update_history("new", self.get_info())
             self.first_history = self.latest_history = History_item("stt")
             self.lock_history=False
 
-            # For technical issues (C# bad), client won't read node attributes("atr") in "new" command. So update node attributes on client additionaly
-            for attr_name in self.attributes.keys():
-                self.env.Write_update_message(self.id,'atr',attr_name)
+        self.initialize() 
+
+        Attribute(self,'pos','Vector3',v3(0,0,0))
+        
+        if 'attr' in info:
+            for attr_dict in info['attr']:
+                self.attributes[attr_dict['name']].set(attr_dict['value'])
+
+    def initialize(self):
+        '''
+        Setup the node's attributes and components
+        This method is separated from __init__ because overrides of initialize() should be called after some setup in __init__()
+        '''
+
+        pass
 
     def activate(self):
         if self.active: 
@@ -237,15 +264,8 @@ class Node:
             self.activate()
         if command =='atr':
             print('\n'+str(m)+'\n')
-            self.set_attribute(m['name'],m['value'])
+            self.attributes[m['name']].set(m['value'])
     
-    
-    def set_attribute(self,attr_name, value):
-        # Attribute changes are logged in node history
-        self.Update_history("atr",{"id":self.id,"name": attr_name,"old":self.attributes[attr_name],"new":value}) 
-        self.attributes.update({attr_name: value})
-        print('\n\nset attribute {} set to {}\n self.attribute = {}\n\n'.format(attr_name,value,self.attributes))
-        self.env.Write_update_message(self.id,'atr',attr_name)
 
     def Update_history(self, type, content):
         '''
@@ -270,7 +290,7 @@ class Node:
             return 0 # nothing to undo
 
         if self.latest_history.type=="atr":
-            self.set_attribute(self.latest_history.content['name'],self.latest_history.content['old'])
+            self.attributes[self.latest_history.content['name']].set(self.latest_history.content['old'])
         
         self.latest_history.head_direction=-1
         self.latest_history=self.latest_history.last
@@ -286,7 +306,7 @@ class Node:
         self.latest_history.head_direction=0
 
         if self.latest_history.type=="atr":
-            self.set_attribute(self.latest_history.content['name'],self.latest_history.content['new'])
+            self.attributes[self.latest_history.content['name']].set(self.latest_history.content['new'])
 
         return 1
 
@@ -309,23 +329,18 @@ class CodeNode(Node):
     frontend_type = 'CodeNode'
     category = 'basic'
     display_name = 'Code'
-
-    default_attr = Node.default_attr.copy()
-    default_attr.update( {'code':''})
     
     class Info(Node.Info):
         code : str
 
-    def __init__(self,info : Info ,env : Environment.Env):
+    def initialize(self):
+        super().initialize()
 
-        self.name=info['name']
-        
-        super().__init__(info,env)
-        
+        self.code = Attribute(self,'code','string','')
         self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
         self.out_control = self.Port('ControlPort', False, pos = [1,0,0])
         self.port_list = [self.in_control, self.out_control]
-
+       
     def in_control_activate(self):
         # The node is activated as soon as its input flow is activated
         self.activate()
@@ -337,7 +352,7 @@ class CodeNode(Node):
         for flow in self.in_control.flows:
             flow.deactivate()
 
-        exec_(self.attributes['code'],self.env.globals,self.env.locals)
+        exec_(self.code.value,self.env.globals,self.env.locals)
 
     def running_finished(self, success = True):
         self.flush_output()
@@ -348,15 +363,15 @@ class CodeNode(Node):
 
     # For client -----------------------------
 
-
 class EvalAssignNode(CodeNode):
 
     frontend_type = 'SimpleCodeNode'
     category = 'basic'
     display_name = 'Evaluate or Assign'
 
-    def __init__(self, info: Node.Info, env: Environment.Env):
-        super().__init__(info, env)
+    def initialize(self):
+        super().initialize()
+
         self.in_data = self.Port('DataPort',True,64,pos = [-1,0,0],on_edge_activate = self.in_data_active)
         self.out_data = self.Port('DataPort',False,64,pos = [1,0,0])
         self.port_list = [self.in_data, self.out_data]
@@ -377,9 +392,9 @@ class EvalAssignNode(CodeNode):
                 for flow in self.in_data.flows:
                     self.value.append(flow.data)
             #exec_(self.attributes['code'] + " = __value", self.env.globals, {'__value' : self.value})
-            self.env.globals.update({self.attributes['code']: self.value})
+            self.env.globals.update({self.code.value: self.value})
         else:
-            self.value = eval(self.attributes['code'],self.env.globals,self.env.locals)
+            self.value = eval(self.code.value,self.env.globals,self.env.locals)
         
 
     def running_finished(self, success = True):
@@ -411,11 +426,12 @@ class FunctionNode(Node):
     out_names : List[str] = []
     max_in_data : List[int] = []
 
-    def __init__(self, info : Info ,env : Environment.Env):
+    def initialize(self):
         '''
         info: {type=FunctionNode,id,name,pos,output}
         '''
-        super().__init__(info,env)
+        super().initialize()
+
         if self.frontend_type == 'RoundNode':
             in_port_pos = [[math.cos(t),math.sin(t),0.0] for t in np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]
             out_port_pos = [[math.cos(t),math.sin(t),0.0] for t in np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]

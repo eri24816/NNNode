@@ -131,7 +131,7 @@ async def env_ws(websocket, path):
                 command_, id = key[:3], key[4:].split('/')[0]
 
                 if command_ == "atr":
-                    await websocket.send(json.dumps({'command': command_, 'id': id, 'name':value,'value':env.nodes[id].attributes[value]}))
+                    await websocket.send(json.dumps({'command': command_, 'id': id, 'name':value,'value':env.nodes[id].attributes[value].value}))
                 else:
                     await websocket.send(json.dumps({'command': command_, 'id': id, 'info': value}))
                 #print({'command': command_, 'id': id, 'value': value})
