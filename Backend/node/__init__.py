@@ -10,4 +10,4 @@ And it seems to become a package (?)
 from .node import CodeNode, EvalAssignNode
 
 from .function import *
-del FunctionNode
+del FunctionNode,Component,Attribute

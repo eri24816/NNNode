@@ -145,9 +145,9 @@ MonoBehaviour:
   outlinePendingColor: {r: 0, g: 0.7294118, b: 1, a: 0.74509805}
   lights:
   - {fileID: 85444830801496456}
+  componentPanel: {fileID: 0}
   type: 
   isDemo: 0
-  dragging: 0
   CodeEditorScript: {fileID: 5729784863857506007}
 --- !u!114 &81730343367682072
 MonoBehaviour:
@@ -420,6 +420,10 @@ PrefabInstance:
     - target: {fileID: 1884943419124524715, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1884943419124524715, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1884943419124524715, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_AnchorMin.y

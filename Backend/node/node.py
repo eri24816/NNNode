@@ -50,11 +50,21 @@ def exec_(script,globals=None, locals=None):
     return output
 
 def v3(x,y,z):
+    '''
+    Unity Vector3 Json format
+    '''
     return {'x':x,'y':y,'z':z}
 
 class Attribute:
     '''
-    State of node
+    A node can have 0, 1, or more attributes and components. 
+
+    Attributes are states of nodes, they can be string, float or other types. Once an attribute is modified (whether in client or server),
+    cilent (or server) will send "atr" command to server (or client) to update the attribute.
+
+    Components are UI components that each controls an attribute, like slider or input field.
+
+    Not all attributes are controlled by components, like attribute "pos". 
     '''
     def __init__(self,node : Node,name,type, value):
         node.attributes[name]=self
@@ -78,17 +88,17 @@ class Attribute:
 class Component:
     '''
     Like a slider or an input field
-    A component connnects to an attribute.
+    A component controls an attribute.
     Componte class have no set() method. When component value is modified, client should send "atr" command which will lead to Attribute.set()
     '''
-    def __init__(self,node : Node,type,target_attr):
+    def __init__(self,node : Node,name,type,target_attr):
         node.components.append(self)
-        self.type = type
-        self.target_attr = target_attr
+        self.name = name # for UI to display
+        self.type = type # C# class name
+        self.target_attr = target_attr # attribute name
     
     def dict(self):
-        return {'type' : self.type, 'target_attr' : self.target_attr}
-
+        return {'name':self.name,'type' : self.type, 'target_attr' : self.target_attr}
 
 class Node:
     '''
@@ -126,7 +136,9 @@ class Node:
         '''
         return {
             "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'frontend_type' : self.frontend_type,
-        'portInfos' : [port.get_dict() for port in self.port_list],'attr': [attr.dict()for _, attr in self.attributes.items()]
+        'portInfos' : [port.get_dict() for port in self.port_list],
+        'attr': [attr.dict()for _, attr in self.attributes.items()],
+        'comp': [comp.dict()for  comp in self.components]
         }
     
     # TODO: auto append into node.port_list
@@ -326,7 +338,7 @@ class CodeNode(Node):
     It will execute its code and activate its output ControlFlow (if there is one).
     '''
 
-    frontend_type = 'CodeNode'
+    frontend_type = 'BigCodeNode'
     category = 'basic'
     display_name = 'Code'
     

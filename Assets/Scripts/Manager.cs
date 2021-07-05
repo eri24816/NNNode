@@ -15,14 +15,20 @@ public class Manager : MonoBehaviour
     public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
 
     public static Manager ins;
-    public Transform canvasTransform;
+
     public Dictionary<string, Node> Nodes;
     public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
-    public GameObject[] prefabs;
-    public GameObject inDataPortPrefab, outDataPortPrefab,inControlPortPrefab,outControlPortPrefab;
-    public Dictionary<string, GameObject> prefabDict;
 
+    public GameObject[] nodePrefabs;
+    public Dictionary<string, GameObject> nodePrefabDict;
+
+    public GameObject[] compPrefabs;
+    public Dictionary<string, GameObject> compPrefabDict;
+
+    public GameObject inDataPortPrefab, outDataPortPrefab,inControlPortPrefab,outControlPortPrefab;
+
+    public Transform canvasTransform;
     public Transform demoNodeContainer;
     public GameObject containerPrefab;
     
@@ -47,9 +53,12 @@ public class Manager : MonoBehaviour
         Nodes = new Dictionary<string, Node>();
         Flows = new Dictionary<string, Flow>();
         DemoNodes = new Dictionary<string, Node>();
-        prefabDict = new Dictionary<string, GameObject>();
-        foreach (GameObject prefab in prefabs)
-            prefabDict.Add(prefab.name, prefab);
+        nodePrefabDict = new Dictionary<string, GameObject>();
+        foreach (GameObject prefab in nodePrefabs)
+            nodePrefabDict.Add(prefab.name, prefab);
+        compPrefabDict = new Dictionary<string, GameObject>();
+        foreach (GameObject prefab in compPrefabs)
+            compPrefabDict.Add(prefab.name, prefab);
 
         ins = this;
 
@@ -154,7 +163,7 @@ public class Manager : MonoBehaviour
                     if (type == "ControlFlow" || (type == "DataFlow"))
                     {
                         var message = JsonUtility.FromJson<APIMessage.NewFlow>(received);
-                        GameObject prefab = prefabDict[message.info.type];
+                        GameObject prefab = nodePrefabDict[message.info.type];
                         var flow = Instantiate(prefab).GetComponent<Flow>();
                         flow.id = message.info.id;
                         flow.head = Nodes[message.info.head].ports[message.info.head_port_id];
@@ -190,19 +199,17 @@ public class Manager : MonoBehaviour
     {
         var message = JsonUtility.FromJson<APIMessage.NewNode>(json);
 
-        GameObject prefab = prefabDict[message.info.frontend_type];
+        GameObject prefab = nodePrefabDict[message.info.frontend_type];
         var node = Instantiate(prefab).GetComponent<Node>();
         node.Init(json,id);
         return node;
     }
     public Transform FindCategoryPanel(string categoryString)
     {
-        print(categoryString);
         string[] cat = categoryString.Split('/');
         Transform panel = demoNodeContainer;
         foreach(string n in cat)
         {
-            print(n);
             var t = panel.Find(n);
             if (t) panel = t;
             else

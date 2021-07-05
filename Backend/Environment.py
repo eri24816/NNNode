@@ -127,7 +127,11 @@ class Env():
         clr - clear_output
         new - create a demo node
         '''
-        k=command+"/"+str(id)
+        priority = 5 # the larger the higher
+        if command == 'new':
+            priority = 8
+        
+        k=str(9-priority)+command+"/"+str(id)
         if command == 'new':
             k+='/'+v['type']
         if command == 'atr':

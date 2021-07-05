@@ -38,8 +38,8 @@ namespace GraphUI
     {
         public List<Port> ports;
         public string id, Name;
-        [SerializeField]
-        protected Dictionary<string, INodeAttr> nodeAttr;
+        public Dictionary<string, INodeAttr> attributes;
+        public Dictionary<string, Comp> components;
         NodeAttr<Vector3> Pos;
         protected string output = "";
         [SerializeField]  
@@ -48,6 +48,7 @@ namespace GraphUI
         Color unselectedColor, hoverColor, selectedColor,outlineRunningColor,outlinePendingColor;
         [SerializeField]
         List<UnityEngine.UI.Graphic> lights;
+        [SerializeField] Transform componentPanel;
 
         public string type; // class name in python
         public bool isDemo;
@@ -68,8 +69,10 @@ namespace GraphUI
                 public string type;
                 public Vector3 pos;
                 public string frontend_type;
-                public Port.Info[] portInfos; // PortInfo classes (or structs?) are defined in each node classes
+                public Port.API_new[] portInfos; // PortInfo classes (or structs?) are defined in each node classes
+                public Comp.API_new[] comp;
             }
+            
             // TODO: directly take node as argument
             public API_new(Node node) {info.id = node.id; info.name = node.name; info.type = node.type; info.pos = node.transform.position; }
         }
@@ -85,8 +88,9 @@ namespace GraphUI
         }
 
         public struct API_atr { public string name; }
-        protected interface INodeAttr { public void Recieve(string Json); public void Update(); }
-        protected class NodeAttr<dataType>: INodeAttr
+        
+        public interface INodeAttr { public void Recieve(string Json); public void Update(); }
+        public class NodeAttr<dataType>: INodeAttr
         {
             struct API_atr { public string id, command, name; public dataType value; }
 
@@ -99,31 +103,31 @@ namespace GraphUI
             readonly float delay = 1;
 
             // Like get set of a property
-            public delegate void SetValue(dataType value);
-            SetValue setValue;
-            public delegate dataType GetValue();
-            GetValue getValue;
+            public delegate void SetDel(dataType value);
+            SetDel setDel;
+            public delegate dataType GetDel();
+            GetDel getDel;
 
-            public NodeAttr(Node node, string name,SetValue setValue = null,GetValue getValue = null)
+            public NodeAttr(Node node, string name,SetDel setDel = null,GetDel getDel = null)
             {
                 this.name = name;
                 nodeId = node.id;
-                this.setValue = setValue;
-                this.getValue = getValue;
+                this.setDel = setDel;
+                this.getDel = getDel;
                 recvCD = new CoolDown(3);
                 sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
-                node.nodeAttr.Add(name,this);
+                node.attributes.Add(name,this);
             }
             public void Set(dataType value, bool send = true)
             {
-                if(getValue == null)
+                if(getDel == null)
                     this.value = value;
-                setValue?.Invoke(value);
+                setDel?.Invoke(value);
                 if (send) Send();
             }
             public dataType Get()
             {
-                if (getValue != null) return getValue();
+                if (getDel != null) return getDel();
                 return value;
             }
             public void Recieve(string Json)
@@ -166,10 +170,15 @@ namespace GraphUI
             id = info.id;
             if (id_ != null) id = id_;
 
-            nodeAttr = new Dictionary<string, INodeAttr>();
+            attributes = new Dictionary<string, INodeAttr>();
+            components = new Dictionary<string, Comp>();
             Pos = new NodeAttr<Vector3>(this, "pos", (v) => { transform.position = v; }, () => { return transform.position; });
-
-            //transform.position = info.pos;
+            foreach(Comp.API_new comp_info in info.comp)
+            {
+                Comp newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
+                newComp.Init(this, comp_info);
+                components.Add(comp_info.name, newComp);
+            }
 
             isDemo = id == "-1";
             if(id != "-1")
@@ -230,7 +239,7 @@ namespace GraphUI
                     }
                     break;
                 case "atr":
-                    nodeAttr[JsonUtility.FromJson<API_atr>(message).name].Recieve(message);
+                    attributes[JsonUtility.FromJson<API_atr>(message).name].Recieve(message);
                     break;
                 case "rmv":
                     StartCoroutine(Removing());
@@ -262,7 +271,7 @@ namespace GraphUI
                     }
                 } 
 
-            foreach(var attr in nodeAttr)
+            foreach(var attr in attributes)
             {
                 attr.Value.Update();
             }

@@ -11,7 +11,7 @@ namespace GraphUI
             Handle edges connected to the node.
         */
         [System.Serializable]
-        public struct Info
+        public struct API_new
         {
             public string type;
             public bool isInput;
@@ -33,7 +33,7 @@ namespace GraphUI
         float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
-        public void Init(Node node,Info info)
+        public void Init(Node node,API_new info)
         {
             isInput = info.isInput;
             maxEdges = info.max_connections;
@@ -173,7 +173,7 @@ namespace GraphUI
             {
                 if (Edges.Count < maxEdges)
                 {
-                    Flow newEdge = Instantiate(Manager.ins.prefabDict[flowType.Name]).GetComponent<Flow>();
+                    Flow newEdge = Instantiate(Manager.ins.nodePrefabDict[flowType.Name]).GetComponent<Flow>();
                     if (isInput) newEdge.head = this;
                     else newEdge.tail = this;
                     RecalculateEdgeDir(newEdge, GetNewEdgeOrder(CamControl.worldMouse));

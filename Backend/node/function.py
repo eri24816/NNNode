@@ -1,4 +1,4 @@
-from .node import FunctionNode
+from .node import Component,Attribute, FunctionNode
 
 class AddFunctionNode(FunctionNode):
     '''
@@ -77,3 +77,14 @@ class FractionFunctionNode(FunctionNode):
     @staticmethod
     def function(numerator,denominator):
         return MultiplyFunctionNode.function(numerator)/MultiplyFunctionNode.function(denominator)
+    
+class TestNode(FractionFunctionNode):
+
+    display_name = 'test node'
+    category = 'test'
+    frontend_type = 'FunctionNode'
+
+    def initialize(self):
+        super().initialize()
+        Attribute(self,'test_attr','string','')
+        Component(self, 'test_slider','slider','test_attr')
