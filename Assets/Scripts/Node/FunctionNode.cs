@@ -20,6 +20,10 @@ namespace GraphUI
                 nameText.text = Name;
 
         }
-         
+
+        public override void SetupPort(Port port, Port.API_new portInfo)
+        { 
+            port.transform.SetParent(portInfo.isInput ? inputPanel.transform : outputPanel.transform);
+        }
     }
 }

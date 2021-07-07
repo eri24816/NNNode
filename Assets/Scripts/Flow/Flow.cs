@@ -24,8 +24,8 @@ namespace GraphUI
             
             public API_new(Flow flow)
             {
-                info.id = flow.id; info.type = flow.GetType().Name; info.head = flow.head.node.id; info.tail = flow.tail.node.id;
-                info.head_port_id = flow.head.port_id; info.tail_port_id = flow.tail.port_id;
+                info.id = flow.id; info.type = flow.GetType().Name; info.head = flow.head.node.id; info.tail = flow.tail.node.id;info.head_port_id =
+                    flow.head.id;info.tail_port_id = flow.tail.id;
             }
         }
         public class API_update_message
@@ -50,6 +50,10 @@ namespace GraphUI
         {
             transform.SetParent(Manager.ins.canvasTransform);
             line = GetComponent<Line>();
+            if(tail)
+                tail.RecalculateEdgeDir();
+            if(head)
+                head.RecalculateEdgeDir();
         }
         protected virtual void Update()
         {
@@ -65,7 +69,6 @@ namespace GraphUI
         {
             if (isTail) line.Tail_dir = dir;
             else line.Head_dir = dir;
-
         }
 
         public IEnumerator Creating()

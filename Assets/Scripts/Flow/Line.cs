@@ -7,7 +7,11 @@ namespace GraphUI
 {
     public class Line : Graphic,ICanvasRaycastFilter
     {
-        
+        override protected void Awake()
+        {
+            base.Awake();
+            CalculatePoints();
+        }
         public int resolution;
         int res_;
         public Vector3 Tail
@@ -17,9 +21,11 @@ namespace GraphUI
                 if (value != tail)
                 {
                     tail = value;
+                    CalculatePoints();
                     SetVerticesDirty();
-                    transform.position = (tail + head) / 2;
-                    rectTransform.sizeDelta = new Vector2(Mathf.Abs(head.x - tail.x) + 2 * width, Mathf.Abs(head.y - tail.y) + 2 * width);
+                    
+                    //transform.position = (tail + head) / 2;
+                    //rectTransform.sizeDelta = new Vector2(Mathf.Abs(head.x - tail.x) + 2 * width, Mathf.Abs(head.y - tail.y) + 2 * width);
                 }
             }
         }
@@ -30,9 +36,11 @@ namespace GraphUI
                 if (value != head)
                 {
                     head = value;
+                    CalculatePoints();
                     SetVerticesDirty();
-                    transform.position = (tail + head) / 2;
-                    rectTransform.sizeDelta = new Vector2(Mathf.Abs(head.x - tail.x)+2*width, Mathf.Abs(head.y - tail.y) + 2 * width);
+                    
+                    //transform.position = (tail + head) / 2;
+                    //rectTransform.sizeDelta = new Vector2(Mathf.Abs(head.x - tail.x)+2*width, Mathf.Abs(head.y - tail.y) + 2 * width);
                 }
             }
         }
@@ -44,6 +52,7 @@ namespace GraphUI
                 {
                     head_vel = value;
                     head_vel.Normalize();
+                    CalculatePoints();
                     SetVerticesDirty();
                 }
             }
@@ -56,6 +65,7 @@ namespace GraphUI
                 {
                     tail_vel = value;
                     tail_vel.Normalize();
+                    CalculatePoints();
                     SetVerticesDirty();
                 }
             }
@@ -67,15 +77,9 @@ namespace GraphUI
         public float shapeVel = 0.5f;
         public float curveDist = 0.8f,width=0.2f;
         Vector3[] points,delta;
-        protected override void OnPopulateMesh(VertexHelper vh)
-        {
-            
-            UIVertex vertex = UIVertex.simpleVert;
-            
-            vh.Clear();
-            vertex.color = color;
-            
 
+        void CalculatePoints()
+        {
 
             float dist = Vector3.Distance(tail, head);
             float vel = shapeVel * Mathf.Min(1, dist);
@@ -94,6 +98,28 @@ namespace GraphUI
                 points[i] = tail * u * u * u + (tail + tail_vel * vel) * 3 * u * u * t + (head + head_vel * vel) * 3 * u * t * t + head * t * t * t;
             }
 
+            float minx = Mathf.Infinity, maxx = Mathf.NegativeInfinity, miny = Mathf.Infinity, maxy = Mathf.NegativeInfinity;
+            foreach (Vector3 p in points)
+            {
+                minx = Mathf.Min(minx, p.x);
+                maxx = Mathf.Max(maxx, p.x);
+                miny = Mathf.Min(miny, p.y);
+                maxy = Mathf.Max(maxy, p.y);
+            }
+            transform.position = new Vector2(minx + maxx, miny + maxy) / 2;
+            rectTransform.sizeDelta = new Vector2(Mathf.Abs(minx - maxx) + 2 * width * raycastThreshold, Mathf.Abs(miny - maxy) + 2 * width * raycastThreshold);
+
+        }
+
+        protected override void OnPopulateMesh(VertexHelper vh)
+        {
+            if (points == null) return;
+
+            UIVertex vertex = UIVertex.simpleVert;
+
+            vh.Clear();
+            vertex.color = color;
+
             delta = new Vector3[resolution - 1];
             for (int i = 0; i < resolution - 1; i++)
             {
@@ -103,7 +129,7 @@ namespace GraphUI
             Vector3 shift = width * Vector3.up, shift_;
             for (int i = 0; i < resolution; i++)
             {
-                if (i == 0 || i == resolution -1)
+                if (i == 0 || i == resolution - 1)
                 //if(true)
                 {
                     shift_ = width * Vector3.up;
@@ -111,45 +137,60 @@ namespace GraphUI
                 else
                 {
                     float c = Vector3.Cross(delta[i - 1], -delta[i]).magnitude;
-                    if (Mathf.Abs(c)<0.15)shift_ = width * Vector3.Normalize(delta[i - 1] - delta[i]); 
+                    if (Mathf.Abs(c) < 0.15) shift_ = width * Vector3.Normalize(delta[i - 1] - delta[i]);
                     else
                     {
                         shift_ = width * (delta[i - 1] - delta[i]) / c;
-                        
+
                     }
                 }
                 shift = shift_ * Mathf.Sign(Vector3.Dot(shift, shift_));
-                vertex.position = points[i] + shift-transform.position;
+                vertex.position = points[i] + shift - transform.position;
                 vh.AddVert(vertex);
-                vertex.position = points[i] - shift-transform.position;
+                vertex.position = points[i] - shift - transform.position;
                 vh.AddVert(vertex);
             }
-            for (int i = 0; i < resolution-1; i++)
+            for (int i = 0; i < resolution - 1; i++)
             {
                 vh.AddTriangle(i * 2, i * 2 + 1, i * 2 + 2);
                 vh.AddTriangle(i * 2 + 1, i * 2 + 2, i * 2 + 3);
             }
+
+            
         }
-        Vector3 b,w,o;
+        Vector3 w;
         float dist;
         public float raycastThreshold = 1.2f,longerEndPoint=2f;
         public bool IsRaycastLocationValid(Vector2 sp, Camera eventCamera)
         {
-            Vector3 longerEndPoint_ = longerEndPoint * b * width;
+            if (points == null) return false;
+            
             for (int i = 0; i < resolution - 1; i++)
             {
                 var ray = eventCamera.ScreenPointToRay(sp);
-
-                b = delta[i];
-                w =  Vector3.Cross(ray.direction, b);
+                
+                w =  Vector3.Cross(ray.direction, delta[i]);
                 w.Normalize();
-                dist = Vector3.Project(points[i]-ray.origin , w).magnitude;
-                if (dist > width * raycastThreshold) continue;
+ 
 
-                o = ray.origin + dist * w;
-                float cos = CosineBetween(o - points[i]- longerEndPoint_, o - points[i + 1]+ longerEndPoint_);
-                if (CosineBetween(o - points[i]- longerEndPoint_, ray.direction) >= cos && CosineBetween(o - points[i + 1]+ longerEndPoint_, ray.direction) >= cos)
-                return true;
+                Plane plane=new Plane();
+                plane.Set3Points(points[i], points[i + 1], points[i] + w);
+                if (plane.Raycast(ray,out float enter))
+                {
+                    Vector3 p = ray.GetPoint(enter);
+
+                    // Test horizontal
+                    dist = Vector3.Project(p - points[i], w).magnitude;
+                    if (dist > width * raycastThreshold) continue;
+
+                    // Test vertical
+                    Vector3 longerEndPoint_ = longerEndPoint * delta[i] * width;
+                    Vector3 t = Vector3.Project(p - (points[i] - longerEndPoint_), delta[i]);
+                    
+                    if ((Vector3.Dot(t, delta[i])) > 0 && (t.magnitude < (points[i + 1] - points[i]).magnitude+2*longerEndPoint_.magnitude)) return true;
+                }
+
+                
             }
             return false;
         }

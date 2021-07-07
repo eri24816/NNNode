@@ -36,6 +36,7 @@ namespace GraphUI
 {
     public class Node : Selectable, IEndDragHandler, IBeginDragHandler, IDragHandler, IUpdateMessageReciever
     {
+        #region vars
         public List<Port> ports;
         public string id, Name;
         public Dictionary<string, INodeAttr> attributes;
@@ -55,6 +56,7 @@ namespace GraphUI
         bool moveable = true;
 
         string newCommandJson;
+        #endregion
 
         public class API_new
         {
@@ -193,24 +195,30 @@ namespace GraphUI
                 Manager.ins.DemoNodes.Add(type, this);
                 transform.SetParent( Manager.ins.FindCategoryPanel(info.category));
             }
-            int i = 0;
             foreach (var portInfo in info.portInfos)
             {
+                CreatePort(portInfo);
+            }
+        }
 
-                GameObject prefab;
-                if (portInfo.type == "ControlPort")
-                    prefab = portInfo.isInput ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
-                else
-                    prefab = portInfo.isInput ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
+        protected virtual void CreatePort(Port.API_new portInfo)
+        {
+            GameObject prefab;
+            if (portInfo.type == "ControlPort")
+                prefab = portInfo.isInput ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
+            else
+                prefab = portInfo.isInput ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
 
-                Port newPort = Instantiate(prefab, transform).GetComponent<Port>();
-                ports.Add(newPort);
-                ((RectTransform)newPort.transform).anchorMin = ((RectTransform)newPort.transform).anchorMax = new Vector2(portInfo.pos.x / 2 + .5f, portInfo.pos.y / 2 + .5f);
-                newPort.port_id = i;
-                newPort.Init(this, portInfo);
-                i++;
-                }
-                
+            Port newPort = Instantiate(prefab, transform).GetComponent<Port>();
+            ports.Add(newPort);
+            newPort.Init(this, portInfo);
+        }
+
+        public virtual void SetupPort(Port port, Port.API_new portInfo)
+        {
+            // Called by Port.Init()
+            ((RectTransform)port.transform).anchorMin = ((RectTransform)port.transform).anchorMax = new Vector2(portInfo.pos.x / 2 + .5f, portInfo.pos.y / 2 + .5f);
+
         }
 
         public virtual void Start()

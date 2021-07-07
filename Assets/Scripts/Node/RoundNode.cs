@@ -19,9 +19,18 @@ namespace GraphUI
             if (nameText)
                 nameText.text = Name;
 
-            float radius = ((RectTransform)transform).sizeDelta.x / 2;
+            
 
         }
+
+        public override void SetupPort(Port port, Port.API_new portInfo)
+        {
+            float radius = ((RectTransform)transform).sizeDelta.x / 2;
+            port.transform.localPosition = radius * portInfo.pos;
+            port.minDir = port.maxDir = Mathf.Atan2(portInfo.pos.y, portInfo.pos.x);
+        }
+
+
         protected override void OnDoubleClick()
         {
             base.OnDoubleClick();

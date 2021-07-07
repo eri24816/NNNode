@@ -261,7 +261,7 @@ GameObject:
   - component: {fileID: 813600127313684794}
   - component: {fileID: 7056933049258839613}
   m_Layer: 0
-  m_Name: slider
+  m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -310,7 +310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.14901961, g: 0.14901961, b: 0.14901961, a: 1}
+  m_Color: {r: 0.13725491, g: 0.13725491, b: 0.13725491, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -402,7 +402,6 @@ MonoBehaviour:
   name_text: {fileID: 6521331071574696000}
   sliderUI: {fileID: 2549990786712044437}
   inputFieldUI: {fileID: 740263418881089119}
-  f: G4
 --- !u!1 &6395026253141595322
 GameObject:
   m_ObjectHideFlags: 0
@@ -461,7 +460,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: 6988d9a569451b2439d54c9329fd63be, type: 2}
-  m_Color: {r: 0.13656102, g: 0.39621896, b: 0.5283019, a: 1}
+  m_Color: {r: 0.70980394, g: 0, b: 0.7921569, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -587,7 +586,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 70, y: 20}
+  m_SizeDelta: {x: 187.7993, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2549990786712044437
 MonoBehaviour:

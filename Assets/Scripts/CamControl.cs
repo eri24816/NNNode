@@ -77,7 +77,12 @@ public class CamControl : MonoBehaviour
         {
             Selectable.Delete();
         }
-            
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            Debug.Break();
+        }
+        
+
     }
 
     public void OnBackgroundScroll(PointerEventData e)

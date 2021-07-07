@@ -36,7 +36,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0.02, y: 0.02}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1954637054139774652
 MonoBehaviour:
@@ -80,8 +80,8 @@ MonoBehaviour:
   shapeVel: 0.5
   curveDist: 0.8
   width: 0.005
-  raycastThreshold: 1.2
-  longerEndPoint: 0
+  raycastThreshold: 4
+  longerEndPoint: 1
 --- !u!222 &-4346185509392050690
 CanvasRenderer:
   m_ObjectHideFlags: 0

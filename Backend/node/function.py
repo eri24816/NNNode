@@ -1,4 +1,4 @@
-from .node import Component,Attribute, FunctionNode
+from .node import Component,Attribute,Port, FunctionNode, Node
 
 class AddFunctionNode(FunctionNode):
     '''
@@ -78,13 +78,20 @@ class FractionFunctionNode(FunctionNode):
     def function(numerator,denominator):
         return MultiplyFunctionNode.function(numerator)/MultiplyFunctionNode.function(denominator)
     
-class TestNode(FractionFunctionNode):
+class SliderNode(Node):
 
-    display_name = 'test node'
-    category = 'test'
-    frontend_type = 'FunctionNode'
+    display_name = 'slider'
+    category = 'input'
+    frontend_type = 'SimpleNode'
 
     def initialize(self):
         super().initialize()
-        Attribute(self,'test_attr','string','')
-        Component(self, 'test_slider','slider','test_attr')
+        self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
+        self.slider_value = Attribute(self,'slider_value','float',0)
+        Component(self, 'slider','Slider','slider_value')
+
+    def running_finished(self, success = True):
+        if success:
+            for flow in self.out_data.flows:
+                flow.recive_value(self.slider_value.value)
+        self.deactivate()

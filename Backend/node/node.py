@@ -55,6 +55,38 @@ def v3(x,y,z):
     '''
     return {'x':x,'y':y,'z':z}
 
+
+class Port():
+    '''
+    Different node classes might have Port classes that own different properties for frontend to read. 
+    In such case, inherit this
+    '''
+    def __init__(self,node: Node, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False):
+        self.id = str(len(node.port_list))
+        node.port_list.append(self)
+        self.type = type
+        self.isInput = isInput
+        self.max_connections = max_connections
+        self.name = name
+        self.description = description 
+        self.pos = pos
+        self.on_edge_activate = on_edge_activate
+        self.flows : List[edge.ControlFlow] = [] 
+        self.with_order = with_order
+
+    def get_dict(self):
+        # for json.dump
+        return {
+            'id': self.id,
+            'type':self.type,
+            'isInput' : self.isInput,
+            'max_connections' : self.max_connections,
+            'with_order' : self.with_order,
+            'name': self.name,
+            'description' : self.description,
+            'pos' : v3(*self.pos)
+            }
+
 class Attribute:
     '''
     A node can have 0, 1, or more attributes and components. 
@@ -76,10 +108,7 @@ class Attribute:
     def set(self,value):
         # Attribute changes are logged in node history
         self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value}) 
-
         self.value = value
-
-        print('\n\nset attribute {} set to {}\n\n'.format(self.name,value))
         self.node.env.Write_update_message(self.node.id,'atr',self.name)
 
     def dict(self):
@@ -141,34 +170,6 @@ class Node:
         'comp': [comp.dict()for  comp in self.components]
         }
     
-    # TODO: auto append into node.port_list
-    class Port():
-        '''
-        Different node classes might have Port classes that own different properties for frontend to read. 
-        In such case, inherit this
-        '''
-        def __init__(self, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False):
-            self.type = type
-            self.isInput = isInput
-            self.max_connections = max_connections
-            self.name = name
-            self.description = description 
-            self.pos = pos
-            self.on_edge_activate = on_edge_activate
-            self.flows : List[edge.ControlFlow] = [] 
-            self.with_order = with_order
-
-        def get_dict(self):
-            # for json.dump
-            return {
-                'type':self.type,
-                'isInput' : self.isInput,
-                'max_connections' : self.max_connections,
-                'with_order' : self.with_order,
-                'name': self.name,
-                'description' : self.description,
-                'pos' : v3(*self.pos)
-                }
 
     def __init__(self, info : Info, env : Environment.Env):
         '''
@@ -179,7 +180,7 @@ class Node:
 
         # For the API, each ports of the node are identified by position in this list
         # Create ports in __init__ then add all port into this list
-        self.port_list : List[self.Port] = []
+        self.port_list : List[Port] = []
 
         # Each types of node have different attributes. Client can set them by sending "atr" command.
         # Changes of attributes will create update messages and send to clients with "atr" command.
@@ -275,7 +276,6 @@ class Node:
         if command == "act":
             self.activate()
         if command =='atr':
-            print('\n'+str(m)+'\n')
             self.attributes[m['name']].set(m['value'])
     
 
@@ -338,27 +338,22 @@ class CodeNode(Node):
     It will execute its code and activate its output ControlFlow (if there is one).
     '''
 
-    frontend_type = 'BigCodeNode'
+    frontend_type = 'SimpleNode'
     category = 'basic'
     display_name = 'Code'
-    
-    class Info(Node.Info):
-        code : str
 
     def initialize(self):
         super().initialize()
 
+        self.in_control = Port(self,'ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
+        self.out_control = Port(self,'ControlPort', False, pos = [1,0,0])
+
         self.code = Attribute(self,'code','string','')
-        self.in_control = self.Port('ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
-        self.out_control = self.Port('ControlPort', False, pos = [1,0,0])
-        self.port_list = [self.in_control, self.out_control]
+        Component(self,'input_field','TextEditor','code')
        
     def in_control_activate(self):
         # The node is activated as soon as its input flow is activated
         self.activate()
-        
-    def activate(self):
-        super().activate()
 
     def _run(self):
         for flow in self.in_control.flows:
@@ -373,24 +368,25 @@ class CodeNode(Node):
                 flow.activate()
         self.deactivate()
 
-    # For client -----------------------------
+class EvalAssignNode(Node):
 
-class EvalAssignNode(CodeNode):
-
-    frontend_type = 'SimpleCodeNode'
+    frontend_type = 'SimpleNode'
     category = 'basic'
     display_name = 'Evaluate or Assign'
 
     def initialize(self):
         super().initialize()
+        
+        self.in_data = Port(self,'DataPort',True,64,pos = [-1,0,0], on_edge_activate = self.in_data_active)
+        self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
 
-        self.in_data = self.Port('DataPort',True,64,pos = [-1,0,0],on_edge_activate = self.in_data_active)
-        self.out_data = self.Port('DataPort',False,64,pos = [1,0,0])
-        self.port_list = [self.in_data, self.out_data]
+        self.code = Attribute(self,'code','string','')
+        Component(self,'input_field','SmallTextEditor','code')
 
     def in_data_active(self):
         #TODO : Check if in data is empty and ask for value
         self.activate()
+        
 
     def _run(self):
         if len(self.in_data.flows)>0:
@@ -411,6 +407,7 @@ class EvalAssignNode(CodeNode):
 
     def running_finished(self, success = True):
         if success:
+            self.flush_output()
             for flow in self.out_data.flows:
                 flow.recive_value(self.value)
         self.deactivate()
@@ -452,10 +449,9 @@ class FunctionNode(Node):
             out_port_pos = [[0,0,0]]*len(self.out_names)
         
         # Initialize ports from self.in_names, self.out_names and self.max_in_data
-        self.in_data = [self.Port('DataPort',True,name = port_name,max_connections= max_in_data,
+        self.in_data = [Port(self,'DataPort',True,name = port_name,max_connections= max_in_data,
          on_edge_activate = self.in_data_activate, pos= pos)for (port_name,max_in_data,pos) in zip(self.in_names,self.max_in_data,in_port_pos)]
-        self.out_data = [self.Port('DataPort',False,name = port_name, pos = pos)for port_name,pos in zip(self.out_names,out_port_pos)]
-        self.port_list = self.in_data + self.out_data
+        self.out_data = [Port(self,'DataPort',False,name = port_name, pos = pos)for port_name,pos in zip(self.out_names,out_port_pos)]
 
     def in_data_activate(self):
         # A functionNode activates when all its input dataFlow is active.
@@ -501,7 +497,7 @@ class FunctionNode(Node):
             for flow in self.out_data[0].flows:
                 flow.recive_value(result)
 
-        # result is tuple
+        # if result is tuple
         elif len(self.out_data) > 1:
             i=0
             for result_item in result:

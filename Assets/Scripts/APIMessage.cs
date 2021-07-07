@@ -10,7 +10,7 @@ namespace APIMessage
         [System.Serializable]
         public struct Info
         {
-            public string frontend_type;
+            public string frontend_type,id;
         }
         public Info info;
     }

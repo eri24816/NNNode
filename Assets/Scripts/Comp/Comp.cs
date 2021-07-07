@@ -14,7 +14,8 @@ namespace GraphUI
         {
             
             name = info.name;
-            name_text.name = name;
+            if(name_text)
+                name_text.name = name;
             Init(node, info.target_attr);
         }
         public virtual void Init(Node node, string target_attr)

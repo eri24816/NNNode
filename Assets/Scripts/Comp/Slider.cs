@@ -19,10 +19,9 @@ namespace GraphUI
                 () => sliderUI.value
                 ) ;
         }
-        public string f;
         public void OnValueChanged(float v)
         {
-            inputFieldUI.text = v.ToString(f).Replace("E+0","e").Replace("E-0", "e-").Replace("E+", "e").Replace("E-", "e-");
+            inputFieldUI.text = v.ToString("G4").Replace("E+0","e").Replace("E-0", "e-").Replace("E+", "e").Replace("E-", "e-");
             if(targetAttr != null)
                 targetAttr.Send();
         }

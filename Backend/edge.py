@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypedDict
 import inspect
 if TYPE_CHECKING:
-    from nodes import Node
+    from node import Node
 
 class Edge(): # abstract class
     class Info(TypedDict):
@@ -27,7 +27,7 @@ class Edge(): # abstract class
 
         self.tail_port.flows.append(self)
         self.head_port.flows.append(self)
-
+        
         self.active=False
         # for client --------------------------------
         self.info = info  # for remove history
@@ -80,6 +80,7 @@ class DataFlow(Edge):
         self.data=None
         
     def recive_value(self,value):
+        print('\n\n'+self.id+'recieve value'+'\n\n')
         self.data = value
         self.has_value = True
         self.activate()

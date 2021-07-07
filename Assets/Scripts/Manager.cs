@@ -198,7 +198,7 @@ public class Manager : MonoBehaviour
     public Node CreateNode(string json,string id = null)
     {
         var message = JsonUtility.FromJson<APIMessage.NewNode>(json);
-
+        if (Nodes.ContainsKey(message.info.id))return null;
         GameObject prefab = nodePrefabDict[message.info.frontend_type];
         var node = Instantiate(prefab).GetComponent<Node>();
         node.Init(json,id);

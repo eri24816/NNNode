@@ -13,6 +13,7 @@ namespace GraphUI
         [System.Serializable]
         public struct API_new
         {
+            public int id;
             public string type;
             public bool isInput;
             public int max_connections;
@@ -21,24 +22,54 @@ namespace GraphUI
             public string discription;
             public Vector3 pos;
         }
-
+        public int id;
         public Node node;
-        public int port_id;
         public List<Flow> Edges; // some type of port accepts multiple edges
         public int maxEdges;
         public bool isInput; // true: input false: output
         public bool with_order;
         public System.Type flowType;
         public TMPro.TMP_Text nameText;
-        float minDir, maxDir;
+        public float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
         public void Init(Node node,API_new info)
         {
+            id = info.id;
             isInput = info.isInput;
             maxEdges = info.max_connections;
             this.node = node;
             with_order = info.with_order;
+
+            RectTransform rt = (RectTransform)transform;
+            float a, b, c, d;
+            a = rt.anchorMin.x;
+            b = 1 - rt.anchorMin.x;
+            c = rt.anchorMin.y;
+            d = 1 - rt.anchorMin.y;
+
+            if (a < b && a < c && a < d)
+            {
+
+                minDir = pi;
+                maxDir = pi;
+            }
+            else if (b < a && b < c && b < d)
+            {
+                minDir = 0;
+                maxDir = 0;
+            }
+            else if (c < b && c < a && c < d)
+            {
+                minDir = pi * 3 / 2;
+                maxDir = pi * 3 / 2;
+            }
+            else
+            {
+                minDir = pi / 2;
+                maxDir = pi / 2;
+            }
+            node.SetupPort(this,info);
         }
         public Vector3 dirVec(float dir)
         {
@@ -49,61 +80,13 @@ namespace GraphUI
             return Vector3.Dot(dirVec(a), dirVec(b));
         }
         float pi = Mathf.PI;
+
         protected virtual void Start()
         {
-            RectTransform rt = (RectTransform)transform;
-            float a, b, c, d;
-            a = rt.anchorMin.x;
-            b = 1 - rt.anchorMin.x;
-            c = rt.anchorMin.y;
-            d = 1 - rt.anchorMin.y;
             if (with_order)
             {
-                if (a < b && a < c && a < d)
-                {
-
-                    minDir = pi / 2;
-                    maxDir = pi * 3 / 2;
-                }
-                else if (b < a && b < c && b < d)
-                {
-                    minDir = -pi / 2;
-                    maxDir = pi / 2;
-                }
-                else if (c < b && c < a && c < d)
-                {
-                    minDir = pi;
-                    maxDir = pi * 2;
-                }
-                else
-                {
-                    minDir = 0;
-                    maxDir = pi;
-                }
-            }
-            else
-            {
-                if (a < b && a < c && a < d)
-                {
-
-                    minDir = pi;
-                    maxDir = pi;
-                }
-                else if (b < a && b < c && b < d)
-                {
-                    minDir = 0;
-                    maxDir = 0;
-                }
-                else if (c < b && c < a && c < d)
-                {
-                    minDir = pi * 3 / 2;
-                    maxDir = pi * 3 / 2;
-                }
-                else
-                {
-                    minDir = pi / 2;
-                    maxDir = pi / 2;
-                }
+                minDir -= pi / 3;
+                maxDir += pi / 3;
             }
 
         }

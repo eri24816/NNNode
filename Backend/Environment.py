@@ -142,7 +142,7 @@ class Env():
                     buffer[k] = ''
                 buffer[k]+=v
             elif command == 'clr':
-                buffer["out/"+id] = ''
+                buffer[str(9-priority)+"out/"+id] = ''
                 buffer[k]=v
             else:
                 buffer[k]=v
