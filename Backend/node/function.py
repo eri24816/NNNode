@@ -86,9 +86,16 @@ class SliderNode(Node):
 
     def initialize(self):
         super().initialize()
+        
         self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
+
         self.slider_value = Attribute(self,'slider_value','float',0)
+        #self.min =          Attribute(self,'min','float',0)
+        #self.max =          Attribute(self,'max','float',100)
+
         Component(self, 'slider','Slider','slider_value')
+        #Component(self, 'min','TextEditor','min')
+        #Component(self, 'max','TextEditor','max')
 
     def running_finished(self, success = True):
         if success:

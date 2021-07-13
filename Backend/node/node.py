@@ -277,6 +277,11 @@ class Node:
             self.activate()
         if command =='atr':
             self.attributes[m['name']].set(m['value'])
+            
+        if command == 'nat':
+            if m['name'] not in self.attributes:
+                Attribute(self,m['name'],m['type'],None)
+            
     
 
     def Update_history(self, type, content):
@@ -422,7 +427,7 @@ class FunctionNode(Node):
 
     display_name = 'Function'
     category = 'function'
-    frontend_type = 'FunctionNode'
+    frontend_type = 'GeneralNode'
 
     class Info(Node.Info):
         in_names : List[str]
@@ -430,7 +435,7 @@ class FunctionNode(Node):
         allow_multiple_in_data : List[bool]
 
     # Most of the child classes of FunctionNode just differ in following 4 class properties and their function() method.
-    frontend_type = 'FunctionNode' # FunctionNode, RoundNode
+    frontend_type = 'GeneralNode' # FunctionNode, RoundNode
     in_names : List[str] = []
     out_names : List[str] = []
     max_in_data : List[int] = []

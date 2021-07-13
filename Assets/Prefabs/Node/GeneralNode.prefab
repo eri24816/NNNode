@@ -732,7 +732,7 @@ GameObject:
   - component: {fileID: -4702201083356803110}
   - component: {fileID: 1015488641186880182}
   m_Layer: 0
-  m_Name: FunctionNode
+  m_Name: GeneralNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

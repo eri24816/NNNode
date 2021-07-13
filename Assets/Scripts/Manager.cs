@@ -30,7 +30,9 @@ public class Manager : MonoBehaviour
 
     public Transform canvasTransform;
     public Transform demoNodeContainer;
+    public Inspector nodeInspector;
     public GameObject containerPrefab;
+    
     
     public enum State
     {
@@ -195,12 +197,13 @@ public class Manager : MonoBehaviour
             }
         }
     }
-    public Node CreateNode(string json,string id = null)
+    public Node CreateNode(string json,string id = null,bool createByThisClient = false)
     {
         var message = JsonUtility.FromJson<APIMessage.NewNode>(json);
         if (Nodes.ContainsKey(message.info.id))return null;
         GameObject prefab = nodePrefabDict[message.info.frontend_type];
         var node = Instantiate(prefab).GetComponent<Node>();
+        node.createByThisClient = createByThisClient;
         node.Init(json,id);
         return node;
     }

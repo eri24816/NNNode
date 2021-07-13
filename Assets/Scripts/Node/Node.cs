@@ -39,9 +39,9 @@ namespace GraphUI
         #region vars
         public List<Port> ports;
         public string id, Name;
-        public Dictionary<string, INodeAttr> attributes;
+        public Dictionary<string, NodeAttr> attributes;
         public Dictionary<string, Comp> components;
-        NodeAttr<Vector3> Pos;
+        NodeAttr Pos;
         protected string output = "";
         [SerializeField]  
         UnityEngine.UI.Outline outline_running;
@@ -91,50 +91,86 @@ namespace GraphUI
 
         public struct API_atr { public string name; }
         
-        public interface INodeAttr { public void Recieve(string Json); public void Update(); }
-        public class NodeAttr<dataType>: INodeAttr
+        public class NodeAttr
         {
-            struct API_atr { public string id, command, name; public dataType value; }
+            struct API_atr<T> { public string id, command, name; public T value;string type; }
+            struct API_nat { public string command, id, name,type; } // new attribute
 
-            dataType value; // If delegate GetValue is not null, this field will not be used.
-            readonly string name, nodeId;
+            object value; // If delegate GetValue is not null, this field will not be used.
+            public string type; // For inspector to know how to generate the attribute editor
+            public readonly string name, nodeId;
             readonly CoolDown recvCD,sendCD;
-            dataType recievedValue;
+            object recievedValue;
 
             // Delay recieving value after sending value
             readonly float delay = 1;
 
-            // Like get set of a property
-            public delegate void SetDel(dataType value);
-            SetDel setDel;
-            public delegate dataType GetDel();
-            GetDel getDel;
+            // Like get set of property
+            public delegate void SetDel(object value);
+            public List<SetDel> setDel;
+            public delegate object GetDel();
+            public GetDel getDel;
 
-            public NodeAttr(Node node, string name,SetDel setDel = null,GetDel getDel = null)
+            public static NodeAttr Register(Node node,string name, string type, SetDel setDel = null, GetDel getDel = null)
+            {
+                if (node.attributes.ContainsKey(name))
+                {
+                    NodeAttr attr = node.attributes[name];
+                    if (setDel != null)
+                        attr.setDel.Add(setDel);
+                    if (getDel != null)
+                       attr.getDel = getDel;
+                    print(attr.name+ attr.Get());
+                    setDel(attr.Get());
+                    return attr;
+                }
+                else
+                {
+                    if(!node.isDemo)
+                        Manager.ins.SendToServer(new API_nat {command = "nat", id = node.id, name = name, type = type });
+                    return new NodeAttr(node, name, type, setDel, getDel);
+                }
+            }
+                
+
+            public NodeAttr(Node node, string name,string type,SetDel setDel = null,GetDel getDel = null)
             {
                 this.name = name;
+                this.type = type;
                 nodeId = node.id;
-                this.setDel = setDel;
-                this.getDel = getDel;
+                this.setDel=new List<SetDel>();
+                if(setDel != null)
+                    this.setDel.Add(setDel);
+                this.getDel=getDel;
                 recvCD = new CoolDown(3);
                 sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
                 node.attributes.Add(name,this);
             }
-            public void Set(dataType value, bool send = true)
+            public void Set(object value = null, bool send = true)
             {
-                if(getDel == null)
+                if (setDel == null || value != null)
                     this.value = value;
-                setDel?.Invoke(value);
+                else
+                    this.value = getDel();
+                foreach(var i in setDel)
+                    i(this.value);
                 if (send) Send();
             }
-            public dataType Get()
+            public object Get()
             {
                 if (getDel != null) return getDel();
                 return value;
             }
             public void Recieve(string Json)
             {
-                recievedValue = JsonUtility.FromJson<API_atr>(Json).value;
+                switch (type) {
+                    case "string":
+                        recievedValue = JsonUtility.FromJson<API_atr<string>>(Json).value; break;
+                    case "float":
+                        recievedValue = JsonUtility.FromJson<API_atr<float>>(Json).value; break;
+                    case "Vector3":
+                        recievedValue = JsonUtility.FromJson<API_atr<Vector3>>(Json).value; break;
+                }
                 print("recievedValue: " + recievedValue);
                 recvCD.Request();
             }
@@ -153,17 +189,27 @@ namespace GraphUI
                 }
                 if (sendCD.Update())
                 {
-                    Manager.ins.SendToServer(new API_atr { id = nodeId, command = "atr", name = name, value = Get() });
+                    if (type == "Vector3")
+                        Send<Vector3>();
+                    else if (type == "float")
+                        Send<float>();
+                    else if (type == "string")
+                        Send<string>();
                 }
             }
+            public void Send<T>()
+            {
+                Manager.ins.SendToServer(new API_atr<T> { id = nodeId, command = "atr", name = name, value = (T)Get() });
+            }
         }
-         
+        public bool createByThisClient = false;
         public virtual void Init(string infoJSON,string id_ = null)
         {
             /*
              Though infoJson already contains id, but when cloning from a demo node, I am too lazy to change the id in json. So in that case
              id is passed as an argument.
             */
+            
 
             API_new.Info info  = JsonUtility.FromJson<API_new>(infoJSON).info;
 
@@ -172,15 +218,10 @@ namespace GraphUI
             id = info.id;
             if (id_ != null) id = id_;
 
-            attributes = new Dictionary<string, INodeAttr>();
-            components = new Dictionary<string, Comp>();
-            Pos = new NodeAttr<Vector3>(this, "pos", (v) => { transform.position = v; }, () => { return transform.position; });
-            foreach(Comp.API_new comp_info in info.comp)
-            {
-                Comp newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
-                newComp.Init(this, comp_info);
-                components.Add(comp_info.name, newComp);
-            }
+            attributes = new Dictionary<string, NodeAttr>();
+            components = new Dictionary<string, Comp>(); 
+            
+            
 
             isDemo = id == "-1";
             if(id != "-1")
@@ -195,6 +236,19 @@ namespace GraphUI
                 Manager.ins.DemoNodes.Add(type, this);
                 transform.SetParent( Manager.ins.FindCategoryPanel(info.category));
             }
+
+            if (createByThisClient)
+                Manager.ins.SendToServer(new API_new(this));
+
+            Pos = new NodeAttr(this, "pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; });
+            foreach (Comp.API_new comp_info in info.comp)
+            {
+                Comp newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
+                if (!isDemo)
+                    newComp.Init(this, comp_info);
+                components.Add(comp_info.name, newComp);
+            }
+
             foreach (var portInfo in info.portInfos)
             {
                 CreatePort(portInfo);
@@ -307,7 +361,7 @@ namespace GraphUI
 
         bool dragging = false;
 
-
+ 
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != 0) return;
@@ -315,14 +369,15 @@ namespace GraphUI
             if (isDemo) // Create a new node
             {
                 //Node newNode = Instantiate(gameObject).GetComponent<Node>();newNode.id = Manager.ins.GetNewID();newNode.isDemo = false;
-                Node newNode = Manager.ins.CreateNode(newCommandJson, Manager.ins.GetNewID());
+
+                Node newNode = Manager.ins.CreateNode(newCommandJson, Manager.ins.GetNewID(),true);
                 newNode.transform.localScale = 0.002f * Vector3.one;
                 StartCoroutine(newNode.DragCreating());
 
                 return;
             }  
             else if(moveable)
-            {
+            { 
                 if (!selected) OnPointerClick(eventData); // if not selected, select it first
                 foreach (Selectable s in current)
                     if (s is Node node)
@@ -356,7 +411,7 @@ namespace GraphUI
             }
             moveable = true;
             //Manager.ins.Nodes.Add(id, this);
-            Manager.ins.SendToServer(new API_new(this));
+
             Pos.Send();
         }
         public virtual IEnumerator Removing()// SAO-like?
@@ -402,7 +457,12 @@ namespace GraphUI
         IEnumerator changeColor1, changeColor2;
         public override void Select()
         {
+            if (selected) return;
             base.Select();
+
+            if(!isDemo)
+                Manager.ins.nodeInspector.Open(this);
+
             if(changeColor1!=null)
                 StopCoroutine(changeColor1);
             StartCoroutine(changeColor1 = SmoothChangeColor(lights, selectedColor));
@@ -410,6 +470,8 @@ namespace GraphUI
         }
         public override void Unselect()
         {
+            Manager.ins.nodeInspector.Close();
+
             base.Unselect();
             if (changeColor1 != null)
                 StopCoroutine(changeColor1);

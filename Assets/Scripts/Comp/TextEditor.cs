@@ -5,22 +5,34 @@ using UnityEngine;
 namespace GraphUI {
     public class TextEditor : Comp
     {
-        [SerializeField]
-        TMPro.CodeEditor inputFieldUI;
-        Node.NodeAttr<string> targetAttr;
-        public override void Init(Node node, string targetAttrName)
+        
+        public TMPro.CodeEditor inputFieldUI;
+        Node.NodeAttr targetAttr;
+        public string dataType = "float";
+        public override void Init(Node node, string targetAttrName, bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
-            targetAttr = new Node.NodeAttr<string>(node, targetAttrName,
-                (v) => inputFieldUI.text = v,
-                () => inputFieldUI.text
-                );
+
+            if (dataType == "float")
+                targetAttr = Node.NodeAttr.Register(node, targetAttrName, "float",
+                    (v) => inputFieldUI.text = ((float)v).ToString("G4").Replace("E+0", "e").Replace("E-0", "e-").Replace("E+", "e").Replace("E-", "e-"),
+                    isMainComp?() => { try { return float.Parse(inputFieldUI.text); } catch { return null; } } : (Node.NodeAttr.GetDel)null
+                    ) ;
+
+            else if(dataType == "string")
+                targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",
+                    (v) => inputFieldUI.text = (string)v,
+                    isMainComp ? () => inputFieldUI.text : (Node.NodeAttr.GetDel)null
+                    );
         }
 
         public void OnEndEdit(string value)
         {
-            if (targetAttr != null)
-                targetAttr.Send();
+            if (targetAttr == null) return;
+                if (dataType == "float")
+                    targetAttr.Set(float.Parse(value));
+                else if (dataType == "string")
+                targetAttr.Set(value);
         }
     }
 }

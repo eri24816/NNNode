@@ -29,7 +29,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 129529530874697994, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
       propertyPath: m_Name
-      value: SmallTextEditor
+      value: SmallFloatEditor
       objectReference: {fileID: 0}
     - target: {fileID: 129529530874697994, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
       propertyPath: m_IsActive
@@ -62,6 +62,10 @@ PrefabInstance:
     - target: {fileID: 994223170533816935, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1383502405176110253, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
+      propertyPath: dataType
+      value: float
       objectReference: {fileID: 0}
     - target: {fileID: 1691593405129399842, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
       propertyPath: m_Enabled
@@ -206,8 +210,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7077500534882174772, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
+      propertyPath: m_ContentType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7077500534882174772, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
+      propertyPath: m_KeyboardType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7077500534882174772, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
       propertyPath: m_GlobalPointSize
       value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 7077500534882174772, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
+      propertyPath: m_CharacterValidation
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7653182088600534779, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
       propertyPath: m_MinWidth

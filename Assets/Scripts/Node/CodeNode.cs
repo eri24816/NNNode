@@ -23,12 +23,12 @@ namespace GraphUI {
         TMPro.CodeEditor CodeEditorScript;
 
         protected string recievedCode;
-        NodeAttr<string> Code;
+        NodeAttr Code;
         public override void Init(string infoJSON,string id = null)
         {
             base.Init(infoJSON,id);
-            Code = new NodeAttr<string>(this, "code", 
-                (v) => { CodeEditorScript.SetTextWithoutNotify(v); },
+            Code = new NodeAttr(this, "code", "string",
+                (v) => { CodeEditorScript.SetTextWithoutNotify((string)v); },
                 ()=> { return CodeEditorScript.text; });
             var info = JsonUtility.FromJson<API_new_CodeNode>(infoJSON);
         }

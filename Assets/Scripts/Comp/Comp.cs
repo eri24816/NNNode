@@ -6,6 +6,7 @@ namespace GraphUI
 {
     public class Comp : MonoBehaviour
     {
+
         [System.Serializable]
         public struct API_new { public string name, type, target_attr; }
         [SerializeField]
@@ -18,9 +19,10 @@ namespace GraphUI
                 name_text.name = name;
             Init(node, info.target_attr);
         }
-        public virtual void Init(Node node, string target_attr)
+        public virtual void Init(Node node, string target_attr, bool isMainComp = true)
         {
-
+            // An attribute may connected to both a component on the node and a component in the inspector.
+            // If it's the latter, isMainComp = false so the attribute's setDel won't point to the component in the inspector.
         }
     }
 }

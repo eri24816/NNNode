@@ -31,7 +31,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129529530874697994}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 2}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4018214337282978864}
@@ -268,6 +268,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   name_text: {fileID: 0}
   inputFieldUI: {fileID: 7077500534882174772}
+  dataType: string
 --- !u!1 &762928918701944976
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,7 +406,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: '1
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 837013bcecdce9e44bcd2f5ceb195825, type: 2}
   m_sharedMaterial: {fileID: -8337939114255242952, guid: 837013bcecdce9e44bcd2f5ceb195825, type: 2}

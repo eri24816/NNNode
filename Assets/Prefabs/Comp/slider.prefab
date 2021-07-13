@@ -706,6 +706,10 @@ PrefabInstance:
       propertyPath: m_ChildControlHeight
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 348935110045364321, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: dataType
+      value: float
+      objectReference: {fileID: 0}
     - target: {fileID: 1596724895733269958, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_Name
       value: CodeEditor
