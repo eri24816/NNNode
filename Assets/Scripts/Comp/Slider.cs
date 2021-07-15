@@ -14,12 +14,12 @@ namespace GraphUI
         public override void Init(Node node,  string targetAttrName, bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
-            targetAttr = new Node.NodeAttr(node, targetAttrName,"float",
+            targetAttr = Node.NodeAttr.Register(node, targetAttrName,"float",
                 (v) => sliderUI.value = (float)v,
                 isMainComp?() => sliderUI.value:(Node.NodeAttr.GetDel)null
                 ) ;
-            Node.NodeAttr.Register(node, "min", "float",  (v) => sliderUI.minValue = (float)v).Set(0f);
-            Node.NodeAttr.Register(node, "max", "float", (v) => sliderUI.maxValue = (float)v).Set(100f);
+            Node.NodeAttr.Register(node, $"{name}/min", "float", (v) => sliderUI.minValue = (float)v, defaultValue: 0f,comp:this);
+            Node.NodeAttr.Register(node, $"{name}/max", "float", (v) => sliderUI.maxValue = (float)v, defaultValue: 100f, comp: this);
 
             
         }

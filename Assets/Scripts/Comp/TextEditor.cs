@@ -16,13 +16,13 @@ namespace GraphUI {
             if (dataType == "float")
                 targetAttr = Node.NodeAttr.Register(node, targetAttrName, "float",
                     (v) => inputFieldUI.text = ((float)v).ToString("G4").Replace("E+0", "e").Replace("E-0", "e-").Replace("E+", "e").Replace("E-", "e-"),
-                    isMainComp?() => { try { return float.Parse(inputFieldUI.text); } catch { return null; } } : (Node.NodeAttr.GetDel)null
+                    isMainComp ? () => { try { return float.Parse(inputFieldUI.text); } catch { return null; } } : (Node.NodeAttr.GetDel)null, comp: this
                     ) ;
 
             else if(dataType == "string")
                 targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",
                     (v) => inputFieldUI.text = (string)v,
-                    isMainComp ? () => inputFieldUI.text : (Node.NodeAttr.GetDel)null
+                    isMainComp ? () => inputFieldUI.text : (Node.NodeAttr.GetDel)null, comp: this
                     );
         }
 

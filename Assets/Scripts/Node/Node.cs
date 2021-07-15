@@ -93,7 +93,7 @@ namespace GraphUI
         
         public class NodeAttr
         {
-            struct API_atr<T> { public string id, command, name; public T value;string type; }
+            struct API_atr<T> { public string id, command, name; public T value; }
             struct API_nat { public string command, id, name,type; } // new attribute
 
             object value; // If delegate GetValue is not null, this field will not be used.
@@ -107,20 +107,20 @@ namespace GraphUI
 
             // Like get set of property
             public delegate void SetDel(object value);
-            public List<SetDel> setDel;
+            public List<System.Tuple<object,SetDel>> setDel;
             public delegate object GetDel();
             public GetDel getDel;
 
-            public static NodeAttr Register(Node node,string name, string type, SetDel setDel = null, GetDel getDel = null)
+            public static NodeAttr Register(Node node, string name, string type, SetDel setDel = null, GetDel getDel = null, object defaultValue = null, object comp = null)
             {
-                if (node.attributes.ContainsKey(name))
+                if (comp == null) comp = 0;
+                if (node.attributes.ContainsKey(name)) 
                 {
                     NodeAttr attr = node.attributes[name];
                     if (setDel != null)
-                        attr.setDel.Add(setDel);
+                        attr.setDel.Add(new System.Tuple<object, SetDel>(comp ,setDel));
                     if (getDel != null)
                        attr.getDel = getDel;
-                    print(attr.name+ attr.Get());
                     setDel(attr.Get());
                     return attr;
                 }
@@ -128,19 +128,21 @@ namespace GraphUI
                 {
                     if(!node.isDemo)
                         Manager.ins.SendToServer(new API_nat {command = "nat", id = node.id, name = name, type = type });
-                    return new NodeAttr(node, name, type, setDel, getDel);
+                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel,comp);
+                    a.Set(defaultValue,send:node.createByThisClient);
+                    return a;
                 }
             }
                 
 
-            public NodeAttr(Node node, string name,string type,SetDel setDel = null,GetDel getDel = null)
+            public NodeAttr(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp)
             {
-                this.name = name;
+                this.name = name; // Name format: category1/category2/.../attr_name
                 this.type = type;
                 nodeId = node.id;
-                this.setDel=new List<SetDel>();
+                this.setDel=new List<System.Tuple<object, SetDel>>();
                 if(setDel != null)
-                    this.setDel.Add(setDel);
+                    this.setDel.Add(new System.Tuple<object, SetDel>(comp, setDel));
                 this.getDel=getDel;
                 recvCD = new CoolDown(3);
                 sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
@@ -152,8 +154,21 @@ namespace GraphUI
                     this.value = value;
                 else
                     this.value = getDel();
-                foreach(var i in setDel)
-                    i(this.value);
+                var toBeRemoved = new List<System.Tuple<object, SetDel>>();
+                foreach (var i in setDel)
+                {
+                    if (i.Item1 == null )
+                    {
+                        toBeRemoved.Add(i);
+                    }
+                }
+                foreach (var i in toBeRemoved)
+                    setDel.Remove(i);
+
+                
+
+                foreach (var i in setDel)
+                    i.Item2(this.value);
                 if (send) Send();
             }
             public object Get()
@@ -171,7 +186,6 @@ namespace GraphUI
                     case "Vector3":
                         recievedValue = JsonUtility.FromJson<API_atr<Vector3>>(Json).value; break;
                 }
-                print("recievedValue: " + recievedValue);
                 recvCD.Request();
             }
             public void Send()
@@ -201,6 +215,7 @@ namespace GraphUI
             {
                 Manager.ins.SendToServer(new API_atr<T> { id = nodeId, command = "atr", name = name, value = (T)Get() });
             }
+
         }
         public bool createByThisClient = false;
         public virtual void Init(string infoJSON,string id_ = null)
@@ -220,8 +235,6 @@ namespace GraphUI
 
             attributes = new Dictionary<string, NodeAttr>();
             components = new Dictionary<string, Comp>(); 
-            
-            
 
             isDemo = id == "-1";
             if(id != "-1")
@@ -234,13 +247,15 @@ namespace GraphUI
                 newCommandJson = infoJSON;
                 transform.localScale = Vector3.one * 0.7f;
                 Manager.ins.DemoNodes.Add(type, this);
-                transform.SetParent( Manager.ins.FindCategoryPanel(info.category));
+                transform.SetParent( Manager.ins.FindCategoryPanel(info.category,Manager.ins.demoNodeContainer,Manager.ins.categoryPanelPrefab));
             }
 
             if (createByThisClient)
                 Manager.ins.SendToServer(new API_new(this));
 
-            Pos = new NodeAttr(this, "pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; });
+
+
+            Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; });
             foreach (Comp.API_new comp_info in info.comp)
             {
                 Comp newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
@@ -417,6 +432,7 @@ namespace GraphUI
         public virtual IEnumerator Removing()// SAO-like?
         {
             yield return null;
+            Unselect();
             Manager.ins.Nodes.Remove(id);
             Destroy(gameObject);
         }

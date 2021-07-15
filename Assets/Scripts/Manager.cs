@@ -31,7 +31,7 @@ public class Manager : MonoBehaviour
     public Transform canvasTransform;
     public Transform demoNodeContainer;
     public Inspector nodeInspector;
-    public GameObject containerPrefab;
+    public GameObject categoryPanelPrefab;
     
     
     public enum State
@@ -207,10 +207,10 @@ public class Manager : MonoBehaviour
         node.Init(json,id);
         return node;
     }
-    public Transform FindCategoryPanel(string categoryString)
+    public Transform FindCategoryPanel(string categoryString,Transform parent,GameObject containerPrefab)
     {
         string[] cat = categoryString.Split('/');
-        Transform panel = demoNodeContainer;
+        Transform panel = parent;
         foreach(string n in cat)
         {
             var t = panel.Find(n);
@@ -223,6 +223,8 @@ public class Manager : MonoBehaviour
                 panel.name = n;
             }
         }
+        if(cat.Length == 1)
+            panel.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding.left = 5;
         return panel.Find("NodePanel");
     }
 }

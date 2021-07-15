@@ -27,7 +27,7 @@ namespace GraphUI {
         public override void Init(string infoJSON,string id = null)
         {
             base.Init(infoJSON,id);
-            Code = new NodeAttr(this, "code", "string",
+            Code = NodeAttr.Register(this, $"{name}/code", "string",
                 (v) => { CodeEditorScript.SetTextWithoutNotify((string)v); },
                 ()=> { return CodeEditorScript.text; });
             var info = JsonUtility.FromJson<API_new_CodeNode>(infoJSON);

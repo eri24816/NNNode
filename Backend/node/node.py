@@ -104,6 +104,10 @@ class Attribute:
         self.node = node
         self.type = type # string, float, etc.
         self.value = value
+        '''
+        if self.node.env:
+            self.node.env.Write_update_message(self.node.id,'atr',self.name)
+        '''
     
     def set(self,value):
         # Attribute changes are logged in node history
@@ -118,7 +122,7 @@ class Component:
     '''
     Like a slider or an input field
     A component controls an attribute.
-    Componte class have no set() method. When component value is modified, client should send "atr" command which will lead to Attribute.set()
+    Componte class have no set() method. When component value is modified, client should send "atr" command, which leads to Attribute.set()
     '''
     def __init__(self,node : Node,name,type,target_attr):
         node.components.append(self)
@@ -209,7 +213,11 @@ class Node:
         
         if 'attr' in info:
             for attr_dict in info['attr']:
-                self.attributes[attr_dict['name']].set(attr_dict['value'])
+                if attr_dict['name'] in self.attributes:
+                    self.attributes[attr_dict['name']].set(attr_dict['value'])
+                else:
+                    # Some attributes could be created by client. self.initialize() doesn't add them to self.attributes.
+                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value']).set(attr_dict['value'])
 
     def initialize(self):
         '''
