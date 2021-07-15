@@ -209,7 +209,7 @@ class Node:
 
         self.initialize() 
 
-        Attribute(self,'pos','Vector3',v3(0,0,0))
+        #Attribute(self,'pos','Vector3',v3(0,0,0))
         
         if 'attr' in info:
             for attr_dict in info['attr']:
