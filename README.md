@@ -51,7 +51,7 @@ Supported features of each node type:
 
 ## Define custom nodes
 ### FunctionNode
-A FunctionNode represents a function. You can define your own one by inheriting the FunctionNode class.
+A FunctionNode serves as a function. You can define your own one by inheriting the FunctionNode class.
 
 By simply adding this into /backend/node/user_defined.py:
 
