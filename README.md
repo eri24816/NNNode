@@ -65,7 +65,7 @@ you'll get a new node:
 
 <img src="https://user-images.githubusercontent.com/30017117/126074317-8fbb8654-f82d-47e6-bcbf-d727281f8c31.png" height="100" />
 
-Implement the function to make the node work.
+Implement the function to make the node actually work.
 
 ```python
 class IsEvenNode(FunctionNode):
@@ -77,8 +77,6 @@ class IsEvenNode(FunctionNode):
     def function(n):
         return not (n%2)
 ```
-
-
  
  ## Base Node class
  ...
