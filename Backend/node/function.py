@@ -1,4 +1,4 @@
-from .node import Component,Attribute,Port, FunctionNode, Node
+from .node import Component, Attribute, Port, FunctionNode, Node
 
 class AddFunctionNode(FunctionNode):
     '''

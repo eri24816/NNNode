@@ -62,17 +62,17 @@ class Port():
     In such case, inherit this
     '''
     def __init__(self,node: Node, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False):
-        self.id = str(len(node.port_list))
         node.port_list.append(self)
+        self.id = str(len(node.port_list))
         self.type = type
         self.isInput = isInput
         self.max_connections = max_connections
         self.name = name
         self.description = description 
         self.pos = pos
-        self.on_edge_activate = on_edge_activate
+        self.on_edge_activate = on_edge_activate # A delegate
         self.flows : List[edge.ControlFlow] = [] 
-        self.with_order = with_order
+        self.with_order = with_order # Whether the order of edges connected to the port matters.
 
     def get_dict(self):
         # for json.dump
@@ -100,8 +100,8 @@ class Attribute:
     '''
     def __init__(self,node : Node,name,type, value):
         node.attributes[name]=self
-        self.name = name
         self.node = node
+        self.name = name
         self.type = type # string, float, etc.
         self.value = value
         '''
@@ -203,11 +203,13 @@ class Node:
         self.added_output = "" 
 
         if self.id != -1:
-            self.env.Update_history("new", self.get_info())
             self.first_history = self.latest_history = History_item("stt")
             self.lock_history=False
 
         self.initialize() 
+
+        if self.id != -1:
+            self.env.Update_history("new", self.get_info())
 
         #Attribute(self,'pos','Vector3',v3(0,0,0))
         
@@ -222,7 +224,7 @@ class Node:
     def initialize(self):
         '''
         Setup the node's attributes and components
-        This method is separated from __init__ because overrides of initialize() should be called after some setup in __init__()
+        This method is separated from __init__() because overrides of initialize() should be called after some setup in __init__()
         '''
 
         pass
@@ -435,7 +437,6 @@ class FunctionNode(Node):
 
     display_name = 'Function'
     category = 'function'
-    frontend_type = 'GeneralNode'
 
     class Info(Node.Info):
         in_names : List[str]
@@ -461,6 +462,9 @@ class FunctionNode(Node):
             in_port_pos = [[0,0,0]]*len(self.in_names)
             out_port_pos = [[0,0,0]]*len(self.out_names)
         
+        if self.max_in_data == []:
+            self.max_in_data = [1]*len(self.in_names)
+
         # Initialize ports from self.in_names, self.out_names and self.max_in_data
         self.in_data = [Port(self,'DataPort',True,name = port_name,max_connections= max_in_data,
          on_edge_activate = self.in_data_activate, pos= pos)for (port_name,max_in_data,pos) in zip(self.in_names,self.max_in_data,in_port_pos)]
