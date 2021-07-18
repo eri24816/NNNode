@@ -7,7 +7,7 @@ class AddFunctionNode(FunctionNode):
 
     display_name = '+'
     category = 'function'
-    frontend_type = 'RoundNode'
+    shape = 'Round'
     
     in_names = ["items"]
     out_names = ["sum"]
@@ -29,7 +29,7 @@ class MultiplyFunctionNode(FunctionNode):
 
     display_name = '×'
     category = 'function'
-    frontend_type = 'RoundNode'
+    shape = 'Round'
 
     in_names = ["items"]
     out_names = ["prod"]
@@ -51,7 +51,7 @@ class SubstractFunctionNode(FunctionNode):
 
     display_name = '-'
     category = 'function'
-    frontend_type = 'RoundNode'
+    shape = 'Round'
 
     in_names = ["minuend","subtrahend"]
     out_names = ["difference"]
@@ -68,7 +68,7 @@ class FractionFunctionNode(FunctionNode):
 
     display_name = '÷'
     category = 'function'
-    frontend_type = 'RoundNode'
+    shape = 'Round'
 
     in_names = ["numerator","denominator"]
     out_names = ["result"]
@@ -82,7 +82,7 @@ class SliderNode(Node):
 
     display_name = 'slider'
     category = 'input'
-    frontend_type = 'SimpleNode'
+    shape = 'Simple'
 
     def initialize(self):
         super().initialize()

@@ -1,7 +1,7 @@
 from .node import Node
 
 class WatchNode(Node):
-    frontend_type = 'WatchNode'
+    shape = 'General'
     category = 'visual'
     display_name = 'watch'
     pass

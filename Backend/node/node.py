@@ -138,7 +138,7 @@ class Node:
     Base class of all types of nodes
     '''
     display_name = 'Node'
-    frontend_type : str = ''
+    shape : str = ''
     category = ''
 
     class Info(TypedDict):
@@ -146,7 +146,7 @@ class Node:
         id : int
 
         # for client ------------------------------
-        frontend_type : str     # CodeNode, FunctionNode, RoundNode
+        shape : str     # CodeNode, FunctionNode, RoundNode
         category : str
         doc : str
         name : str              # Just for frontend. In backend we never use it but use "id" instead
@@ -168,7 +168,7 @@ class Node:
         And when client sends redo, the node can be recreated from it. 
         '''
         return {
-            "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'frontend_type' : self.frontend_type,
+            "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'shape' : self.shape,
         'portInfos' : [port.get_dict() for port in self.port_list],
         'attr': [attr.dict()for _, attr in self.attributes.items()],
         'comp': [comp.dict()for  comp in self.components]
@@ -353,7 +353,7 @@ class CodeNode(Node):
     It will execute its code and activate its output ControlFlow (if there is one).
     '''
 
-    frontend_type = 'SimpleNode'
+    shape = 'Simple'
     category = 'basic'
     display_name = 'Code'
 
@@ -385,7 +385,7 @@ class CodeNode(Node):
 
 class EvalAssignNode(Node):
 
-    frontend_type = 'SimpleNode'
+    shape = 'Simple'
     category = 'basic'
     display_name = 'Evaluate or Assign'
 
@@ -444,7 +444,7 @@ class FunctionNode(Node):
         allow_multiple_in_data : List[bool]
 
     # Most of the child classes of FunctionNode just differ in following 4 class properties and their function() method.
-    frontend_type = 'GeneralNode' # FunctionNode, RoundNode
+    shape = 'General'
     in_names : List[str] = []
     out_names : List[str] = []
     max_in_data : List[int] = []
@@ -455,7 +455,7 @@ class FunctionNode(Node):
         '''
         super().initialize()
 
-        if self.frontend_type == 'RoundNode':
+        if self.shape == 'Round':
             in_port_pos = [[math.cos(t),math.sin(t),0.0] for t in np.linspace(np.pi/2,np.pi*3/2,len(self.in_names)+2)[1:-1]]
             out_port_pos = [[math.cos(t),math.sin(t),0.0] for t in np.linspace(np.pi/2,-np.pi/2,len(self.out_names)+2)[1:-1]]
         else :
@@ -496,8 +496,8 @@ class FunctionNode(Node):
 
         # Gather data from input dataFlows
         funcion_input = []
-        for port in self.in_data:
-            if self.max_in_data == 1:
+        for port,max_in_data in zip(self.in_data,self.max_in_data):
+            if max_in_data == 1:
                 if len(port.flows) == 0:
                     funcion_input.append(None) #TODO: Default value
                 else:

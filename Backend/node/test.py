@@ -3,7 +3,7 @@ from .node import Component, Attribute, Port, FunctionNode, Node
 class TestNode1(FunctionNode):
     display_name = 'CNN block'
     category = 'function'
-    frontend_type = 'GeneralNode'
+    shape = 'General'
 
     in_names = ['in','bn']
     out_names = ['out']
@@ -12,7 +12,7 @@ class TestNode1(FunctionNode):
 class TestNode2(FunctionNode):
     display_name = 'KLD loss'
     category = 'function'
-    frontend_type = 'GeneralNode'
+    shape = 'General'
 
     in_names = ['mu','covariance']
     out_names = ['KLD']
@@ -21,17 +21,17 @@ class TestNode2(FunctionNode):
 class TestNode3(FunctionNode):
     display_name = 'sample'
     category = 'function'
-    frontend_type = 'GeneralNode'
+    shape = 'General'
 
     in_names = ["input"]
     out_names = ['value','mu','var']
     max_in_data = [64]
 
 class IsEvenNode(FunctionNode):
-    display_name = 'is_even'
+    display_name = '2'
     in_names = ['n']
     out_names = ['out']
-    frontend_type = 'RoundNode'
+    shape = 'Round'
 
     @staticmethod
     def function(n):
