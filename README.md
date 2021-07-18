@@ -91,7 +91,7 @@ to make the node round.
 ## TODOs
 - ⬜️ Write visualization components
 - ⬜️ Make nodes snap to gird
-- ⬜️ Enable embedding SimpleNode into FunctionNode
+- ⬜️ Enable embedding nodes into GeneralNode
 - ⬜️ Save/Load
 - ⬜️ Intergrate node editor to frontend (not important)
 
