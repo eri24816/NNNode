@@ -143,7 +143,7 @@ public class Manager : MonoBehaviour
 
     private void Update()
     {
-        if (avaliableIds.Count < 500)
+        if (avaliableIds.Count < 5)
         {
             if (connectToServer)
                 env.Send(new APIMessage.Gid().Json); // request for an unused id

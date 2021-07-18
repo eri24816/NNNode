@@ -62,8 +62,8 @@ class Port():
     In such case, inherit this
     '''
     def __init__(self,node: Node, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False):
-        node.port_list.append(self)
         self.id = str(len(node.port_list))
+        node.port_list.append(self)
         self.type = type
         self.isInput = isInput
         self.max_connections = max_connections
