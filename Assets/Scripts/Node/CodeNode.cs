@@ -30,7 +30,7 @@ namespace GraphUI {
             Code = NodeAttr.Register(this, $"{name}/code", "string",
                 (v) => { CodeEditorScript.SetTextWithoutNotify((string)v); },
                 ()=> { return CodeEditorScript.text; });
-            var info = JsonUtility.FromJson<API_new_CodeNode>(infoJSON);
+            //var info = JsonUtility.FromJson<API_new_CodeNode>(infoJSON);
         }
 
         public void SetCode()// called by the code editor

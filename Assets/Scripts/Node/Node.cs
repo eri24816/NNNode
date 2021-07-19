@@ -94,7 +94,7 @@ namespace GraphUI
         public class NodeAttr
         {
             struct API_atr<T> { public string id, command, name; public T value; }
-            struct API_nat { public string command, id, name,type; } // new attribute
+            struct API_nat<T> { public string command, id, name, type, h;public T value; } // new attribute
 
             object value; // If delegate GetValue is not null, this field will not be used.
             public string type; // For inspector to know how to generate the attribute editor
@@ -111,7 +111,7 @@ namespace GraphUI
             public delegate object GetDel();
             public GetDel getDel;
 
-            public static NodeAttr Register(Node node, string name, string type, SetDel setDel = null, GetDel getDel = null, object defaultValue = null, object comp = null)
+            public static NodeAttr Register(Node node, string name, string type, SetDel setDel = null, GetDel getDel = null, object initValue = null, object comp = null, string history_in = "node")
             {
                 if (comp == null) comp = 0;
                 if (node.attributes.ContainsKey(name)) 
@@ -126,16 +126,26 @@ namespace GraphUI
                 }
                 else
                 {
-                    if(!node.isDemo)
-                        Manager.ins.SendToServer(new API_nat {command = "nat", id = node.id, name = name, type = type });
-                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel,comp);
-                    a.Set(defaultValue,send:node.createByThisClient);
+                    void SendNat <T>() => Manager.ins.SendToServer(new API_nat<T> { command = "nat", id = node.id, name = name, type = type, h = history_in, value = initValue == null?default(T): (T)initValue });
+                    if (!node.isDemo)
+                        switch (type)
+                        {
+                            case "string":
+                                SendNat<string>(); break;
+                            case "float":
+                                SendNat<float>(); break;
+                            case "Vector3":
+                                SendNat<Vector3>(); break;
+                        }
+                    
+                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel,comp,history_in);
+                    a.Set(initValue,send:false); // send = false because initial value is already sent by SendNat.
                     return a;
                 }
             }
                 
 
-            public NodeAttr(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp)
+            public NodeAttr(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp,string history_in = "node")
             {
                 this.name = name; // Name format: category1/category2/.../attr_name
                 this.type = type;
@@ -148,28 +158,40 @@ namespace GraphUI
                 sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
                 node.attributes.Add(name,this);
             }
+            bool setLock = false;
+            class SetLock : System.IDisposable
+            {
+                NodeAttr attr;
+                public SetLock(NodeAttr attr) { attr.setLock = true;this.attr = attr; }
+                public void Dispose()
+                {
+                    attr.setLock = false;
+                }
+            }
             public void Set(object value = null, bool send = true)
             {
-                if (setDel == null || value != null)
-                    this.value = value;
-                else
-                    this.value = getDel();
-                var toBeRemoved = new List<System.Tuple<object, SetDel>>();
-                foreach (var i in setDel)
+                if (setLock) return;
+                using (new SetLock(this)) // Avoid recursive Set() call
                 {
-                    if (i.Item1 == null )
+                    if (value != null)
+                        this.value = value;
+                    else
+                        this.value = getDel();
+                    var toBeRemoved = new List<System.Tuple<object, SetDel>>();
+                    foreach (var i in setDel)
                     {
-                        toBeRemoved.Add(i);
+                        if (i.Item1 == null)
+                        {
+                            toBeRemoved.Add(i);
+                        }
                     }
+                    foreach (var i in toBeRemoved)
+                        setDel.Remove(i);
+
+                    foreach (var i in setDel)
+                        i.Item2(this.value);
+                    if (send) Send();
                 }
-                foreach (var i in toBeRemoved)
-                    setDel.Remove(i);
-
-                
-
-                foreach (var i in setDel)
-                    i.Item2(this.value);
-                if (send) Send();
             }
             public object Get()
             {
@@ -252,10 +274,10 @@ namespace GraphUI
 
             if (createByThisClient)
                 Manager.ins.SendToServer(new API_new(this));
-
-
-
-            Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; });
+            else
+                // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
+                Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; },history_in : "env");
+            
             foreach (Comp.API_new comp_info in info.comp)
             {
                 Comp newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
@@ -292,7 +314,6 @@ namespace GraphUI
 
         public virtual void Start()
         {
-            targetPos = transform.position;
             outline_running.effectColor = new Color(0, 0, 0, 0);
         }
 
@@ -372,7 +393,6 @@ namespace GraphUI
         }
 
 
-        Vector3 targetPos;
 
         bool dragging = false;
 
@@ -425,9 +445,8 @@ namespace GraphUI
                 yield return null;
             }
             moveable = true;
-            //Manager.ins.Nodes.Add(id, this);
 
-            Pos.Send();
+            Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env",initValue:transform.position);
         }
         public virtual IEnumerator Removing()// SAO-like?
         {

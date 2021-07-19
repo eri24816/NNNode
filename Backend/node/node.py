@@ -98,25 +98,39 @@ class Attribute:
 
     Not all attributes are controlled by components, like attribute "pos". 
     '''
-    def __init__(self,node : Node,name,type, value):
+    def __init__(self,node : Node,name,type, value,history_in = 'node'):
         node.attributes[name]=self
         self.node = node
         self.name = name
         self.type = type # string, float, etc.
         self.value = value
+
+        # History is for undo/redo. Every new changes of an attribute creates an history item.
+        # self.history_in = '' -> no storing history
+        # self.history_in = 'node' -> store history in the node, like most of the attributes
+        # self.history_in = 'env' -> store history in the env, like node position
+        self.history_in = history_in 
         '''
         if self.node.env:
             self.node.env.Write_update_message(self.node.id,'atr',self.name)
         '''
     
-    def set(self,value):
-        # Attribute changes are logged in node history
-        self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value}) 
+    def set(self,value, store_history:bool = True):
+
+        # Update history
+        if store_history:
+            if self.history_in == 'node':
+                self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value}) 
+            elif self.history_in == 'env':
+                self.node.env.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
+
         self.value = value
+
+        # Send to client
         self.node.env.Write_update_message(self.node.id,'atr',self.name)
 
     def dict(self):
-        return {'name' : self.name, 'type' : self.type, 'value' : self.value}
+        return {'name' : self.name, 'type' : self.type, 'value' : self.value, 'h' : self.history_in}
     
 class Component:
     '''
@@ -219,7 +233,7 @@ class Node:
                     self.attributes[attr_dict['name']].set(attr_dict['value'])
                 else:
                     # Some attributes could be created by client. self.initialize() doesn't add them to self.attributes.
-                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value']).set(attr_dict['value'])
+                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
 
     def initialize(self):
         '''
@@ -290,7 +304,7 @@ class Node:
             
         if command == 'nat':
             if m['name'] not in self.attributes:
-                Attribute(self,m['name'],m['type'],None)
+                Attribute(self,m['name'],m['type'],None,m['h']).set(m['value'],False) # Set initial value
             
     
 
@@ -311,6 +325,9 @@ class Node:
 
         # add an item to the linked list
         self.latest_history=History_item(type,content,self.latest_history) 
+        #print(traceback.print_stack())
+        print(self.first_history)
+        
 
     def Undo(self):
         if self.latest_history.last==None:
@@ -323,6 +340,8 @@ class Node:
         self.latest_history=self.latest_history.last
         self.latest_history.head_direction = 0
 
+        print(self.first_history)
+
         return 1
     
     def Redo(self):
@@ -334,6 +353,7 @@ class Node:
 
         if self.latest_history.type=="atr":
             self.attributes[self.latest_history.content['name']].set(self.latest_history.content['new'])
+        print(self.first_history)
 
         return 1
 

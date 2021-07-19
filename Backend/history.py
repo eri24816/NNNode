@@ -14,7 +14,7 @@ class History_item:
         head_direction is for client to find the head (server/upd)
         it changes when edit/undo/redo
         -1: backward, 0: self is head, 1: forward
-        '''#*? Is it OK to del the history_items that will no longer be visited while some clients are still there?
+        '''
         
         self.sequence_id = sequence_id
         self.time=datetime.datetime.now()
@@ -22,9 +22,11 @@ class History_item:
             self.last.next=self
             self.last.head_direction = 1  # self is head
     def __str__(self):
-        result=self.type+", "+str(self.content)
-        if self.last:
-            result = str(self.last) + '\n' + result
+        result = '\nHistory:\n' if self.last == None else ''
+        result += '->\t' if self.head_direction == 0 else '\t'
+        result += self.type+", "+str(self.content)+'\n'
+        if self.next:
+            result += str(self.next)
         return result
 
 class History_lock():

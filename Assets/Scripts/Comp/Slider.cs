@@ -18,8 +18,8 @@ namespace GraphUI
                 (v) => sliderUI.value = (float)v,
                 isMainComp?() => sliderUI.value:(Node.NodeAttr.GetDel)null
                 ) ;
-            Node.NodeAttr.Register(node, $"{name}/min", "float", (v) => sliderUI.minValue = (float)v, defaultValue: 0f,comp:this);
-            Node.NodeAttr.Register(node, $"{name}/max", "float", (v) => sliderUI.maxValue = (float)v, defaultValue: 100f, comp: this);
+            Node.NodeAttr.Register(node, $"{name}/min", "float", (v) => sliderUI.minValue = (float)v, initValue: 0f,comp:this);
+            Node.NodeAttr.Register(node, $"{name}/max", "float", (v) => sliderUI.maxValue = (float)v, initValue: 100f, comp: this);
 
             
         }

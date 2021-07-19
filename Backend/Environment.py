@@ -164,6 +164,8 @@ class Env():
                 self.Create(content)
             elif type=="mov":
                 self.Move(content['id'],content['old'])
+            elif type=="atr":
+                self.nodes[content['id']].attributes[content['name']].set(content['old'])
 
         self.latest_history.head_direction = -1
 
@@ -196,6 +198,8 @@ class Env():
                 self.Remove(content)
             elif type=="mov":
                 self.Move(content['id'],content['new'])
+            elif type=="atr":
+                self.nodes[content['id']].attributes[content['name']].set(content['new'])
 
         seq_id_a = self.latest_history.sequence_id
 
