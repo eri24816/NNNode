@@ -29,16 +29,16 @@ python server.py
 2. Open this folder as a Unity project
 3. Press the start button
 
-## Front-end node types
-### GeneralNode
+## Node shapes
+### General
 
 <img src="https://user-images.githubusercontent.com/30017117/126072854-ba9c47a9-5e0f-4220-8a6e-81a896a2dc11.png" height="100" />
 
-### RoundNode
+### Round
 
 <img src="https://user-images.githubusercontent.com/30017117/126073098-0689d4d5-57ad-4b43-8219-63c30b00ab82.png" height="100" />
 
-### SimpleNode
+### Simple
 
 <img src="https://user-images.githubusercontent.com/30017117/126073182-67c3cd75-ff0f-460c-a8e2-b1087e30c3b5.png" height="100" />
 
