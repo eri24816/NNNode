@@ -3,7 +3,7 @@
 
 ## Introduction
 
-NNNode is a node-based python editor, specifically  for editing, training, and visualizing pytotch neural network models. (It's still under development)
+NNNode is a node-based python editor, specifically designed for editing, training, and visualizing pytotch neural network models. (It's still under development)
 
 A complete neural network (NN) model consits of dozens of basic modules (layers). The computed tensors are passed from modules to modules in some specific routes. When optimizing and debugging a model, one has to frequently modify those routes as well as add/remove some modules temporarily to do experiments. Doing these on plain code may make the code ugly and hard to read. Inspecting the inside of the model and visualizing results during training may need extra effort loading data into tools like TensorBoard or Visdom.
 
