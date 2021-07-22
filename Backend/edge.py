@@ -80,7 +80,6 @@ class DataFlow(Edge):
         self.data=None
         
     def recive_value(self,value):
-        print('\n\n'+self.id+'recieve value'+'\n\n')
         self.data = value
         self.has_value = True
         self.activate()

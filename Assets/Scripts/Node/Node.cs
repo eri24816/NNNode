@@ -280,7 +280,11 @@ namespace GraphUI
             
             foreach (Comp.API_new comp_info in info.comp)
             {
-                Comp newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
+                Comp newComp;
+                if (comp_info.type.Length>=8 && comp_info.type.Substring(0, 8) == "Dropdown")
+                    newComp = Instantiate(Manager.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
+                else
+                    newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
                 if (!isDemo)
                     newComp.Init(this, comp_info);
                 components.Add(comp_info.name, newComp);
