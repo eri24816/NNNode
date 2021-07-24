@@ -32,11 +32,11 @@ RectTransform:
   m_Father: {fileID: 5305288095484126913}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 68.73, y: 25.01}
-  m_Pivot: {x: 0, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5189480401521213942
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -304,12 +304,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4218210102337387445}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: b3d07bcd1f2e4bc4ba130360f2cb40bc, type: 2}
   m_Color: {r: 0.13725491, g: 0.13725491, b: 0.13725491, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -400,6 +400,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   name_text: {fileID: 6521331071574696000}
+  destroyed: 0
   sliderUI: {fileID: 2549990786712044437}
   inputFieldUI: {fileID: 740263418881089119}
 --- !u!1 &6395026253141595322
@@ -804,7 +805,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3394898164550249981, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 101.85
+      value: 87.5261
       objectReference: {fileID: 0}
     - target: {fileID: 3394898164550249981, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_SizeDelta.y
@@ -883,6 +884,14 @@ PrefabInstance:
     - target: {fileID: 4422926380250074366, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5396069501123307387, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5396069501123307387, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
+      propertyPath: m_Material
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7999743617529239565, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_text
