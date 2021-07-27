@@ -149,6 +149,8 @@ GameObject:
   - component: {fileID: 4792376665988671261}
   - component: {fileID: 2795007408840089623}
   - component: {fileID: 4824053272760002415}
+  - component: {fileID: -1465786456724769728}
+  - component: {fileID: 8188996839406556310}
   m_Layer: 0
   m_Name: RoundNode
   m_TagString: Untagged
@@ -284,17 +286,43 @@ MonoBehaviour:
   id: 
   Name: 
   outline_running: {fileID: 4792376665988671261}
-  unselectedColor: {r: 0.49019608, g: 0.49019608, b: 0.49019608, a: 0}
-  hoverColor: {r: 0.8784314, g: 0.8784314, b: 0.8784314, a: 0}
-  selectedColor: {r: 0, g: 1, b: 0, a: 0}
-  outlineRunningColor: {r: 0, g: 0.627451, b: 1, a: 0.24313726}
-  outlinePendingColor: {r: 0, g: 0.7294118, b: 1, a: 0.74509805}
   lights:
   - {fileID: 6253532428769394442}
   componentPanel: {fileID: 0}
   type: 
   isDemo: 0
+  selectColorTransition: {fileID: -1465786456724769728}
+  runColorTransition: {fileID: 8188996839406556310}
   createByThisClient: 0
   nameText: {fileID: 6253532428769394442}
   inDataPortPrefab: {fileID: 8009105930568994710, guid: 1d7afe3453bd49c469bd5b7fc74f9b9c, type: 3}
   outDataPortPrefab: {fileID: 8290046095466235031, guid: 5893fa298e70bba49a60e28b140068e1, type: 3}
+--- !u!114 &-1465786456724769728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6961902779083875185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fd331bc2b1ba04180e037f03b21315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 15
+  graphics:
+  - {fileID: 6253532428769394442}
+--- !u!114 &8188996839406556310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6961902779083875185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fd331bc2b1ba04180e037f03b21315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 15
+  graphics: []

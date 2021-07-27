@@ -731,6 +731,8 @@ GameObject:
   - component: {fileID: 4792376665988671261}
   - component: {fileID: -4702201083356803110}
   - component: {fileID: 1015488641186880182}
+  - component: {fileID: 3181328267758607953}
+  - component: {fileID: -4159522734598046162}
   m_Layer: 0
   m_Name: GeneralNode
   m_TagString: Untagged
@@ -878,16 +880,13 @@ MonoBehaviour:
   id: 
   Name: 
   outline_running: {fileID: 4792376665988671261}
-  unselectedColor: {r: 0.49019608, g: 0.49019608, b: 0.49019608, a: 0}
-  hoverColor: {r: 0.8784314, g: 0.8784314, b: 0.8784314, a: 0}
-  selectedColor: {r: 0, g: 1, b: 0, a: 0}
-  outlineRunningColor: {r: 0, g: 0.627451, b: 1, a: 0.24313726}
-  outlinePendingColor: {r: 0, g: 0.7294118, b: 1, a: 0.74509805}
   lights:
   - {fileID: 6253532428769394442}
   componentPanel: {fileID: 4420419643738660915}
   type: 
   isDemo: 0
+  selectColorTransition: {fileID: 3181328267758607953}
+  runColorTransition: {fileID: -4159522734598046162}
   createByThisClient: 0
   inputPanel: {fileID: 4008355076363144760}
   outputPanel: {fileID: 7736413037262099107}
@@ -924,6 +923,35 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3181328267758607953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6961902779083875185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fd331bc2b1ba04180e037f03b21315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 15
+  graphics:
+  - {fileID: 6253532428769394442}
+--- !u!114 &-4159522734598046162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6961902779083875185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fd331bc2b1ba04180e037f03b21315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 15
+  graphics: []
 --- !u!1 &7736413037262099107
 GameObject:
   m_ObjectHideFlags: 0

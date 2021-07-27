@@ -46,14 +46,13 @@ namespace GraphUI
         [SerializeField]  
         UnityEngine.UI.Outline outline_running;
         [SerializeField]
-        Color unselectedColor, hoverColor, selectedColor,outlineRunningColor,outlinePendingColor;
-        [SerializeField]
         List<UnityEngine.UI.Graphic> lights;
         [SerializeField] Transform componentPanel;
 
         public string type; // class name in python
         public bool isDemo;
         bool moveable = true;
+        public ColorTransition selectColorTransition, runColorTransition;
 
         string newCommandJson;
         #endregion
@@ -335,9 +334,9 @@ namespace GraphUI
                 case "act":
                     switch (JsonUtility.FromJson<API_update_message>(message).info)
                     {
-                        case "0": DisplayInactivate(); break;
+                        case "0": DisplayInactive(); break;
                         case "1": DisplayPending(); break;
-                        case "2": DisplayActivate(); break;
+                        case "2": DisplayActive(); break;
                     }
                     break;
                 case "atr":
@@ -493,7 +492,6 @@ namespace GraphUI
                 g.color = new Color(target.r, target.g, target.b, g.color.a);
         }
 
-        IEnumerator changeColor1, changeColor2;
         public override void Select()
         {
             if (selected) return;
@@ -502,9 +500,7 @@ namespace GraphUI
             if(!isDemo)
                 Manager.ins.nodeInspector.Open(this);
 
-            if(changeColor1!=null)
-                StopCoroutine(changeColor1);
-            StartCoroutine(changeColor1 = SmoothChangeColor(lights, selectedColor));
+            selectColorTransition.Switch("selected");
             
         }
         public override void Unselect()
@@ -512,48 +508,33 @@ namespace GraphUI
             Manager.ins.nodeInspector.Close();
 
             base.Unselect();
-            if (changeColor1 != null)
-                StopCoroutine(changeColor1);
-            StartCoroutine(changeColor1 = SmoothChangeColor(lights, unselectedColor));
+
+            selectColorTransition.Switch("unselected");
         }
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
             if (!selected)
-            {
-                if (changeColor1 != null)
-                    StopCoroutine(changeColor1);
-                StartCoroutine(changeColor1 = SmoothChangeColor(lights, hoverColor));
-            }
+                selectColorTransition.Switch("hover");
         }
         public override void OnPointerExit(PointerEventData eventData)
         {
             base.OnPointerExit(eventData);
             if (!selected)
-            {
-                if (changeColor1 != null)
-                    StopCoroutine(changeColor1);
-                StartCoroutine(changeColor1 = SmoothChangeColor(lights, unselectedColor));
-            }
+                selectColorTransition.Switch("unselected");
         }
-        public void DisplayActivate()
+        public void DisplayActive()
         {
-            if (changeColor2 != null)
-                StopCoroutine(changeColor2);
-            StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, outlineRunningColor));
+            runColorTransition.Switch("active");
         }
-        public void DisplayInactivate()
+        public void DisplayInactive()
         {
-            if (changeColor2 != null)
-                StopCoroutine(changeColor2);
-            outline_running.effectColor = outlineRunningColor;
-            StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, new Color(0, 0, 0, 0)));
+            runColorTransition.ImmidiateSwitch("active");
+            runColorTransition.Switch("inactive");
         }
         public void DisplayPending()
         {
-            if (changeColor2 != null)
-                StopCoroutine(changeColor2);
-            StartCoroutine(changeColor2 = SmoothChangeColor(outline_running, outlinePendingColor));
+            runColorTransition.Switch("pending");
         }
 
     }

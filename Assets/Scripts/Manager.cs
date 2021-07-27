@@ -200,9 +200,10 @@ public class Manager : MonoBehaviour
     public Node CreateNode(string json,string id = null,bool createByThisClient = false)
     {
         var message = JsonUtility.FromJson<APIMessage.NewNode>(json);
-        if (Nodes.ContainsKey(message.info.id))return null;
+        if (Nodes.ContainsKey(message.info.id))return null;/*
         GameObject prefab = nodePrefabDict[message.info.shape+"Node"];
-        var node = Instantiate(prefab).GetComponent<Node>();
+        var node = Instantiate(prefab).GetComponent<Node>();*/
+        var node = Theme.ins.Create(message.info.shape + "Node").GetComponent<Node>(); ;
         node.createByThisClient = createByThisClient;
         node.Init(json,id);
         return node;
