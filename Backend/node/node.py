@@ -2,11 +2,11 @@ from __future__ import annotations
 import math
 import numpy as np
 from typing import Dict, List
-from history import *
-import datetime
+from history import History
 import sys
 import traceback
 import copy
+import time
 from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
@@ -112,7 +112,7 @@ class Attribute:
         self.history_in = history_in 
         '''
         if self.node.env:
-            self.node.env.Write_update_message(self.node.id,'atr',self.name)
+            self.node.env.Add_buffered_message(self.node.id,'atr',self.name)
         '''
     
     def set(self,value, store_history:bool = True):
@@ -120,14 +120,16 @@ class Attribute:
         # Update history
         if store_history:
             if self.history_in == 'node':
-                self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value}) 
+                self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
+                self.node.env.Add_direct_message 
             elif self.history_in == 'env':
                 self.node.env.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
 
         self.value = value
 
         # Send to client
-        self.node.env.Write_update_message(self.node.id,'atr',self.name)
+        #self.node.env.Add_buffered_message(self.node.id,'atr',self.name)
+        self.node.env.Add_direct_message({'command':'atr','id':self.node.id,'name':self.name,'value':value})
 
     def dict(self):
         return {'name' : self.name, 'type' : self.type, 'value' : self.value, 'h' : self.history_in}
@@ -217,13 +219,13 @@ class Node:
         self.added_output = "" 
 
         if self.id != -1:
-            self.first_history = self.latest_history = History_item("stt")
-            self.lock_history=False
+            self.history = History()
 
         self.initialize() 
 
         if self.id != -1:
             self.env.Update_history("new", self.get_info())
+            self.env.Add_direct_message({'command':'new','info':self.get_info()})
 
         #Attribute(self,'pos','Vector3',v3(0,0,0))
         
@@ -250,25 +252,25 @@ class Node:
         self.env.nodes_to_run.put(self)
         
         # for client ------------------------------
-        self.env.Write_update_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
+        self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
 
     def deactivate(self):
         self.active = False
 
         # for client ------------------------------
-        self.env.Write_update_message(self.id, 'act', '0')
+        self.env.Add_buffered_message(self.id, 'act', '0')
 
     def flush_output(self): # called when client send 'upd'
         if self.added_output == '':
             return
         self.output += self.added_output
-        self.env.Write_update_message(self.id, 'out', self.added_output) # send client only currently added lines of output
+        self.env.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
         self.added_output = ''
 
     def run(self):
         # Env calls this method
-        self.env.Write_update_message(self.id,'act','2') # 2 means "running"
-        self.env.Write_update_message(self.id, 'clr') # Clear output
+        self.env.Add_buffered_message(self.id,'act','2') # 2 means "running"
+        self.env.Add_buffered_message(self.id, 'clr') # Clear output
 
         # Redirect printed outputs and error messages to client
         with stdoutIO(self):
@@ -314,46 +316,39 @@ class Node:
         stt, None - create the node
         atr, {name, old, new} - change attribute
         '''
-        if self.lock_history:
-            return
-        # don't repeat atr history within 3 seconds 
-        if type=="atr" and self.latest_history.type=="atr" and content['id'] == self.latest_history.content['id']:
-            if (datetime.datetime.now() - self.latest_history.time).seconds<3:
-                self.latest_history.content['new']=content['new']
-                self.latest_history.version+=1
+        # don't repeat atr history within 2 seconds 
+        if type=="atr" and self.history.current.type=="atr" and content['id'] == self.history.current.content['id']:
+            if (time.time() - self.history.current.time)<2:
+                self.history.current.content['new']=content['new']
+                self.history.current.version+=1
                 return
 
         # add an item to the linked list
-        self.latest_history=History_item(type,content,self.latest_history) 
-        #print(traceback.print_stack())
-        print(self.first_history)
+        self.history.Update(type,content) 
         
 
     def Undo(self):
-        if self.latest_history.last==None:
+        if self.history.current.last==None:
             return 0 # nothing to undo
 
-        if self.latest_history.type=="atr":
-            self.attributes[self.latest_history.content['name']].set(self.latest_history.content['old'])
+        if self.history.current.type=="atr":
+            self.attributes[self.history.current.content['name']].set(self.history.current.content['old'])
         
-        self.latest_history.head_direction=-1
-        self.latest_history=self.latest_history.last
-        self.latest_history.head_direction = 0
-
-        print(self.first_history)
+        self.history.current.head_direction=-1
+        self.history.current=self.history.current.last
+        self.history.current.head_direction = 0
 
         return 1
     
     def Redo(self):
-        if self.latest_history.next==None:
+        if self.history.current.next==None:
             return 0 # nothing to redo
-        self.latest_history.head_direction=1
-        self.latest_history=self.latest_history.next
-        self.latest_history.head_direction=0
+        self.history.current.head_direction=1
+        self.history.current=self.history.current.next
+        self.history.current.head_direction=0
 
-        if self.latest_history.type=="atr":
-            self.attributes[self.latest_history.content['name']].set(self.latest_history.content['new'])
-        print(self.first_history)
+        if self.history.current.type=="atr":
+            self.attributes[self.history.current.content['name']].set(self.history.current.content['new'])
 
         return 1
 
@@ -362,7 +357,8 @@ class Node:
             for flow in copy.copy(port.flows):
                 flow.remove()
         self.env.nodes.pop(self.id)
-        self.env.Update_history("rmv",self.get_info())
+        self.env.Update_history('rmv',self.get_info())
+        self.env.Add_direct_message({'command':'rmv','id':self.id})
         del self  #*?    
 
 class CodeNode(Node):

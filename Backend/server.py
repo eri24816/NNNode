@@ -38,6 +38,8 @@ prifix:
 
 
 
+from asyncio.events import get_running_loop
+from asyncio.queues import Queue
 import websockets
 import asyncio
 import threading
@@ -50,9 +52,36 @@ import websockets_routes
 
 router = websockets_routes.Router()
 
+message_sender_started = False
 
+@router.route("/lobby") #* lobby
+async def lobby(websocket, path):
+    global message_sender_started
+    if not message_sender_started:
+        asyncio.create_task(direct_message_sender())
+        asyncio.create_task(buffered_message_sender())
+        message_sender_started = True
+    async for message in websocket:
+        command=message[:3]
+        message=message[4:]
+        if command == "stt": # start a env
+            env_name=message
+            if env_name in envs:
+                await websocket.send("msg env %s is already running" % env_name)
+                return
+            else:
+                await websocket.send("msg env %s has started" % env_name)
+            new_env=Environment.Env(name=env_name)
+            new_thread=threading.Thread(target=new_env.run,name=env_name)
+            new_thread.setDaemon(True)
+            new_env.thread=new_thread
+            envs.update({env_name:new_env})
+            new_thread.start()
 
-@router.route("/env/{env_name}") #* interact with an env
+            new_env.Add_direct_message = lambda content: messages_to_client.put_nowait((new_env.ws_clients, content))
+
+# The main loop that handle an ws client connected to an env
+@router.route("/env/{env_name}")
 async def env_ws(websocket, path):
     env : Environment.Env = None
     env_name=path.params["env_name"]
@@ -64,25 +93,23 @@ async def env_ws(websocket, path):
         websocket.close()
         return
 
-    env_history_client=env.latest_history # which env history is client on
-    env_history_client_version = env.latest_history.version
-    update_message_buffer = {}
-    env.update_message_buffers.append(update_message_buffer) # register to env so the buffer will be updated
+    env.ws_clients.append(websocket)
+    
 
     #TODO: client load entire env
 
     env.update_demo_nodes()
-    print(env.update_message_buffers[0])
 
     async for message in websocket:
         m=json.loads(message) # message is in Json
         command=m['command']
 
-        if command != 'upd':
-            print(m)
+        if command == 'upd':
+            continue # TODO
+        print('-- client:\t',m)
         if command == "new":
             '''
-            create a new node or an edge
+            create a new node or an new edge
                 {command:"new",
                     info:{id,...}
                 }
@@ -92,50 +119,15 @@ async def env_ws(websocket, path):
 
         elif command == "rmv":
             '''
-            remove a new node or an edge
+            remove a node or an edge
                 {command:"rmv",
                     id
                 }
             '''
             
             env.Remove({"id" : m['id']})
-            await websocket.send("msg %s removed" % m['id'])
+            await websocket.send("smsg %s removed" % m['id'])
             
-
-        elif command == "upd":
-            '''
-            if there are changes after last upd command, send those changes to client
-                {command:"upd",(int)max_steps}
-            '''
-            max_steps=int(m['max_steps'])if 'max_steps' in m else 100
-            for _ in range(max_steps):# update env
-                #TODO: if too far, reload entire env
-                if env_history_client.head_direction==0:
-                    if env_history_client_version == env_history_client.version:
-                        break
-                    else:
-                        await Update_client(websocket,1,env_history_client)
-                        env_history_client_version = env_history_client.version
-                elif env_history_client.head_direction==1:
-                    env_history_client=env_history_client.next # move forward
-                    await Update_client(websocket,1,env_history_client)
-                    env_history_client_version = env_history_client.version
-                elif env_history_client.head_direction==-1:
-                    await Update_client(websocket,-1,env_history_client)
-                    env_history_client=env_history_client.last # move backward
-                    env_history_client_version = env_history_client.version
-
-            if env.running_node:
-                env.running_node.flush_output()
-            for key, value in sorted(update_message_buffer.copy().items()):
-                command_, id = key[1:4], key[5:].split('/')[0]
-
-                if command_ == "atr":
-                    await websocket.send(json.dumps({'command': command_, 'id': id, 'name':value,'value':env.nodes[id].attributes[value].value}))
-                else:
-                    await websocket.send(json.dumps({'command': command_, 'id': id, 'info': value}))
-                #print({'command': command_, 'id': id, 'value': value})
-            update_message_buffer.clear()
 
         elif command == "udo":
             '''
@@ -205,57 +197,38 @@ async def env_ws(websocket, path):
             if id in env.nodes:
                 env.nodes[id].recive_command(m)
 
+async def direct_message_sender():
+    # put message in the queue to send them to client
+    global messages_to_client
+    messages_to_client = asyncio.Queue()
+    while True:
+        ws_list,message = await messages_to_client.get()
+        for ws in ws_list:
+            await ws.send(json.dumps(message))
 
-        
-async def Update_client(ws,direction,history_item):
-    '''
-    for client that isn't on head,
-    if direction == 1, do/redo the action in history_item
-    if direction == -1, undo the action in history_item
-    '''
-    print('Update client: '+history_item.type+', '+str(history_item.content))
-    # history_item can't be type "stt"
-    if direction==1:
-        if history_item.type=="mov":# move node to new position
-            await ws.send(json.dumps({'command':"mov",'id':history_item.content['id'],'pos':history_item.content['new']}))
-        if history_item.type=="new":# add node
-            await ws.send(json.dumps({'command':"new",'info':history_item.content})) # info
-        if history_item.type=="rmv":# remove node
-            await ws.send(json.dumps({'command':"rmv",'id':history_item.content['id']}))
-    else:
-        if history_item.type=="mov":# move node back to old position
-            await ws.send(json.dumps({'command':"mov",'id':history_item.content['id'],'pos':history_item.content['old']}))
-        if history_item.type=="new":# remove node
-            await ws.send(json.dumps({'command':"rmv",'id':history_item.content['id']}))
-        if history_item.type=="rmv":# add node
-            await ws.send(json.dumps({'command':"new",'info':history_item.content})) # info
+async def buffered_message_sender():
 
+    while(True):
+        for env in envs.values():
+            # Each env has a message buffer
+            if env.running_node:
+                env.running_node.flush_output()
+            for key, value in sorted(env.message_buffer.copy().items()):
+                command_, id = key[1:4], key[5:].split('/')[0]
+                if command_ == "atr":
+                    messages_to_client.put_nowait((env.ws_clients,{'command': command_, 'id': id, 'name':value,'value':env.nodes[id].attributes[value].value}))
+                else:
+                    messages_to_client.put_nowait((env.ws_clients,{'command': command_, 'id': id, 'info': value}))
+                #print({'command': command_, 'id': id, 'value': value})
+            env.message_buffer.clear()
+        await asyncio.sleep(0.1)
 
-        
-@router.route("/lobby") #* lobby
-async def lobby(websocket, path):
-
-    async for message in websocket:
-        command=message[:3]
-        message=message[4:]
-        if command == "stt": # start a env
-            env_name=message
-            if env_name in envs:
-                await websocket.send("msg env %s is already running" % env_name)
-                return
-            else:
-                await websocket.send("msg env %s has started" % env_name)
-            new_env=Environment.Env(name=env_name)
-            new_thread=threading.Thread(target=new_env.run,name=env_name)
-            new_env.thread=new_thread
-            envs.update({env_name:new_env})
-            new_thread.setDaemon(True)
-            new_thread.start()
 
 start_server = websockets.serve(router, "localhost", 1000)
+
 asyncio.get_event_loop().run_until_complete(start_server)
 try:
     asyncio.get_event_loop().run_forever()
 except KeyboardInterrupt:
-    print('KeyboardInterrrrrrrrrrrrrrrrupt')
+    print('KeyboardInterrupt')
 

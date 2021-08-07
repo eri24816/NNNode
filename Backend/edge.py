@@ -34,6 +34,7 @@ class Edge(): # abstract class
         self.type=info['type']
         self.id=info['id']
         self.env.Update_history("new", info)
+        self.env.Add_direct_message({'command':'new','info':self.get_info()})
 
 
     def get_info(self):
@@ -56,6 +57,7 @@ class Edge(): # abstract class
 
         self.env.edges.pop(self.id)
         self.env.Update_history("rmv", self.info)
+        self.env.Add_direct_message({'command':'rmv','id':self.id})
         del self  #*?
 
 class ControlFlow(Edge):
