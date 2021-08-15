@@ -10,7 +10,7 @@ public class Inspector : MonoBehaviour
     [SerializeField]
     GameObject itemPanel,categoryPanel;
     [SerializeField]
-    GameObject floatInput,stringInput;
+    GameObject floatInput,stringInput,dropdown;
     public void Open(Node node)
     {
         foreach(var attr in node.attributes.Values)
@@ -28,6 +28,12 @@ public class Inspector : MonoBehaviour
                 var newComp = CreateAttrEditor(stringInput, attr).GetComponent<GraphUI.TextEditor>();
                 newComp.dataType = "string";
                 newComp.Init(node, attr.name,false);
+            }
+            else if (attr.type.Length>=8 && attr.type.Substring(0,8) == "dropdown")
+            {
+                var newComp = CreateAttrEditor(dropdown, attr).GetComponent<Dropdown>();
+
+                newComp.Init(node, attr.name, false);
             }
         }
     }

@@ -15,7 +15,7 @@ namespace GraphUI
             base.Init(node, targetAttrName);
             targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",
                 (v) => text.text = (string)v,
-                () => throw new System.NotImplementedException()
+                () => text.text
                 ) ;
         }
     }

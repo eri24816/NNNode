@@ -190,9 +190,9 @@ namespace GraphUI
             StartCoroutine(changeColor = line.ChangeColor(colorUnselected));
         }
 
-        public void RecieveUpdateMessage(string message, string command)
+        public void RecieveUpdateMessage(Newtonsoft.Json.Linq.JToken message)
         {
-            switch (command)
+            switch ((string)message["command"])
             {
                 case "rmv":
                     RawRemove();

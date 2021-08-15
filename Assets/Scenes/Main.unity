@@ -733,6 +733,7 @@ MonoBehaviour:
   categoryPanel: {fileID: 1468223545780764545, guid: 0afe668810b5b2d488f7d82c15081cf4, type: 3}
   floatInput: {fileID: 1596724895733269958, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
   stringInput: {fileID: 1596724895733269958, guid: df3e75cbffa8c784abe3a906e4c03820, type: 3}
+  dropdown: {fileID: 0}
 --- !u!114 &996819437
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1062,6 +1063,7 @@ MonoBehaviour:
   - {fileID: 1596724895733269958, guid: df3e75cbffa8c784abe3a906e4c03820, type: 3}
   - {fileID: 129529530874697994, guid: 675d87f184ba53640905b97f4e0c2c67, type: 3}
   - {fileID: 4218210102337387445, guid: 2691f264b5e8edb4bbfbf35ef218110b, type: 3}
+  - {fileID: 4218210102337387445, guid: 15e99b5761e067949a11dfb0ed4c4af2, type: 3}
   inDataPortPrefab: {fileID: 8009105930568994710, guid: 1d7afe3453bd49c469bd5b7fc74f9b9c, type: 3}
   outDataPortPrefab: {fileID: 8290046095466235031, guid: 5893fa298e70bba49a60e28b140068e1, type: 3}
   inControlPortPrefab: {fileID: 3025831327933562746, guid: f9dbe26d7045c294ebe686d70a4f2b74, type: 3}
@@ -1413,7 +1415,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_RenderPostProcessing: 1
-  m_Antialiasing: 2
+  m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
   m_Dithering: 0
@@ -2032,9 +2034,9 @@ MonoBehaviour:
   - {fileID: 6961902779083875185, guid: 66bb7bc4260e73d49bac2a42d348617f, type: 3}
   - {fileID: 243579921277508087, guid: 0bedd3f033db31d4cbeb582a1345a3d3, type: 3}
   - {fileID: 6961902779083875185, guid: 477e4845705a09a4ea00839759d7bd9b, type: 3}
-  mainForInspector: {r: 1, g: 0.5743472, b: 0, a: 1}
+  mainForInspector: {r: 0, g: 0.96078444, b: 1, a: 1}
   secondaryForInspector: {r: 0, g: 0, b: 0, a: 0}
-  bgBriteness: 0.08
+  bgBriteness: 0.05
   bg: {fileID: 2112478762}
 --- !u!4 &1891038061
 Transform:

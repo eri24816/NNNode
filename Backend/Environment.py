@@ -207,7 +207,7 @@ class Env():
         # which will later be sent to client.
         # However, demo nodes creation should not be undone, so here we put the message "new" in update_message buffer.
         for node_class in self.node_classes.values():
-            self.Add_buffered_message(-1,'new',node_class.get_class_info())
+            self.Add_direct_message({'command':'new','info':node_class.get_class_info()})
 
     # run in another thread from the main thread (server.py)
     def run(self):

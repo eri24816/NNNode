@@ -40,6 +40,7 @@ prifix:
 
 from asyncio.events import get_running_loop
 from asyncio.queues import Queue
+from typing import Dict, Tuple, Union
 import websockets
 import asyncio
 import threading
@@ -55,7 +56,7 @@ router = websockets_routes.Router()
 message_sender_started = False
 
 @router.route("/lobby") #* lobby
-async def lobby(websocket, path):
+async def lobby(websocket : websockets.server.WebSocketServerProtocol, path):
     global message_sender_started
     if not message_sender_started:
         asyncio.create_task(direct_message_sender())
@@ -82,7 +83,7 @@ async def lobby(websocket, path):
 
 # The main loop that handle an ws client connected to an env
 @router.route("/env/{env_name}")
-async def env_ws(websocket, path):
+async def env_ws(websocket : websockets.server.WebSocketServerProtocol, path):
     env : Environment.Env = None
     env_name=path.params["env_name"]
     if env_name in envs:
@@ -196,14 +197,17 @@ async def env_ws(websocket, path):
             id=m['id']
             if id in env.nodes:
                 env.nodes[id].recive_command(m)
-
+                
+messages_to_client: asyncio.Queue[Tuple[list[websockets.server.WebSocketServerProtocol],Dict]] = None
 async def direct_message_sender():
     # put message in the queue to send them to client
     global messages_to_client
-    messages_to_client = asyncio.Queue()
+    messages_to_client = asyncio.Queue() 
     while True:
         ws_list,message = await messages_to_client.get()
         for ws in ws_list:
+            if not ws.open:
+                continue
             await ws.send(json.dumps(message))
 
 async def buffered_message_sender():

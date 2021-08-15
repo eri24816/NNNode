@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class CoolDown
 {
@@ -54,7 +56,7 @@ namespace GraphUI
         bool moveable = true;
         public ColorTransition selectColorTransition, runColorTransition;
 
-        string newCommandJson;
+        JToken info;
         #endregion
 
         public class API_new
@@ -89,7 +91,8 @@ namespace GraphUI
         }
 
         public struct API_atr { public string name; }
-        
+        public struct API_nat { public string name, id, type, value; }
+
         public class NodeAttr
         {
             struct API_atr<T> { public string id, command, name; public T value; }
@@ -117,10 +120,13 @@ namespace GraphUI
                 {
                     NodeAttr attr = node.attributes[name];
                     if (setDel != null)
-                        attr.setDel.Add(new System.Tuple<object, SetDel>(comp ,setDel));
+                    {
+                        attr.setDel.Add(new System.Tuple<object, SetDel>(comp, setDel));
+                        setDel(attr.Get());
+                    }
                     if (getDel != null)
                        attr.getDel = getDel;
-                    setDel(attr.Get());
+                    
                     return attr;
                 }
                 else
@@ -136,9 +142,8 @@ namespace GraphUI
                             case "Vector3":
                                 SendNat<Vector3>(); break;
                         }
-                    
-                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel,comp,history_in);
-                    a.Set(initValue,send:false); // send = false because initial value is already sent by SendNat.
+
+                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel, comp, history_in);
                     return a;
                 }
             }
@@ -174,8 +179,10 @@ namespace GraphUI
                 {
                     if (value != null)
                         this.value = value;
-                    else
-                        this.value = getDel();
+                    else {
+                        print(name);
+                    this.value = getDel();
+                }
                     var toBeRemoved = new List<System.Tuple<object, SetDel>>();
                     foreach (var i in setDel)
                     {
@@ -197,15 +204,15 @@ namespace GraphUI
                 if (getDel != null) return getDel();
                 return value;
             }
-            public void Recieve(string Json)
+            public void Recieve(JToken message)
             {
                 switch (type) {
                     case "string":
-                        recievedValue = JsonUtility.FromJson<API_atr<string>>(Json).value; break;
+                        recievedValue = (string)message["value"]; break;
                     case "float":
-                        recievedValue = JsonUtility.FromJson<API_atr<float>>(Json).value; break;
+                        recievedValue = (float)message["value"]; break;
                     case "Vector3":
-                        recievedValue = JsonUtility.FromJson<API_atr<Vector3>>(Json).value; break;
+                        recievedValue = new Vector3 ((float)message["value"]["x"], (float)message["value"]["y"], (float)message["value"]["z"]); break;
                 }
                 recvCD.Request();
             }
@@ -239,20 +246,17 @@ namespace GraphUI
 
         }
         public bool createByThisClient = false;
-        public virtual void Init(string infoJSON,string id_ = null)
+        public virtual void Init(JToken info)
         {
             /*
-             Though infoJson already contains id, but when cloning from a demo node, I am too lazy to change the id in json. So in that case
-             id is passed as an argument.
+             * Parse the node info to setup the node.
+             * 
             */
-            
 
-            API_new.Info info  = JsonUtility.FromJson<API_new>(infoJSON).info;
 
-            type = info.type;
-            name = Name = info.name;
-            id = info.id;
-            if (id_ != null) id = id_;
+            type = (string)info["type"];
+            name = Name = (string)info["name"];
+            id = (string)info["id"];
 
             attributes = new Dictionary<string, NodeAttr>();
             components = new Dictionary<string, Comp>(); 
@@ -265,10 +269,10 @@ namespace GraphUI
             }
             else
             {
-                newCommandJson = infoJSON;
+                this.info = info;
                 transform.localScale = Vector3.one * 0.7f;
                 Manager.ins.DemoNodes.Add(type, this);
-                transform.SetParent( Manager.ins.FindCategoryPanel(info.category,Manager.ins.demoNodeContainer,Manager.ins.categoryPanelPrefab));
+                transform.SetParent( Manager.ins.FindCategoryPanel((string)info["category"],Manager.ins.demoNodeContainer,Manager.ins.categoryPanelPrefab));
             }
 
             if (createByThisClient)
@@ -277,41 +281,42 @@ namespace GraphUI
                 // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
                 Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; },history_in : "env");
             
-            foreach (Comp.API_new comp_info in info.comp)
+            foreach (var comp_info in info["comp"])
             {
                 Comp newComp;
-                if (comp_info.type.Length>=8 && comp_info.type.Substring(0, 8) == "Dropdown")
+                string type = (string)comp_info["type"];
+                if (type.Length>=8 && type.Substring(0, 8) == "Dropdown")
                     newComp = Instantiate(Manager.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
                 else
-                    newComp = Instantiate(Manager.ins.compPrefabDict[comp_info.type], componentPanel).GetComponent<Comp>();
+                    newComp = Instantiate(Manager.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
                 if (!isDemo)
                     newComp.Init(this, comp_info);
-                components.Add(comp_info.name, newComp);
+                components.Add(newComp.name, newComp);
             }
 
-            foreach (var portInfo in info.portInfos)
+            foreach (var portInfo in info["portInfos"])
             {
                 CreatePort(portInfo);
             }
         }
 
-        protected virtual void CreatePort(Port.API_new portInfo)
+        protected virtual void CreatePort(JToken portInfo)
         {
             GameObject prefab;
-            if (portInfo.type == "ControlPort")
-                prefab = portInfo.isInput ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
+            if ((string)portInfo["type"] == "ControlPort")
+                prefab = (bool)portInfo["isInput"] ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
             else
-                prefab = portInfo.isInput ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
+                prefab = (bool)portInfo["isInput"] ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
 
             Port newPort = Instantiate(prefab, transform).GetComponent<Port>();
             ports.Add(newPort);
             newPort.Init(this, portInfo);
         }
 
-        public virtual void SetupPort(Port port, Port.API_new portInfo)
+        public virtual void SetupPort(Port port, JToken portInfo)
         {
             // Called by Port.Init()
-            ((RectTransform)port.transform).anchorMin = ((RectTransform)port.transform).anchorMax = new Vector2(portInfo.pos.x / 2 + .5f, portInfo.pos.y / 2 + .5f);
+            ((RectTransform)port.transform).anchorMin = ((RectTransform)port.transform).anchorMax = new Vector2((float)portInfo["pos"]["x"] / 2 + .5f, (float)portInfo["pos"]["y"] / 2 + .5f);
 
         }
 
@@ -320,19 +325,19 @@ namespace GraphUI
             outline_running.effectColor = new Color(0, 0, 0, 0);
         }
 
-        public virtual void RecieveUpdateMessage(string message,string command){
-            switch (command)
+        public virtual void RecieveUpdateMessage(JToken message){
+            switch ((string)message["command"])
             {
                 case "clr":
                     ClearOutput();
                     break;
 
                 case "out":
-                    AddOutput(JsonUtility.FromJson<API_update_message>(message).info);
+                    AddOutput((string)message["info"]);
                     break;
 
                 case "act":
-                    switch (JsonUtility.FromJson<API_update_message>(message).info)
+                    switch ((string)message["info"])
                     {
                         case "0": DisplayInactive(); break;
                         case "1": DisplayPending(); break;
@@ -340,7 +345,10 @@ namespace GraphUI
                     }
                     break;
                 case "atr":
-                    attributes[JsonUtility.FromJson<API_atr>(message).name].Recieve(message);
+                    attributes[(string)message["name"]].Recieve(message); // Forward the message to the attribute
+                    break;
+                case "nat":
+                    NodeAttr.Register(this, (string)message["name"], (string)message["type"]).Recieve(message);
                     break;
                 case "rmv":
                     StartCoroutine(Removing());
@@ -407,8 +415,8 @@ namespace GraphUI
             if (isDemo) // Create a new node
             {
                 //Node newNode = Instantiate(gameObject).GetComponent<Node>();newNode.id = Manager.ins.GetNewID();newNode.isDemo = false;
-
-                Node newNode = Manager.ins.CreateNode(newCommandJson, Manager.ins.GetNewID(),true);
+                info["id"] = Manager.ins.GetNewID();
+                Node newNode = Manager.ins.CreateNode(info,true);
                 newNode.transform.localScale = 0.002f * Vector3.one;
                 StartCoroutine(newNode.DragCreating());
 
@@ -459,38 +467,6 @@ namespace GraphUI
             Destroy(gameObject);
         }
 
-        IEnumerator SmoothChangeColor(UnityEngine.UI.Outline outline,Color target,float speed=15)
-        {
-            Color original = outline.effectColor;
-            float t = 1f;
-            while (t >0.02f)
-            {
-                t *= Mathf.Pow(0.5f, Time.deltaTime*speed);
-                outline.effectColor = Color.Lerp(target, original, t);
-                yield return null;
-            }
-            outline.effectColor = target;
-        }
-
-        IEnumerator SmoothChangeColor(List<UnityEngine.UI.Graphic> graphics, Color target, float speed = 15)
-        {
-            if (graphics.Count == 0) yield break;
-            Color original = graphics[0].color;
-            float t = 1f;
-            while (t > 0.02f)
-            {
-                t *= Mathf.Pow(0.5f, Time.deltaTime * speed);
-                var c = Color.Lerp(target, original, t);
-                foreach (UnityEngine.UI.Graphic g in graphics)
-                {
-                    g.color = new Color(c.r, c.g, c.b, g.color.a);
-                }
-                    
-                yield return null;
-            }
-            foreach(UnityEngine.UI.Graphic g in graphics)
-                g.color = new Color(target.r, target.g, target.b, g.color.a);
-        }
 
         public override void Select()
         {

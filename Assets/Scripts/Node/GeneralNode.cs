@@ -12,20 +12,20 @@ namespace GraphUI
         TMPro.TMP_Text nameText;
         [SerializeField]
         GameObject inDataPortPrefab, outDataPortPrefab;
-        public override void Init(string infoJSON, string id = null)
+        public override void Init(Newtonsoft.Json.Linq.JToken infoJSON)
         {
-            base.Init(infoJSON,id);
+            base.Init(infoJSON);
 
-            if(nameText)
+            if (nameText)
                 nameText.text = Name;
 
         }
 
-        public override void SetupPort(Port port, Port.API_new portInfo)
+        public override void SetupPort(Port port, Newtonsoft.Json.Linq.JToken portInfo)
         { 
-            port.transform.SetParent(portInfo.isInput ? inputPanel.transform : outputPanel.transform);
-            port.minDir = port.maxDir = portInfo.isInput ? Mathf.PI : 0;
-            port.nameText.text = portInfo.name;
+            port.transform.SetParent((bool)portInfo["isInput"] ? inputPanel.transform : outputPanel.transform);
+            port.minDir = port.maxDir = (bool)portInfo["isInput"] ? Mathf.PI : 0;
+            port.nameText.text = (string)portInfo["name"];
         }
     }
 }

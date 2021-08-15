@@ -12,9 +12,9 @@ namespace GraphUI
         TMPro.TMP_Text nameText;
         [SerializeField]
         GameObject inDataPortPrefab, outDataPortPrefab;
-        public override void Init(string infoJSON,string id = null)
+        public override void Init(Newtonsoft.Json.Linq.JToken infoJSON)
         {
-            base.Init(infoJSON,id);
+            base.Init(infoJSON);
 
             if (nameText)
                 nameText.text = Name;
@@ -23,11 +23,11 @@ namespace GraphUI
 
         }
 
-        public override void SetupPort(Port port, Port.API_new portInfo)
+        public override void SetupPort(Port port, Newtonsoft.Json.Linq.JToken portInfo)
         {
             float radius = ((RectTransform)transform).sizeDelta.x / 2;
-            port.transform.localPosition = radius * portInfo.pos;
-            port.minDir = port.maxDir = Mathf.Atan2(portInfo.pos.y, portInfo.pos.x);
+            port.transform.localPosition = radius * portInfo["pos"].ToObject<Vector3>();
+            port.minDir = port.maxDir = Mathf.Atan2((float)portInfo["pos"]["y"], (float)portInfo["pos"]["x"]);
         }
 
 

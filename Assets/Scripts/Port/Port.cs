@@ -33,13 +33,14 @@ namespace GraphUI
         public float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
-        public void Init(Node node,API_new info)
+        public void Init(Node node,Newtonsoft.Json.Linq.JToken info)
         {
-            id = info.id;
-            isInput = info.isInput;
-            maxEdges = info.max_connections;
             this.node = node;
-            with_order = info.with_order;
+            id = (int)info["id"];
+            isInput = (bool)info["isInput"];
+            maxEdges = (int)info["max_connections"];
+            with_order = (bool)info["with_order"];
+            
 
             RectTransform rt = (RectTransform)transform;
             float a, b, c, d;

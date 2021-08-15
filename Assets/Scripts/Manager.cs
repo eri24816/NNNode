@@ -4,12 +4,13 @@ using UnityEngine;
 using WebSocketSharp;
 using GraphUI;
 using System.Collections.Concurrent;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 public interface IUpdateMessageReciever
 {
-    public void RecieveUpdateMessage(string message, string command);
+    public void RecieveUpdateMessage(JToken message);
 }
-
 public class Manager : MonoBehaviour
 {
     public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
@@ -36,7 +37,7 @@ public class Manager : MonoBehaviour
     
     public enum State
     {
-        idle,
+        idle,  
         draggingFlow
     }
     public State state;
@@ -83,7 +84,7 @@ public class Manager : MonoBehaviour
     public void SendToServer(object obj)
     {
         if(connectToServer)
-            env.Send(JsonUtility.ToJson(obj));
+            env.Send(JsonUtility.ToJson(obj)); // Here I use UnityEngine.JsonUtility instead of Json.NET because the latter produces error converting Vector3.
     }
 
     public string GetNewID()
@@ -146,66 +147,67 @@ public class Manager : MonoBehaviour
         if (avaliableIds.Count < 5)
         {
             if (connectToServer)
-                env.Send(new APIMessage.Gid().Json); // request for an unused id
+                env.Send("{\"command\":\"gid\"}"); // request for an unused id
             else
                 avaliableIds.Enqueue((nameNum++).ToString());
         }
 
-        while (messagesFromServer.TryDequeue(out string received))
+        while (messagesFromServer.TryDequeue(out string receivedString))
         {
-            print(WSPath + " says: " + received);
-            if (received[0] != '{') return;
-            string command = received.Length >= 16 ? received.Substring(13, 3) : "";
+            print(WSPath + " says: " + receivedString);
+            if (receivedString[0] != '{') return; // Filter out debugging message
+            var recieved = JObject.Parse(receivedString);
+            string command = (string)recieved["command"];
             if (command == "new")
             {
-                var id = FindString(received, "id");
+                var info = recieved["info"];
+                var id = (string)info["id"];
                 if (!Nodes.ContainsKey(id) && !Flows.ContainsKey(id))
                 {
-                    string type = FindString(received, "type");
-                    if (type == "ControlFlow" || (type == "DataFlow"))
+                    var type = (string)info["type"];
+                    if (type == "ControlFlow" || type == "DataFlow")
                     {
-                        var message = JsonUtility.FromJson<APIMessage.NewFlow>(received);
-                        GameObject prefab = nodePrefabDict[message.info.type];
+                        
+                        GameObject prefab = nodePrefabDict[(string)info["type"]];
                         var flow = Instantiate(prefab).GetComponent<Flow>();
-                        flow.id = message.info.id;
-                        flow.head = Nodes[message.info.head].ports[message.info.head_port_id];
+                        flow.id = (string)info["id"];
+                        flow.head = Nodes[(string)info["head"]].ports[(int)info["head_port_id"]];
                         flow.head.Edges.Add(flow);
-                        flow.tail = Nodes[message.info.tail].ports[message.info.tail_port_id];
+                        flow.tail = Nodes[(string)info["tail"]].ports[(int)info["tail_port_id"]];
                         flow.tail.Edges.Add(flow);
-                        Flows.Add(message.info.id, flow);
+                        Flows.Add(id, flow);
                     }
                     else
                     {
-                        CreateNode(received);
+                        CreateNode(info);
                     } 
-                }
+                } 
             }
 
             else if (command == "gid")// get a unused id to assign to new nodes or flows
             {
-                var message = JsonUtility.FromJson<APIMessage.Gid>(received);
-                avaliableIds.Enqueue(message.id);
+                //var message = JsonUtility.FromJson<APIMessage.Gid>(received);
+                avaliableIds.Enqueue((string)recieved["id"]);
             }
 
             else // directly send update messages to node
             {
-                var id = JsonUtility.FromJson<APIMessage.UpdateMessage>(received).id;
+                var id = (string)recieved["id"];
                 if (Nodes.ContainsKey(id))
-                    Nodes[id].RecieveUpdateMessage(received, command);
+                    Nodes[id].RecieveUpdateMessage(recieved);
                 else if(Flows.ContainsKey(id))
-                    Flows[id].RecieveUpdateMessage(received, command);
+                    Flows[id].RecieveUpdateMessage(recieved);
             }
         }
     }
-    public Node CreateNode(string json,string id = null,bool createByThisClient = false)
+    public Node CreateNode(JToken info,bool createByThisClient = false)
     {
-        var message = JsonUtility.FromJson<APIMessage.NewNode>(json);
-        if (Nodes.ContainsKey(message.info.id))return null;/*
+        if (Nodes.ContainsKey((string)info["id"]))return null;/*
         GameObject prefab = nodePrefabDict[message.info.shape+"Node"];
         var node = Instantiate(prefab).GetComponent<Node>();*/
-        var node = Theme.ins.Create(message.info.shape + "Node").GetComponent<Node>(); ;
+        var node = Theme.ins.Create((string)info["shape"] + "Node").GetComponent<Node>(); ;
         node.createByThisClient = createByThisClient;
-        node.Init(json,id);
+        node.Init(info);
         return node;
     }
     public Transform FindCategoryPanel(string categoryString,Transform parent,GameObject containerPrefab)

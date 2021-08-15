@@ -5,13 +5,13 @@ namespace GraphUI
 {
     public class SimpleNode : Node
     {
-        protected override void CreatePort(Port.API_new portInfo)
+        protected override void CreatePort(Newtonsoft.Json.Linq.JToken portInfo)
         {
             GameObject prefab;
-            if (portInfo.type == "ControlPort")
-                prefab = portInfo.isInput ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
+            if ((string)portInfo["type"] == "ControlPort")
+                prefab = (bool)portInfo["isInput"] ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
             else
-                prefab = portInfo.isInput ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
+                prefab = (bool)portInfo["isInput"] ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
 
             Port newPort = Instantiate(prefab,transform).GetComponent<Port>();
             ports.Add(newPort);
@@ -20,10 +20,10 @@ namespace GraphUI
 
             
         }
-        public override void SetupPort(Port port, Port.API_new portInfo)
+        public override void SetupPort(Port port, Newtonsoft.Json.Linq.JToken portInfo)
         {
-            port.minDir = port.maxDir = portInfo.isInput ? Mathf.PI : 0;
-            if (portInfo.isInput) port.transform.SetAsFirstSibling();
+            port.minDir = port.maxDir = (bool)portInfo["isInput"] ? Mathf.PI : 0;
+            if ((bool)portInfo["isInput"]) port.transform.SetAsFirstSibling();
             else port.transform.SetAsLastSibling();
         }
     }
