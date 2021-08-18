@@ -733,7 +733,7 @@ MonoBehaviour:
   categoryPanel: {fileID: 1468223545780764545, guid: 0afe668810b5b2d488f7d82c15081cf4, type: 3}
   floatInput: {fileID: 1596724895733269958, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
   stringInput: {fileID: 1596724895733269958, guid: df3e75cbffa8c784abe3a906e4c03820, type: 3}
-  dropdown: {fileID: 0}
+  dropdown: {fileID: 4218210102337387445, guid: 15e99b5761e067949a11dfb0ed4c4af2, type: 3}
 --- !u!114 &996819437
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2034,7 +2034,7 @@ MonoBehaviour:
   - {fileID: 6961902779083875185, guid: 66bb7bc4260e73d49bac2a42d348617f, type: 3}
   - {fileID: 243579921277508087, guid: 0bedd3f033db31d4cbeb582a1345a3d3, type: 3}
   - {fileID: 6961902779083875185, guid: 477e4845705a09a4ea00839759d7bd9b, type: 3}
-  mainForInspector: {r: 0, g: 0.96078444, b: 1, a: 1}
+  mainForInspector: {r: 0.6824372, g: 1, b: 0, a: 1}
   secondaryForInspector: {r: 0, g: 0, b: 0, a: 0}
   bgBriteness: 0.05
   bg: {fileID: 2112478762}

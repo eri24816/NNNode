@@ -11,6 +11,22 @@ public interface IUpdateMessageReciever
 {
     public void RecieveUpdateMessage(JToken message);
 }
+
+public static class JsonHelper
+{
+    public static object JToken2type(JToken j, string type)
+    {
+        if (type.Length>=8 && type.Substring(0, 8) == "dropdown") type = "string";
+        return type switch
+        {
+            "string" => (string)j,
+            "float" => (float)j,
+            "Vector3" => j.ToObject<Vector3>(),
+            _ => throw new System.Exception($"Type {type} not supported"),
+        };
+    } 
+}
+
 public class Manager : MonoBehaviour
 {
     public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.

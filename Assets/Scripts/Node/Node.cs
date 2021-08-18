@@ -89,10 +89,6 @@ namespace GraphUI
             public string id;
             public string info;
         }
-
-        public struct API_atr { public string name; }
-        public struct API_nat { public string name, id, type, value; }
-
         public class NodeAttr
         {
             struct API_atr<T> { public string id, command, name; public T value; }
@@ -126,7 +122,7 @@ namespace GraphUI
                     }
                     if (getDel != null)
                        attr.getDel = getDel;
-                    
+
                     return attr;
                 }
                 else
@@ -143,13 +139,14 @@ namespace GraphUI
                                 SendNat<Vector3>(); break;
                         }
 
-                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel, comp, history_in);
+                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel, comp);
+                    a.Set(initValue,false);
                     return a;
                 }
             }
                 
 
-            public NodeAttr(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp,string history_in = "node")
+            public NodeAttr(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp)
             {
                 this.name = name; // Name format: category1/category2/.../attr_name
                 this.type = type;
@@ -206,16 +203,9 @@ namespace GraphUI
             }
             public void Recieve(JToken message)
             {
-                switch (type) {
-                    case "string":
-                        recievedValue = (string)message["value"]; break;
-                    case "float":
-                        recievedValue = (float)message["value"]; break;
-                    case "Vector3":
-                        recievedValue = new Vector3 ((float)message["value"]["x"], (float)message["value"]["y"], (float)message["value"]["z"]); break;
-                }
+                recievedValue = JsonHelper.JToken2type(message["value"], type);
                 recvCD.Request();
-            }
+            } 
             public void Send()
             {
                 sendCD.Request();
@@ -235,7 +225,7 @@ namespace GraphUI
                         Send<Vector3>();
                     else if (type == "float")
                         Send<float>();
-                    else if (type == "string")
+                    else if (type == "string"||(type.Length >= 8 && type.Substring(0, 8) == "dropdown"))
                         Send<string>();
                 }
             }
@@ -281,6 +271,12 @@ namespace GraphUI
                 // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
                 Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; },history_in : "env");
             
+            foreach (var attr_info in info["attr"])
+            {
+                var new_attr = new NodeAttr(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
+                new_attr.Set(JsonHelper.JToken2type((string)attr_info["value"],new_attr.type), false);
+            }
+
             foreach (var comp_info in info["comp"])
             {
                 Comp newComp;
@@ -348,6 +344,7 @@ namespace GraphUI
                     attributes[(string)message["name"]].Recieve(message); // Forward the message to the attribute
                     break;
                 case "nat":
+                    throw new System.Exception("don't use nat");
                     NodeAttr.Register(this, (string)message["name"], (string)message["type"]).Recieve(message);
                     break;
                 case "rmv":

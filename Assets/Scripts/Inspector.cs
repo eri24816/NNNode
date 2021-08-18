@@ -19,6 +19,7 @@ public class Inspector : MonoBehaviour
             {
                 var newComp = CreateAttrEditor(floatInput,attr).GetComponent<GraphUI.TextEditor>();
                 newComp.dataType = "float";
+                newComp.name = attr.name;
                 newComp.Init(node, attr.name,false);
             }
 
@@ -27,13 +28,17 @@ public class Inspector : MonoBehaviour
             {
                 var newComp = CreateAttrEditor(stringInput, attr).GetComponent<GraphUI.TextEditor>();
                 newComp.dataType = "string";
+                newComp.name = attr.name;
                 newComp.Init(node, attr.name,false);
             }
             else if (attr.type.Length>=8 && attr.type.Substring(0,8) == "dropdown")
             {
                 var newComp = CreateAttrEditor(dropdown, attr).GetComponent<Dropdown>();
-
+                
+                newComp.SetOptions(attr.type.Substring(9));
+                newComp.name = attr.name;
                 newComp.Init(node, attr.name, false);
+                
             }
         }
     }

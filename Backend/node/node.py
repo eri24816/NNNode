@@ -112,7 +112,7 @@ class Attribute:
         self.history_in = history_in 
 
         if send_nat and self.node.env:
-            self.node.env.Add_direct_message({'command':'nat','id':self.node.id,'name':self.name,'type':self.type,'value':self.value})
+            pass#self.node.env.Add_direct_message({'command':'nat','id':self.node.id,'name':self.name,'type':self.type,'value':self.value})
 
         
     
