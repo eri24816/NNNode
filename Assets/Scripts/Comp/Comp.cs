@@ -12,10 +12,8 @@ namespace GraphUI
         public struct API_new { public string name, type, target_attr; }
         [SerializeField]
         TMPro.TMP_Text name_text;
-        public bool destroyed = false;
         public void Init(Node node, JToken info)
         {
-            destroyed = false;
             name = (string)info["name"];
             Init(node, (string)info["target_attr"]);
         }
@@ -26,9 +24,6 @@ namespace GraphUI
             if (name_text)
                 name_text.text = name;
         }
-        void OnDestroy()
-        {
-            destroyed = true;
-        }
+
     }
 }

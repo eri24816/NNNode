@@ -22,9 +22,25 @@ namespace GraphUI
         }
         public override void SetupPort(Port port, Newtonsoft.Json.Linq.JToken portInfo)
         {
+            port.GetComponent<UnityEngine.UI.LayoutElement>().ignoreLayout = true;
+            var t = ((RectTransform)port.transform);
+            if ((bool)portInfo["isInput"])
+            {
+                
+                t.anchoredPosition = new Vector2(-1,0);
+                t.anchorMin = new Vector2(0,0.5f);
+                t.anchorMax = new Vector2(0, 0.5f);
+            }
+            else
+            {
+                t.anchoredPosition = new Vector2(1, 0);
+                t.anchorMin = new Vector2(1, 0.5f);
+                t.anchorMax = new Vector2(1, 0.5f);
+            }
             port.minDir = port.maxDir = (bool)portInfo["isInput"] ? Mathf.PI : 0;
             if ((bool)portInfo["isInput"]) port.transform.SetAsFirstSibling();
             else port.transform.SetAsLastSibling();
+            port.DisplayKnob();
         }
     }
 }

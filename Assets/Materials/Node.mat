@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Node
-  m_Shader: {fileID: -6465566751694194690, guid: cb03feec15d9b7e46a4ae40b87c67414, type: 3}
+  m_Shader: {fileID: 4800000, guid: e7871f72c9ea14b4cb83679734170d79, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -123,7 +123,7 @@ Material:
     m_Colors:
     - Color_105068e0d6fc4fb6b8b7d3af6564de18: {r: 0, g: 0, b: 0, a: 0.56078434}
     - _BaseColor: {r: 0.13421167, g: 0.16037738, b: 0.1307227, a: 1}
-    - _Color: {r: 0.0754717, g: 0.0754717, b: 0.0754717, a: 0.78039217}
+    - _Color: {r: 0.14150941, g: 0.14150941, b: 0.14150941, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}

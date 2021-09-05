@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 namespace GraphUI
 {
-    public class Port : MonoBehaviour, IDragHandler
+    public class Port : MonoBehaviour, IDragHandler,IPointerEnterHandler,IPointerExitHandler
     {
         /*
             Child game object of a node.
@@ -33,6 +33,15 @@ namespace GraphUI
         public float minDir, maxDir;
         [SerializeField]
         private List<GameObject> toHideOnMinimize;
+        [SerializeField]
+        GameObject knob;
+        float pi = Mathf.PI;
+
+        public void DisplayKnob()
+        {
+            knob.SetActive(true);
+        }
+
         public void Init(Node node,Newtonsoft.Json.Linq.JToken info)
         {
             this.node = node;
@@ -80,7 +89,7 @@ namespace GraphUI
         {
             return Vector3.Dot(dirVec(a), dirVec(b));
         }
-        float pi = Mathf.PI;
+        
 
         protected virtual void Start()
         {
@@ -166,6 +175,16 @@ namespace GraphUI
                     
                 }
             }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            CamControl.portHover = this;
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (CamControl.portHover == this) CamControl.portHover = null;
         }
     }
 }

@@ -176,10 +176,9 @@ namespace GraphUI
                 {
                     if (value != null)
                         this.value = value;
-                    else {
-                        print(name);
-                    this.value = getDel();
-                }
+                    else 
+                        this.value = getDel();
+                
                     var toBeRemoved = new List<System.Tuple<object, SetDel>>();
                     foreach (var i in setDel)
                     {
@@ -345,8 +344,6 @@ namespace GraphUI
                     break;
                 case "nat":
                     throw new System.Exception("don't use nat");
-                    NodeAttr.Register(this, (string)message["name"], (string)message["type"]).Recieve(message);
-                    break;
                 case "rmv":
                     StartCoroutine(Removing());
                     break;

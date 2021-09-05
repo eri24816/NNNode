@@ -74,11 +74,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.2627451, g: 0.46666667, b: 0.67058825, a: 0.7529412}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   resolution: 20
   shapeVel: 0.5
-  curveDist: 0.8
+  curveDist: 1
   width: 0.005
   raycastThreshold: 4
   longerEndPoint: 1

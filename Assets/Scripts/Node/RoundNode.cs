@@ -18,9 +18,6 @@ namespace GraphUI
 
             if (nameText)
                 nameText.text = Name;
-
-            
-
         }
 
         public override void SetupPort(Port port, Newtonsoft.Json.Linq.JToken portInfo)
@@ -28,6 +25,7 @@ namespace GraphUI
             float radius = ((RectTransform)transform).sizeDelta.x / 2;
             port.transform.localPosition = radius * portInfo["pos"].ToObject<Vector3>();
             port.minDir = port.maxDir = Mathf.Atan2((float)portInfo["pos"]["y"], (float)portInfo["pos"]["x"]);
+            port.DisplayKnob();
         }
 
 

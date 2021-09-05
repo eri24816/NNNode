@@ -142,22 +142,6 @@ public class Manager : MonoBehaviour
         }
     }
 
-    string FindString(string json,string key)
-    {
-        int i = json.IndexOf(key),i1;
-        i += key.Length + 2;
-        while (json[i]!='\"' && json[i]!= '\'')
-        {
-            i++;
-        }
-        i1 = ++i;
-        while (json[i] != '\"' && json[i] != '\'')
-        {
-            i++;
-        }
-        return json.Substring(i1, i - i1);
-    }
-
     private void Update()
     {
         if (avaliableIds.Count < 5)

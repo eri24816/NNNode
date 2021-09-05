@@ -1,7 +1,7 @@
 from .node import Node, Port, Attribute, Component
 
 class DisplayNode(Node):
-    shape = 'General'
+    shape = 'Simple'
     category = 'visual'
     display_name = 'display'
 

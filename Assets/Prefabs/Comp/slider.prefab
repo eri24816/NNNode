@@ -26,7 +26,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2254395814594522091}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 2}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 5305288095484126913}
@@ -400,7 +400,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   name_text: {fileID: 6521331071574696000}
-  destroyed: 0
   sliderUI: {fileID: 2549990786712044437}
   inputFieldUI: {fileID: 740263418881089119}
 --- !u!1 &6395026253141595322
@@ -821,7 +820,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3394898164550249981, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3394898164550249981, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_LocalRotation.w

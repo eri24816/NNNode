@@ -78,7 +78,7 @@ MonoBehaviour:
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   resolution: 20
   shapeVel: 0.5
-  curveDist: 0.8
+  curveDist: 1
   width: 0.005
   raycastThreshold: 4
   longerEndPoint: 1

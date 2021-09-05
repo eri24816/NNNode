@@ -74,6 +74,7 @@ namespace GraphUI
         public IEnumerator Creating()
         {
             Manager.ins.state = Manager.State.draggingFlow;
+            line.raycastTarget = false;
             yield return null; // wait for next frame
             if (tail && head)
             {
@@ -90,9 +91,11 @@ namespace GraphUI
                     p_targetPort.RecalculateEdgeDir();
                 }
                 p_targetPort = targetPort;
-                targetPort = null;
-                if (CamControl.colliderHover)
-                    targetPort = CamControl.colliderHover.GetComponent<Port>();
+                //targetPort = null;
+                //if (CamControl.colliderHover)
+                    //targetPort = CamControl.colliderHover.GetComponent<Port>();
+                targetPort = CamControl.portHover;
+
                 if (targetPort)
                     if (!targetPort.AcceptEdge(this)) targetPort = null;
                 if (targetPort)
@@ -129,6 +132,7 @@ namespace GraphUI
                 Manager.ins.Flows.Add(id, this);
                 Manager.ins.state = Manager.State.idle;
                 targetPort.RecalculateEdgeDir();
+                line.raycastTarget = true;
                 yield break;
             }
             else

@@ -12,6 +12,7 @@ public class CamControl : MonoBehaviour
     public bool touchPadMode=false;
     public static Vector3 mouseDelta, mouse,worldMouseDelta,worldMouse;
     public static Collider colliderHover;
+    public static Port portHover;
     Plane focusPlane;
     Camera cam;
     private void Start()

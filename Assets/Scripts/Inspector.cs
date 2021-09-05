@@ -15,6 +15,7 @@ public class Inspector : MonoBehaviour
     {
         foreach(var attr in node.attributes.Values)
         {
+
             if (attr.type == "float")
             {
                 var newComp = CreateAttrEditor(floatInput,attr).GetComponent<GraphUI.TextEditor>();
@@ -45,6 +46,7 @@ public class Inspector : MonoBehaviour
 
     GameObject CreateAttrEditor(GameObject prefab,Node.NodeAttr attr)
     {
+
         int i = attr.name.LastIndexOf('/');
         GameObject itemPanel_ = Instantiate(itemPanel, Manager.ins.FindCategoryPanel(i==-1?"-":attr.name.Substring(0,i), attributePanel,categoryPanel));
         itemPanel_.GetComponentInChildren<TMPro.TMP_Text>().text = attr.name.Substring(i+1);
@@ -56,6 +58,7 @@ public class Inspector : MonoBehaviour
     {
         foreach (Transform child in attributePanel)
         {
+            child.name = "";
              Destroy(child.gameObject);
         }
     }
