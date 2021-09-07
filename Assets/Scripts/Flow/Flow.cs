@@ -43,7 +43,8 @@ namespace GraphUI
         public Port tail, head;
         public Line line;
         public bool hard = false;
-        public Color colorSelected, colorHover, colorUnselected, colorActivated;
+
+        public ColorTransition runColorTransition,selectColorTransition;
 
 
         protected virtual void Start()
@@ -158,40 +159,32 @@ namespace GraphUI
 
 
         IEnumerator changeColor;
+        public override void Select()
+        {
+            if (selected) return;
+            base.Select();
+
+            selectColorTransition.Switch("selected");
+        }
+        public override void Unselect()
+        {
+            Manager.ins.nodeInspector.Close();
+
+            base.Unselect();
+
+            selectColorTransition.Switch("unselected");
+        }
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
             if (!selected)
-            {
-                if (changeColor != null)
-                    StopCoroutine(changeColor);
-                StartCoroutine(changeColor = line.ChangeColor(colorHover));
-            }
+                selectColorTransition.Switch("hover");
         }
         public override void OnPointerExit(PointerEventData eventData)
         {
-            base.OnPointerEnter(eventData);
+            base.OnPointerExit(eventData);
             if (!selected)
-            {
-                if (changeColor != null)
-                    StopCoroutine(changeColor);
-                StartCoroutine(changeColor = line.ChangeColor(colorUnselected));
-            }
-        }
-        public override void Select()
-        {
-            base.Select();
-            if (changeColor != null)
-                StopCoroutine(changeColor);
-            StartCoroutine(changeColor = line.ChangeColor(colorSelected));
-
-        }
-        public override void Unselect()
-        {
-            base.Unselect();
-            if (changeColor != null)
-                StopCoroutine(changeColor);
-            StartCoroutine(changeColor = line.ChangeColor(colorUnselected));
+                selectColorTransition.Switch("unselected");
         }
 
         public void RecieveUpdateMessage(Newtonsoft.Json.Linq.JToken message)
@@ -204,26 +197,15 @@ namespace GraphUI
                     break;
             }
         }
-        // TODO !!!!!!!!!!!!!!!!!!!
-        /*
-        public void DisplayActivate()
+
+        public void DisplayActive()
         {
-            if (changeColor != null)
-                StopCoroutine(changeColor);
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlineRunningColor));
+            runColorTransition.Switch("active");
         }
-        public void DisplayInactivate()
+        public void DisplayInactive()
         {
-            if (changeColor != null)
-                StopCoroutine(changeColor);
-            outline_running.effectColor = outlineRunningColor;
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, new Color(0, 0, 0, 0)));
+            runColorTransition.ImmidiateSwitch("active");
+            runColorTransition.Switch("inactive");
         }
-        public void DisplayPending()
-        {
-            if (changeColor != null)
-                StopCoroutine(changeColor);
-            StartCoroutine(changeOutlineColor = ChangeOutlineColor(outline_running, outlinePendingColor));
-        }*/
     }
 }

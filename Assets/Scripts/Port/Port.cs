@@ -166,7 +166,7 @@ namespace GraphUI
             {
                 if (Edges.Count < maxEdges)
                 {
-                    Flow newEdge = Instantiate(Manager.ins.nodePrefabDict[flowType.Name]).GetComponent<Flow>();
+                    Flow newEdge = Theme.ins.Create(flowType.Name).GetComponent<Flow>();
                     if (isInput) newEdge.head = this;
                     else newEdge.tail = this;
                     RecalculateEdgeDir(newEdge, GetNewEdgeOrder(CamControl.worldMouse));

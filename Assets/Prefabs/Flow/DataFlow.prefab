@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 1954637054139774652}
   - component: {fileID: 203987412913398630}
   - component: {fileID: -4346185509392050690}
+  - component: {fileID: 2364239019586374231}
+  - component: {fileID: 5241292689740432255}
   m_Layer: 0
   m_Name: DataFlow
   m_TagString: Untagged
@@ -56,10 +58,8 @@ MonoBehaviour:
   head: {fileID: 0}
   line: {fileID: 203987412913398630}
   hard: 0
-  colorSelected: {r: 0, g: 1, b: 0.20392157, a: 0.7019608}
-  colorHover: {r: 0.2627451, g: 0.46666667, b: 0.67058825, a: 1}
-  colorUnselected: {r: 0.2627451, g: 0.46666667, b: 0.67058825, a: 0.8666667}
-  colorActivated: {r: 0, g: 0, b: 0, a: 0}
+  runColorTransition: {fileID: 2364239019586374231}
+  selectColorTransition: {fileID: 5241292689740432255}
 --- !u!114 &203987412913398630
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,3 +90,32 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 357937049128392484}
   m_CullTransparentMesh: 1
+--- !u!114 &2364239019586374231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 357937049128392484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fd331bc2b1ba04180e037f03b21315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 15
+  graphics: []
+--- !u!114 &5241292689740432255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 357937049128392484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fd331bc2b1ba04180e037f03b21315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 15
+  graphics:
+  - {fileID: 203987412913398630}

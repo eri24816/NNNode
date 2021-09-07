@@ -86,6 +86,18 @@ public class Theme : MonoBehaviour
                 node.runColorTransition.AddColor("inactive", C0(0));
                 node.runColorTransition.SetDefault("inactive");
                 break;
+            case "DataFlow":
+                Flow flow = o.GetComponent<Flow>();
+                flow.selectColorTransition.AddColor("selected", C1(10));
+                flow.selectColorTransition.AddColor("unselected", C0(7));
+                flow.selectColorTransition.AddColor("hover", C0(8));
+                flow.selectColorTransition.SetDefault("unselected");
+
+                flow.runColorTransition.AddColor("active", C2(10));
+                flow.runColorTransition.AddColor("inactive", C0(0));
+                flow.runColorTransition.SetDefault("inactive");
+
+                break;
         }
     }
 
