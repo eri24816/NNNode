@@ -2273,9 +2273,9 @@ MonoBehaviour:
   - {fileID: 6961902779083875185, guid: 477e4845705a09a4ea00839759d7bd9b, type: 3}
   - {fileID: 357937049128392484, guid: 0d68f42ac39b66249a27bd8e02c3ad2e, type: 3}
   - {fileID: 357937049128392484, guid: 68467c8094c2607468cda4fc6c6a7454, type: 3}
-  mainForInspector: {r: 0.6824372, g: 1, b: 0, a: 1}
+  mainForInspector: {r: 1, g: 0.7600819, b: 0, a: 1}
   secondaryForInspector: {r: 0, g: 0, b: 0, a: 0}
-  bgBriteness: 0.05
+  bgBriteness: 0
   bg: {fileID: 2112478762}
 --- !u!4 &1891038061
 Transform:

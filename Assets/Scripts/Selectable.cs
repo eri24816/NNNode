@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 namespace GraphUI
 {
-    public class Selectable : MonoBehaviour, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler
+    public class Selectable : MonoBehaviour, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler,IScrollHandler
     {
         public static List<Selectable> current=new List<Selectable>();
         
@@ -107,6 +107,12 @@ namespace GraphUI
         public virtual void Remove()
         {
             if (current.Contains(this)) current.Remove(this);
+        }
+
+        public void OnScroll(PointerEventData eventData)
+        {
+            // Send scroll event ahead, instead of blocking it.
+            CamControl.ins.OnBackgroundScroll(eventData);
         }
     }
 }

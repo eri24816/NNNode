@@ -72,14 +72,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b1d17d8b44de72488cf3286ea01ea93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: 38570f66b00315a4c97e21b49a4582d0, type: 2}
   m_Color: {r: 0.2627451, g: 0.46666667, b: 0.67058825, a: 0.7529412}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   resolution: 20
   shapeVel: 0.5
   curveDist: 1
-  width: 0.005
+  width: 0.01
   raycastThreshold: 4
   longerEndPoint: 1
 --- !u!222 &-4346185509392050690

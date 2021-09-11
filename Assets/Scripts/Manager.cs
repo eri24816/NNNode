@@ -167,9 +167,8 @@ public class Manager : MonoBehaviour
                     var type = (string)info["type"];
                     if (type == "ControlFlow" || type == "DataFlow")
                     {
-                        
-                        GameObject prefab = nodePrefabDict[(string)info["type"]];
-                        var flow = Instantiate(prefab).GetComponent<Flow>();
+                        GameObject prefab = Theme.ins.Create((string)info["type"]);
+                        var flow = prefab.GetComponent<Flow>();
                         flow.id = (string)info["id"];
                         flow.head = Nodes[(string)info["head"]].ports[(int)info["head_port_id"]];
                         flow.head.Edges.Add(flow);

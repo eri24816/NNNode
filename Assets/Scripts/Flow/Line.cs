@@ -126,11 +126,13 @@ namespace GraphUI
                 delta[i] = Vector3.Normalize(points[i + 1] - points[i]);
             }
 
+            float accuLenght = 0;
             Vector3 shift = width * Vector3.up, shift_;
             for (int i = 0; i < resolution; i++)
             {
+                if (i > 0)
+                    accuLenght += (points[i] - points[i - 1]).magnitude;
                 if (i == 0 || i == resolution - 1)
-                //if(true)
                 {
                     shift_ = width * Vector3.up;
                 }
@@ -146,16 +148,18 @@ namespace GraphUI
                 }
                 shift = shift_ * Mathf.Sign(Vector3.Dot(shift, shift_));
                 vertex.position = points[i] + shift - transform.position;
+                vertex.uv0 = vertex.uv1 = vertex.uv2 = vertex.uv3 = new Vector2(0, accuLenght/width);
                 vh.AddVert(vertex);
                 vertex.position = points[i] - shift - transform.position;
+                vertex.uv0 = vertex.uv1 = vertex.uv2 = vertex.uv3 = new Vector2(1, accuLenght / width);
                 vh.AddVert(vertex);
             }
             for (int i = 0; i < resolution - 1; i++)
             {
-                vh.AddTriangle(i * 2, i * 2 + 1, i * 2 + 2);
+                vh.AddTriangle(i * 2, i * 2 + 2, i * 2 + 1);
                 vh.AddTriangle(i * 2 + 1, i * 2 + 2, i * 2 + 3);
             }
-
+            
             
         }
         Vector3 w;
@@ -193,10 +197,6 @@ namespace GraphUI
                 
             }
             return false;
-        }
-        float CosineBetween(Vector3 a,Vector3 b)
-        {
-            return Mathf.Abs( Vector3.Dot(a, b) / (a.magnitude * b.magnitude));
         }
         public IEnumerator ChangeColor(Color target, float speed = 15)
         {

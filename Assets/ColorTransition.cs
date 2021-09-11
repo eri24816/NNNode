@@ -39,11 +39,6 @@ public class ColorTransition : MonoBehaviour
         ImmidiateSwitch(name);
     }
 
-    private void Start()
-    {
-        ImmidiateSwitch(defaultColor);
-    }
-
     private IEnumerator SmoothlyChangeColor(List<UnityEngine.UI.Graphic> graphics, Color target, float speed = 15)
     {
         if (graphics.Count == 0) yield break;
