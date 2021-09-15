@@ -239,7 +239,6 @@ namespace GraphUI
         {
             /*
              * Parse the node info to setup the node.
-             * 
             */
 
 
@@ -317,7 +316,7 @@ namespace GraphUI
 
         public virtual void Start()
         {
-            outline_running.effectColor = new Color(0, 0, 0, 0);
+            sendOnScrollTo = isDemo ?(MonoBehaviour)/*Unity needs this type conversion*/CamControl.ins.nodeList : CamControl.ins  ; 
         }
 
         public virtual void RecieveUpdateMessage(JToken message){
@@ -506,6 +505,9 @@ namespace GraphUI
         {
             runColorTransition.Switch("pending");
         }
-
+        public virtual void SetMainColor(Color color)
+        {
+            
+        }
     }
 }

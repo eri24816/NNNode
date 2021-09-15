@@ -34,5 +34,10 @@ namespace GraphUI
             base.OnDoubleClick();
             Manager.ins.Activate(this);
         }
+        public override void SetMainColor(Color color)
+        {
+            base.SetMainColor(color);
+            nameText.color = color;
+        }
     }
 }

@@ -12,6 +12,6 @@ public class Background : MonoBehaviour,IPointerClickHandler,IScrollHandler
     }
     public void OnScroll(PointerEventData eventData)
     {
-        CamControl.ins.OnBackgroundScroll(eventData);
+        CamControl.ins.OnScroll(eventData);
     }
 }

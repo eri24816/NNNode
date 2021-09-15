@@ -74,21 +74,24 @@ public class Theme : MonoBehaviour
             case "RoundNode":
                 Node node = o.GetComponent<Node>();
                 node.selectColorTransition.AddColor("selected", C1(10));
-                node.selectColorTransition.AddColor("unselected", C0(7));
-                node.selectColorTransition.AddColor("hover", C0(8));
+                node.selectColorTransition.AddColor("unselected", C0(0));
+                node.selectColorTransition.AddColor("hover", C0(3));
                 if (Application.isEditor)
                     node.selectColorTransition.SetDefault("selected");
                 else
                     node.selectColorTransition.SetDefault("unselected");
 
-                node.runColorTransition.AddColor("pending", C2(5));
-                node.runColorTransition.AddColor("active", C2(10));
-                node.runColorTransition.AddColor("inactive", C0(0));
+                node.runColorTransition.AddColor("pending", C2(1));
+                node.runColorTransition.AddColor("active", C2(5));
+                node.runColorTransition.AddColor("inactive", C0(1));
                 node.runColorTransition.SetDefault("inactive");
+
+                node.SetMainColor(C1(10));
+                
                 break;
             case "DataFlow":
                 Flow flow = o.GetComponent<Flow>();
-                flow.selectColorTransition.AddColor("selected", C1(10));
+                flow.selectColorTransition.AddColor("selected", C1(1));
                 flow.selectColorTransition.AddColor("unselected", C0(7));
                 flow.selectColorTransition.AddColor("hover", C0(8));
                 flow.selectColorTransition.SetDefault("unselected");

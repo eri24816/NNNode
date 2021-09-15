@@ -14,6 +14,7 @@ namespace GraphUI
         }
         public int resolution;
         int res_;
+        public Vector3 pos;
         public Vector3 Tail
         {
             set
@@ -107,6 +108,7 @@ namespace GraphUI
                 maxy = Mathf.Max(maxy, p.y);
             }
             transform.position = new Vector2(minx + maxx, miny + maxy) / 2;
+            transform.position += pos;
             rectTransform.sizeDelta = new Vector2(Mathf.Abs(minx - maxx) + 2 * width * raycastThreshold, Mathf.Abs(miny - maxy) + 2 * width * raycastThreshold);
 
         }

@@ -13,11 +13,12 @@ public class CamControl : MonoBehaviour
     public static Vector3 mouseDelta, mouse,worldMouseDelta,worldMouse;
     public static Collider colliderHover;
     public static Port portHover;
-    Plane focusPlane;
+    public UnityEngine.UI.ScrollRect nodeList;
+    Plane focusPlane; 
     Camera cam;
     private void Start()
     {
-        ins = this;
+        ins = this; 
         focusPlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         cam = GetComponent<Camera>();
     }
@@ -86,7 +87,7 @@ public class CamControl : MonoBehaviour
 
     }
 
-    public void OnBackgroundScroll(PointerEventData e)
+    public void OnScroll(PointerEventData e)
     {
         worldMouse = WorldPoint();
         if (UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == null)

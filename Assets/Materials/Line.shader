@@ -12,12 +12,14 @@ Shader "Unlit/line"
             _StencilWriteMask("Stencil Write Mask", Float) = 255
             _StencilReadMask("Stencil Read Mask", Float) = 255
             _ColorMask("Color Mask", Float) = 15
+            _Intensity("Intensity",Float) = 0
 
     }
 
         SubShader
         {
             Tags {"Queue" = "Transparent" "RenderType" = "Transparent" }
+            ZWrite Off
             LOD 100
             Blend SrcAlpha OneMinusSrcAlpha
 
@@ -49,6 +51,7 @@ Shader "Unlit/line"
                 };
 
                 float4 _Color;
+                float _Intensity;
 
                 v2f vert(appdata v)
                 {
@@ -62,9 +65,10 @@ Shader "Unlit/line"
                 fixed4 frag(v2f i) : SV_Target
                 {
                     //fixed4 col = tex2D(_MainTex, i.uv); // This is not working on 2d graphic. IDK why.
+
                     fixed y = sin(i.uv.g + 2*abs(i.uv.r - 0.5)-_Time*200) + 0.3 ;
-                y = clamp(y, 0, 1);
-                    fixed a = _Color.a + y;
+                    y = clamp(y, 0, 1)*_Intensity;
+                    fixed a = _Color.a + (1- _Color.a)*y;
                     return  fixed4(lerp(fixed3(1, 1, 1) ,_Color.rgb,y), clamp(a,0,1));
                 }
                 ENDCG

@@ -641,7 +641,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 25
-  m_SortingLayerID: 0
+  m_SortingLayerID: 2044560991
   m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!224 &216254001
@@ -1676,6 +1676,7 @@ MonoBehaviour:
   scroll: 1
   zoom: 0.1
   touchPadMode: 0
+  nodeList: {fileID: 205768854}
 --- !u!1 &1714824342
 GameObject:
   m_ObjectHideFlags: 0
@@ -2273,9 +2274,9 @@ MonoBehaviour:
   - {fileID: 6961902779083875185, guid: 477e4845705a09a4ea00839759d7bd9b, type: 3}
   - {fileID: 357937049128392484, guid: 0d68f42ac39b66249a27bd8e02c3ad2e, type: 3}
   - {fileID: 357937049128392484, guid: 68467c8094c2607468cda4fc6c6a7454, type: 3}
-  mainForInspector: {r: 1, g: 0.7600819, b: 0, a: 1}
-  secondaryForInspector: {r: 0, g: 0, b: 0, a: 0}
-  bgBriteness: 0
+  mainForInspector: {r: 0, g: 0.7388849, b: 1, a: 1}
+  secondaryForInspector: {r: 0.11372566, g: 1, b: 0, a: 1}
+  bgBriteness: 0.09
   bg: {fileID: 2112478762}
 --- !u!4 &1891038061
 Transform:
