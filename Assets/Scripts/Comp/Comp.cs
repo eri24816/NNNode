@@ -24,6 +24,9 @@ namespace GraphUI
             if (name_text)
                 name_text.text = name;
         }
-
+        public virtual void SetColor(Color color)
+        {
+            
+        }
     }
 }

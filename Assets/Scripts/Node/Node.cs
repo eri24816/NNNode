@@ -247,39 +247,40 @@ namespace GraphUI
             id = (string)info["id"];
 
             attributes = new Dictionary<string, NodeAttr>();
-            components = new Dictionary<string, Comp>(); 
+            components = new Dictionary<string, Comp>();
 
             isDemo = id == "-1";
-            if(id != "-1")
+            if (id != "-1")
             {
                 transform.localScale = Vector3.one * 0.002f;
-                Manager.ins.Nodes.Add(id,this);
+                Manager.ins.Nodes.Add(id, this);
             }
             else
             {
                 this.info = info;
                 transform.localScale = Vector3.one * 0.7f;
                 Manager.ins.DemoNodes.Add(type, this);
-                transform.SetParent( Manager.ins.FindCategoryPanel((string)info["category"],Manager.ins.demoNodeContainer,Manager.ins.categoryPanelPrefab));
+                transform.SetParent(Manager.ins.FindCategoryPanel((string)info["category"], Manager.ins.demoNodeContainer, Manager.ins.categoryPanelPrefab));
             }
 
             if (createByThisClient)
                 Manager.ins.SendToServer(new API_new(this));
             else
                 // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
-                Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; },history_in : "env");
-            
+                Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env");
+
             foreach (var attr_info in info["attr"])
             {
                 var new_attr = new NodeAttr(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
-                new_attr.Set(JsonHelper.JToken2type((string)attr_info["value"],new_attr.type), false);
+                new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
             }
+            NodeAttr.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
 
             foreach (var comp_info in info["comp"])
             {
                 Comp newComp;
                 string type = (string)comp_info["type"];
-                if (type.Length>=8 && type.Substring(0, 8) == "Dropdown")
+                if (type.Length >= 8 && type.Substring(0, 8) == "Dropdown")
                     newComp = Instantiate(Manager.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
                 else
                     newComp = Instantiate(Manager.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
@@ -505,9 +506,12 @@ namespace GraphUI
         {
             runColorTransition.Switch("pending");
         }
-        public virtual void SetMainColor(Color color)
+        public virtual void SetColor(Color color)
         {
-            
+            foreach(Comp comp in GetComponentsInChildren<Comp>())
+            {
+                comp.SetColor(color);
+            }
         }
     }
 }

@@ -10,6 +10,8 @@ namespace GraphUI
         UnityEngine.UI.Slider sliderUI;
         [SerializeField]
         TMPro.CodeEditor inputFieldUI;
+        [SerializeField]
+        UnityEngine.UI.Image fill;
         Node.NodeAttr targetAttr;
         public override void Init(Node node,  string targetAttrName, bool isMainComp = true)
         {
@@ -32,6 +34,11 @@ namespace GraphUI
         public void OnEndEdit(string value)
         {
             sliderUI.value = float.Parse(value);
+        }
+        public override void SetColor(Color color)
+        {
+            base.SetColor(color);
+            fill.color = color;
         }
     }
 }

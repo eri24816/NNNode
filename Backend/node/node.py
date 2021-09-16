@@ -98,7 +98,7 @@ class Attribute:
 
     Not all attributes are controlled by components, like attribute "pos". 
     '''
-    def __init__(self,node : Node,name,type, value,history_in = 'node',send_nat = True):
+    def __init__(self,node : Node,name,type, value,history_in = 'node'):
         node.attributes[name]=self
         self.node = node
         self.name = name
@@ -110,11 +110,6 @@ class Attribute:
         # self.history_in = 'node' -> store history in the node, like most of the attributes
         # self.history_in = 'env' -> store history in the env, like node position
         self.history_in = history_in 
-
-        if send_nat and self.node.env:
-            pass#self.node.env.Add_direct_message({'command':'nat','id':self.node.id,'name':self.name,'type':self.type,'value':self.value})
-
-        
     
     def set(self,value, store_history:bool = True):
 
@@ -226,6 +221,7 @@ class Node:
         if self.id != -1:
             self.env.Update_history("new", self.get_info())
             self.env.Add_direct_message({'command':'new','info':self.get_info()})
+        self.color = Attribute(self, 'color', 'Vector3',v3(0,1,0),'')
 
         #Attribute(self,'pos','Vector3',v3(0,0,0))
         
@@ -306,7 +302,7 @@ class Node:
             
         if command == 'nat':
             if m['name'] not in self.attributes:
-                Attribute(self,m['name'],m['type'],m['value'],m['h'],False).set(m['value'],False) # Set initial value
+                Attribute(self,m['name'],m['type'],m['value'],m['h']).set(m['value'],False) # Set initial value
             
     
 

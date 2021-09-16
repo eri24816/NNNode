@@ -27,9 +27,9 @@ namespace GraphUI
             port.minDir = port.maxDir = (bool)portInfo["isInput"] ? Mathf.PI : 0;
             port.nameText.text = (string)portInfo["name"];
         }
-        public override void SetMainColor(Color color)
+        public override void SetColor(Color color)
         {
-            base.SetMainColor(color);
+            base.SetColor(color);
             nameText.color = color;
         }
     }

@@ -73,7 +73,7 @@ public class Theme : MonoBehaviour
             case "SimpleNode":
             case "RoundNode":
                 Node node = o.GetComponent<Node>();
-                node.selectColorTransition.AddColor("selected", C1(10));
+                node.selectColorTransition.AddColor("selected", C1(8));
                 node.selectColorTransition.AddColor("unselected", C0(0));
                 node.selectColorTransition.AddColor("hover", C0(3));
                 if (Application.isEditor)
@@ -86,7 +86,7 @@ public class Theme : MonoBehaviour
                 node.runColorTransition.AddColor("inactive", C0(1));
                 node.runColorTransition.SetDefault("inactive");
 
-                node.SetMainColor(C1(10));
+                node.SetColor(C1(10));
                 
                 break;
             case "DataFlow":
