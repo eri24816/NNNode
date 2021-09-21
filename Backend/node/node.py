@@ -7,6 +7,7 @@ import sys
 import traceback
 import copy
 import time
+import config
 from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
@@ -218,10 +219,11 @@ class Node:
 
         self.initialize() 
 
+        self.color = Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)),'')
         if self.id != -1:
             self.env.Update_history("new", self.get_info())
             self.env.Add_direct_message({'command':'new','info':self.get_info()})
-        self.color = Attribute(self, 'color', 'Vector3',v3(0,1,0),'')
+        
 
         #Attribute(self,'pos','Vector3',v3(0,0,0))
         

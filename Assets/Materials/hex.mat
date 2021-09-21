@@ -67,7 +67,7 @@ Material:
     - Color_3e41811bb7eb4489a2c416a75053793e: {r: 0, g: 0.036037598, b: 0, a: 0.4392157}
     - Color_c368542080764b66960b87da0c42c8b3: {r: 0, g: 0, b: 0, a: 0}
     - Vector2_c8f4463caecc4ce49f946bf4e0b2e55c: {r: 5.19, g: 9.13, b: -1.7, a: 0}
-    - _Color: {r: 0.009, g: 0.062199716, b: 0.081, a: 0.09}
+    - _Color: {r: 0, g: 0, b: 0, a: 0}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

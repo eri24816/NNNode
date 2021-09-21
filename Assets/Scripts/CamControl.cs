@@ -22,7 +22,7 @@ public class CamControl : MonoBehaviour
         focusPlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         cam = GetComponent<Camera>();
     }
-    Vector3 WorldPoint()
+    public Vector3 WorldPoint()
     {
         Ray ray= cam.ScreenPointToRay(Input.mousePosition);
         focusPlane.Raycast(ray, out float enter);
@@ -67,8 +67,8 @@ public class CamControl : MonoBehaviour
             {
                 transform.position += new Vector3(0, 0, Input.mouseScrollDelta.y * zoom/2);
             }
-            if (!(selectedGameObject.CompareTag("InputField")))
-                transform.position += (Vector3)Input.mouseScrollDelta * scroll;
+
+                transform.position += (Vector3)Input.mouseScrollDelta * scroll*0.05f;
         }
         Physics.Raycast(cam.ScreenPointToRay(mouse), out RaycastHit hit);
         colliderHover = hit.collider;

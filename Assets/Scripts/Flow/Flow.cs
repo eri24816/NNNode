@@ -45,6 +45,8 @@ namespace GraphUI
         public bool hard = false;
 
         public ColorTransition runColorTransition,selectColorTransition;
+        [SerializeField]
+        Material material;
 
 
         protected virtual void Start()
@@ -55,6 +57,8 @@ namespace GraphUI
                 tail.RecalculateEdgeDir();
             if(head)
                 head.RecalculateEdgeDir();
+            var graphic = GetComponent<UnityEngine.UI.Graphic>();
+            material = graphic.material = Instantiate(graphic.material) ;
         }
         protected virtual void Update()
         {
@@ -64,7 +68,29 @@ namespace GraphUI
                 line.Tail = tail.transform.position;
                 line.Head = head.transform.position;
             }
+            material.SetFloat("_Intensity", runColorTransition.color.r);
         }
+
+        public virtual void RecieveUpdateMessage(Newtonsoft.Json.Linq.JToken message)
+        {
+            switch ((string)message["command"])
+            {
+
+                case "act":
+                    switch ((string)message["info"])
+                    {
+                        case "0": DisplayInactive(); break;
+                        case "2": DisplayActive(); break;
+                    }
+                    break;
+                case "rmv":
+                    RawRemove();
+                    Manager.ins.Flows.Remove(id);
+                    break;
+            }
+        }
+
+
 
         public void SetDir(bool isTail,Vector3 dir)
         {
@@ -187,20 +213,11 @@ namespace GraphUI
                 selectColorTransition.Switch("unselected");
         }
 
-        public void RecieveUpdateMessage(Newtonsoft.Json.Linq.JToken message)
-        {
-            switch ((string)message["command"])
-            {
-                case "rmv":
-                    RawRemove();
-                    Manager.ins.Flows.Remove(id);
-                    break;
-            }
-        }
 
         public void DisplayActive()
         {
             runColorTransition.Switch("active");
+            print("a");
         }
         public void DisplayInactive()
         {

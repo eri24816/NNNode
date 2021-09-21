@@ -45,11 +45,11 @@ class Edge(): # abstract class
     def activate(self):
         self.active = True
         self.head_port.on_edge_activate() # Imform head node
-        #TODO: inform client to play animations
+        self.env.Add_buffered_message(self.id, 'act', '2')
 
     def deactivate(self):
         self.active = False
-        #TODO: inform client to play animations
+        self.env.Add_buffered_message(self.id, 'act', '0')
 
     def remove(self):
         self.tail_port.flows.remove(self)

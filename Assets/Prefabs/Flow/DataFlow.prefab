@@ -60,6 +60,7 @@ MonoBehaviour:
   hard: 0
   runColorTransition: {fileID: 2364239019586374231}
   selectColorTransition: {fileID: 5241292689740432255}
+  material: {fileID: 0}
 --- !u!114 &203987412913398630
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104,6 +105,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 15
+  color: {r: 0, g: 0, b: 0, a: 0}
   graphics: []
 --- !u!114 &5241292689740432255
 MonoBehaviour:
@@ -118,5 +120,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 15
+  color: {r: 0, g: 0, b: 0, a: 0}
   graphics:
   - {fileID: 203987412913398630}

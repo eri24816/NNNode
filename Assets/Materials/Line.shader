@@ -41,6 +41,7 @@ Shader "Unlit/line"
                 {
                     float4 vertex : POSITION;
                     float2 uv : TEXCOORD0;
+                    fixed4 color : COLOR;
                 };
 
                 struct v2f
@@ -48,6 +49,7 @@ Shader "Unlit/line"
                     float2 uv : TEXCOORD0;
                     UNITY_FOG_COORDS(1)
                     float4 vertex : SV_POSITION;
+                    fixed4 color : COLOR;
                 };
 
                 float4 _Color;
@@ -59,6 +61,7 @@ Shader "Unlit/line"
                     o.vertex = UnityObjectToClipPos(v.vertex);
                     //o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                     o.uv = v.uv;
+                    o.color = v.color;
                     return o;
                 }
 
@@ -68,8 +71,8 @@ Shader "Unlit/line"
 
                     fixed y = sin(i.uv.g + 2*abs(i.uv.r - 0.5)-_Time*200) + 0.3 ;
                     y = clamp(y, 0, 1)*_Intensity;
-                    fixed a = _Color.a + (1- _Color.a)*y;
-                    return  fixed4(lerp(fixed3(1, 1, 1) ,_Color.rgb,y), clamp(a,0,1));
+                    fixed a = i.color.a + (1- i.color.a)*y;
+                    return  fixed4(lerp(i.color ,_Color.rgb,y), clamp(a,0,1));
                 }
                 ENDCG
             }

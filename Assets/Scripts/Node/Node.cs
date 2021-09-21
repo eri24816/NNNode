@@ -362,7 +362,7 @@ namespace GraphUI
             StartCoroutine(Removing()); // Play removing animation and destroy the game objecct
         }
 
-        public virtual void Update()
+        public virtual void LateUpdate()
         {
             if (isDemo) return;
             if (dragging) 
@@ -371,6 +371,9 @@ namespace GraphUI
                     if (CamControl.worldMouseDelta.sqrMagnitude > 0)
                     {
                         Pos.Set(transform.position + CamControl.worldMouseDelta);
+                        //transform.position += CamControl.worldMouseDelta;
+                        //transform.position = CamControl.ins.WorldPoint();
+                       
                     }
                 } 
 
@@ -508,10 +511,19 @@ namespace GraphUI
         }
         public virtual void SetColor(Color color)
         {
+            // Called by the color attribute setter
             foreach(Comp comp in GetComponentsInChildren<Comp>())
             {
                 comp.SetColor(color);
+                
             }
+            selectColorTransition.SetColor("selected", color*0.8f);
+            selectColorTransition.SetColor("unselected", Color.black);
+            selectColorTransition.SetColor("hover", Color.white*0.3f);
+            if (Application.isEditor)
+                selectColorTransition.SetDefault("selected");
+            else
+                selectColorTransition.SetDefault("unselected");
         }
     }
 }

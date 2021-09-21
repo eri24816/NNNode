@@ -60,6 +60,7 @@ MonoBehaviour:
   hard: 0
   runColorTransition: {fileID: 6706155887842346491}
   selectColorTransition: {fileID: 8445604781589077767}
+  material: {fileID: 0}
 --- !u!114 &5087582684243637261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -77,6 +78,7 @@ MonoBehaviour:
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   resolution: 20
+  pos: {x: 0, y: 0, z: 0}
   shapeVel: 0.5
   curveDist: 1
   width: 0.005
@@ -103,6 +105,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 15
+  color: {r: 0, g: 0, b: 0, a: 0}
   graphics: []
 --- !u!114 &8445604781589077767
 MonoBehaviour:
@@ -117,4 +120,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 15
-  graphics: []
+  color: {r: 0, g: 0, b: 0, a: 0}
+  graphics:
+  - {fileID: 5087582684243637261}
