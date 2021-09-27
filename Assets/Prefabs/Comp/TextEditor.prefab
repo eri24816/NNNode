@@ -268,9 +268,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   name_text: {fileID: 0}
-  destroyed: 0
   inputFieldUI: {fileID: 7077500534882174772}
   dataType: string
+  lineNumberPanel: {fileID: 8022687958035920294}
+  lineNumber: {fileID: 3279196147236282849}
 --- !u!114 &1012820396544184493
 MonoBehaviour:
   m_ObjectHideFlags: 0

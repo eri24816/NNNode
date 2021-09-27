@@ -15,14 +15,21 @@ Shader "Unlit/node"
 
     }
 
+
+
     SubShader
     {
         Tags {"Queue" = "Transparent" "RenderType"="Transparent" }
         LOD 100
         Blend SrcAlpha OneMinusSrcAlpha
 
-        Stencil{
-
+        Stencil
+        {
+            Ref[_Stencil]
+            Comp[_StencilComp]
+            Pass[_StencilOp]
+            ReadMask[_StencilReadMask]
+            WriteMask[_StencilWriteMask]
         }
 
         Pass

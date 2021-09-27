@@ -46,7 +46,7 @@ public class Manager : MonoBehaviour
     public GameObject inDataPortPrefab, outDataPortPrefab,inControlPortPrefab,outControlPortPrefab;
 
     public Transform canvasTransform;
-    public Transform demoNodeContainer;
+    public Hierachy demoNodeContainer;
     public Inspector nodeInspector;
     public GameObject categoryPanelPrefab;
     
@@ -209,24 +209,5 @@ public class Manager : MonoBehaviour
         node.Init(info);
         return node;
     }
-    public Transform FindCategoryPanel(string categoryString,Transform parent,GameObject containerPrefab)
-    {
-        string[] cat = categoryString.Split('/');
-        Transform panel = parent;
-        foreach(string n in cat)
-        {
-            var t = panel.Find(n);
-            if (t) panel = t;
-            else
-            {
-                panel = Instantiate(containerPrefab, panel).transform;
-                panel.SetSiblingIndex(panel.parent.childCount - 2);
-                panel.GetComponentInChildren<TMPro.TMP_Text>().text = n;
-                panel.name = n;
-            }
-        }
-        if(cat.Length == 1)
-            panel.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding.left = 5;
-        return panel.Find("NodePanel");
-    }
+
 }

@@ -12,6 +12,13 @@ public class Theme : MonoBehaviour
     Color gray = new Color(.5f, .5f, .5f);
     public List<GameObject> prefabs;
     Dictionary<string, GameObject> prefabDict;
+    struct TypeObjectPair
+    {
+        public string type;
+        public GameObject obj;
+        public TypeObjectPair(string type, GameObject obj) { this.type = type; this.obj = obj; }
+    }
+    List<TypeObjectPair> instantiated = new List<TypeObjectPair>();
 
     [SerializeField] Color mainForInspector, secondaryForInspector;
     [SerializeField] float bgBriteness;
@@ -47,21 +54,27 @@ public class Theme : MonoBehaviour
         prefabDict = new Dictionary<string, GameObject>();
         foreach (GameObject g in prefabs)
             prefabDict.Add(g.name, g);
+        instantiated = new List<TypeObjectPair>();
     }
 
     public GameObject Create(string prefabName)
     {
         GameObject newObject = Instantiate(prefabDict[prefabName]);
         Setup(newObject, prefabName);
+        instantiated.Add(new TypeObjectPair(prefabName, newObject));
         return newObject;
     }
 
     public void ResetAll()
     {
-        foreach (var p in FindObjectsOfType<Node>())
+        List<TypeObjectPair> toDelete = new List<TypeObjectPair>();
+        foreach (var p in instantiated)
         {
-            Setup(p.gameObject, p.GetType().Name);
+            if (p.obj)
+                Setup(p.obj, p.type);
+            else { toDelete.Add(p); }
         }
+        foreach (var p in toDelete) instantiated.Remove(p);
         bg.GetComponent<UnityEngine.UI.Image>().material.SetColor("_Color", C1(8) * bgBriteness);
     }
 
@@ -86,9 +99,9 @@ public class Theme : MonoBehaviour
                 node.runColorTransition.SetColor("pending", C2(1));
                 node.runColorTransition.SetColor("active", C2(5));
                 node.runColorTransition.SetColor("inactive", C0(1));
-                node.runColorTransition.SetDefault("inactive");
+                node.runColorTransition.SetDefault("inactive"); // TODO : Maybe it is running
 
-                node.SetColor(C1(10));
+                //node.SetColor(C1(10));
 
                 break;
             case "DataFlow":
@@ -102,6 +115,10 @@ public class Theme : MonoBehaviour
                 flow.runColorTransition.SetColor("inactive", C0(0));
                 flow.runColorTransition.SetDefault("inactive");
 
+                break;
+            case "CategoryPanel":
+            case "CategoryPanelForNodeList":
+                o.GetComponentInChildren<UnityEngine.UI.RawImage>().color = C1(7);
                 break;
         }
     }

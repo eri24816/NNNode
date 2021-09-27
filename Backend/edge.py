@@ -43,13 +43,15 @@ class Edge(): # abstract class
     
 
     def activate(self):
-        self.active = True
-        self.head_port.on_edge_activate() # Imform head node
-        self.env.Add_buffered_message(self.id, 'act', '2')
+        if not self.active:
+            self.active = True
+            self.head_port.on_edge_activate() # Imform head node
+            self.env.Add_buffered_message(self.id, 'act', '2')
 
     def deactivate(self):
-        self.active = False
-        self.env.Add_buffered_message(self.id, 'act', '0')
+        if self.active:
+            self.active = False
+            self.env.Add_buffered_message(self.id, 'act', '0')
 
     def remove(self):
         self.tail_port.flows.remove(self)

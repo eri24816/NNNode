@@ -402,7 +402,7 @@ MonoBehaviour:
   name_text: {fileID: 6521331071574696000}
   sliderUI: {fileID: 2549990786712044437}
   inputFieldUI: {fileID: 740263418881089119}
-  fill: {fileID: 0}
+  fill: {fileID: 2945007420279968165}
 --- !u!1 &6395026253141595322
 GameObject:
   m_ObjectHideFlags: 0
@@ -861,9 +861,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4208210591348227373, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_text
-      value: '1
-
-'
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4208210591348227411, guid: 0aba5af8a787a59448530abb120401c4, type: 3}
       propertyPath: m_AnchoredPosition.y

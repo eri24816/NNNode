@@ -28,12 +28,6 @@ namespace GraphUI
             port.DisplayKnob();
         }
 
-
-        protected override void OnDoubleClick()
-        {
-            base.OnDoubleClick();
-            Manager.ins.Activate(this);
-        }
         public override void SetColor(Color color)
         {
             base.SetColor(color);

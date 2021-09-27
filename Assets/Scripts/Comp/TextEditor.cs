@@ -5,10 +5,13 @@ using UnityEngine;
 namespace GraphUI {
     public class TextEditor : Comp
     {
-        
         public TMPro.CodeEditor inputFieldUI;
         Node.NodeAttr targetAttr;
         public string dataType = "float";
+        [SerializeField]
+        UnityEngine.UI.Image lineNumberPanel;
+        [SerializeField]
+        TMPro.TMP_Text lineNumber;
         public override void Init(Node node, string targetAttrName, bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
@@ -26,6 +29,15 @@ namespace GraphUI {
                     );
         }
 
+        public override void SetColor(Color color)
+        {
+            print("aaaa");
+            base.SetColor(color); 
+            lineNumber.color = color;
+            color.a = 0.3f;
+            lineNumberPanel.color = color;
+        }
+
         public void OnEndEdit(string value)
         {
             if (targetAttr == null) return;
@@ -34,5 +46,6 @@ namespace GraphUI {
                 else if (dataType == "string")
                 targetAttr.Set(value);
         }
+        
     }
 }

@@ -41,14 +41,11 @@ namespace GraphUI
         #region vars
         public List<Port> ports;
         public string id, Name;
-        public Dictionary<string, NodeAttr> attributes;
-        public Dictionary<string, Comp> components;
+        public Dictionary<string, NodeAttr> attributes ;
+        public List<Comp> comps = new List<Comp>();
+        //public Dictionary<string, Comp> components{ get; set; };
         NodeAttr Pos;
         protected string output = "";
-        [SerializeField]  
-        UnityEngine.UI.Outline outline_running;
-        [SerializeField]
-        List<UnityEngine.UI.Graphic> lights;
         [SerializeField] Transform componentPanel;
 
         public string type; // class name in python
@@ -247,7 +244,7 @@ namespace GraphUI
             id = (string)info["id"];
 
             attributes = new Dictionary<string, NodeAttr>();
-            components = new Dictionary<string, Comp>();
+            //components = new Dictionary<string, Comp>();
 
             isDemo = id == "-1";
             if (id != "-1")
@@ -258,9 +255,9 @@ namespace GraphUI
             else
             {
                 this.info = info;
-                transform.localScale = Vector3.one * 0.7f;
+                transform.localScale = Vector3.one * 0.6f;
                 Manager.ins.DemoNodes.Add(type, this);
-                transform.SetParent(Manager.ins.FindCategoryPanel((string)info["category"], Manager.ins.demoNodeContainer, Manager.ins.categoryPanelPrefab));
+                transform.SetParent(Manager.ins.demoNodeContainer.FindCategoryPanel((string)info["category"], "CategoryPanelForNodeList"));
             }
 
             if (createByThisClient)
@@ -274,7 +271,6 @@ namespace GraphUI
                 var new_attr = new NodeAttr(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
                 new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
             }
-            NodeAttr.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
 
             foreach (var comp_info in info["comp"])
             {
@@ -286,8 +282,11 @@ namespace GraphUI
                     newComp = Instantiate(Manager.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
                 if (!isDemo)
                     newComp.Init(this, comp_info);
-                components.Add(newComp.name, newComp);
+                comps.Add(newComp);
             }
+
+            NodeAttr.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
+
 
             foreach (var portInfo in info["portInfos"])
             {
@@ -478,7 +477,7 @@ namespace GraphUI
         }
         public override void Unselect()
         {
-            Manager.ins.nodeInspector.Close();
+            Manager.ins.nodeInspector.Clear();
 
             base.Unselect();
 
@@ -512,7 +511,7 @@ namespace GraphUI
         public virtual void SetColor(Color color)
         {
             // Called by the color attribute setter
-            foreach(Comp comp in GetComponentsInChildren<Comp>())
+            foreach(Comp comp in comps)
             {
                 comp.SetColor(color);
                 

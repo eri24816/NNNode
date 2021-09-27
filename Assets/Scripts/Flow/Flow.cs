@@ -194,7 +194,7 @@ namespace GraphUI
         }
         public override void Unselect()
         {
-            Manager.ins.nodeInspector.Close();
+            Manager.ins.nodeInspector.Clear();
 
             base.Unselect();
 

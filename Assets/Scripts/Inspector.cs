@@ -3,14 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using GraphUI;
 
-public class Inspector : MonoBehaviour
+public class Inspector : Hierachy
 {
-    [SerializeField]
-    RectTransform attributePanel;
-    [SerializeField]
-    GameObject itemPanel,categoryPanel;
+    Hierachy hierachy;
     [SerializeField]
     GameObject floatInput,stringInput,dropdown;
+
+    [SerializeField]
+    GameObject itemPanel;
+
+    private void Start()
+    {
+        hierachy = GetComponent<Hierachy>();
+    }
+
     public void Open(Node node)
     {
         foreach(var attr in node.attributes.Values)
@@ -20,7 +26,7 @@ public class Inspector : MonoBehaviour
             {
                 var newComp = CreateAttrEditor(floatInput,attr).GetComponent<GraphUI.TextEditor>();
                 newComp.dataType = "float";
-                newComp.name = attr.name;
+                //newComp.name = attr.name;
                 newComp.Init(node, attr.name,false);
             }
 
@@ -29,7 +35,7 @@ public class Inspector : MonoBehaviour
             {
                 var newComp = CreateAttrEditor(stringInput, attr).GetComponent<GraphUI.TextEditor>();
                 newComp.dataType = "string";
-                newComp.name = attr.name;
+                //newComp.name = attr.name;
                 newComp.Init(node, attr.name,false);
             }
             else if (attr.type.Length>=8 && attr.type.Substring(0,8) == "dropdown")
@@ -37,7 +43,7 @@ public class Inspector : MonoBehaviour
                 var newComp = CreateAttrEditor(dropdown, attr).GetComponent<Dropdown>();
                 
                 newComp.SetOptions(attr.type.Substring(9));
-                newComp.name = attr.name;
+                //newComp.name = attr.name;
                 newComp.Init(node, attr.name, false);
                 
             }
@@ -48,18 +54,11 @@ public class Inspector : MonoBehaviour
     {
 
         int i = attr.name.LastIndexOf('/');
-        GameObject itemPanel_ = Instantiate(itemPanel, Manager.ins.FindCategoryPanel(i==-1?"-":attr.name.Substring(0,i), attributePanel,categoryPanel));
+        GameObject itemPanel_ = Instantiate(itemPanel, FindCategoryPanel(i==-1?"-":attr.name.Substring(0,i), "CategoryPanel"));
         itemPanel_.GetComponentInChildren<TMPro.TMP_Text>().text = attr.name.Substring(i+1);
         //itemPanel_.transform.SetSiblingIndex();
         return Instantiate(prefab, itemPanel_.transform);
     }
 
-    public void Close()
-    {
-        foreach (Transform child in attributePanel)
-        {
-            child.name = "";
-             Destroy(child.gameObject);
-        }
-    }
+
 }

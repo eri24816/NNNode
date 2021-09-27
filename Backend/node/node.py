@@ -134,7 +134,7 @@ class Component:
     '''
     Like a slider or an input field
     A component controls an attribute.
-    Componte class have no set() method. When component value is modified, client should send "atr" command, which leads to Attribute.set()
+    Component class have no set() method. When component value is modified, client should send "atr" command, which leads to Attribute.set()
     '''
     def __init__(self,node : Node,name,type,target_attr):
         node.components.append(self)
@@ -305,8 +305,6 @@ class Node:
         if command == 'nat':
             if m['name'] not in self.attributes:
                 Attribute(self,m['name'],m['type'],m['value'],m['h']).set(m['value'],False) # Set initial value
-            
-    
 
     def Update_history(self, type, content):
         '''
@@ -322,8 +320,7 @@ class Node:
                 return
 
         # add an item to the linked list
-        self.history.Update(type,content) 
-        
+        self.history.Update(type,content)         
 
     def Undo(self):
         if self.history.current.last==None:

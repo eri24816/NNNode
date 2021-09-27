@@ -27,3 +27,5 @@ class DisplayNode(Node):
             pass
         elif self.mode.value == 'stat':
             pass
+    def activate(self):
+        pass
