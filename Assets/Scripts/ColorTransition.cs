@@ -48,13 +48,13 @@ public class ColorTransition : MonoBehaviour
             color = Color.Lerp(target, original, t);
             foreach (UnityEngine.UI.Graphic g in graphics)
             {
-                g.color = new Color(color.r, color.g, color.b, g.color.a);
+                g.color = color;
             }
 
             yield return null;
         }
         color = target;
         foreach (UnityEngine.UI.Graphic g in graphics)
-            g.color = new Color(color.r, color.g, color.b, g.color.a);
+            g.color = color;
     }
 }

@@ -55,10 +55,11 @@ namespace GraphUI
             line = GetComponent<Line>();
             if(tail)
                 tail.RecalculateEdgeDir();
-            if(head)
+            if(head) 
                 head.RecalculateEdgeDir();
             var graphic = GetComponent<UnityEngine.UI.Graphic>();
             material = graphic.material = Instantiate(graphic.material) ;
+            sendOnScrollTo = CamControl.ins;
         }
         protected virtual void Update()
         {

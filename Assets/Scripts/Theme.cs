@@ -1,6 +1,7 @@
 using UnityEngine;
 using GraphUI;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 //[ExecuteAlways]
 public class Theme : MonoBehaviour
@@ -24,6 +25,7 @@ public class Theme : MonoBehaviour
     [SerializeField] float bgBriteness;
 
     [SerializeField] GameObject bg;
+    [SerializeField] List<Image> buttons;
 
 
     private void OnValidate()
@@ -76,30 +78,28 @@ public class Theme : MonoBehaviour
         }
         foreach (var p in toDelete) instantiated.Remove(p);
         bg.GetComponent<UnityEngine.UI.Image>().material.SetColor("_Color", C1(8) * bgBriteness);
+        foreach (var b in buttons) b.color = C1(10, 5);
     }
 
     public void Setup(GameObject o, string prefabName)
-    {
+    { 
         switch (prefabName)
         {
             case "GeneralNode":
             case "SimpleNode":
             case "RoundNode":
                 Node node = o.GetComponent<Node>();
-                /*
-                node.selectColorTransition.SetColor("selected", C1(8));
-                node.selectColorTransition.SetColor("unselected", C0(0));
-                node.selectColorTransition.SetColor("hover", C0(3));
-                if (Application.isEditor)
-                    node.selectColorTransition.SetDefault("selected");
-                else
+                
+                node.selectColorTransition.SetColor("selected", C2(8));
+                node.selectColorTransition.SetColor("unselected", C0(0,0));
+                node.selectColorTransition.SetColor("hover", C2(5,5));
                     node.selectColorTransition.SetDefault("unselected");
-                */
+                
 
                 node.runColorTransition.SetColor("pending", C2(1));
                 node.runColorTransition.SetColor("active", C2(5));
                 node.runColorTransition.SetColor("inactive", C0(1));
-                node.runColorTransition.SetDefault("inactive"); // TODO : Maybe it is running
+                node.runColorTransition.SetDefault("inactive"); // TODO : Maybe it is running 
 
                 //node.SetColor(C1(10));
 
@@ -118,7 +118,7 @@ public class Theme : MonoBehaviour
                 break;
             case "CategoryPanel":
             case "CategoryPanelForNodeList":
-                o.GetComponentInChildren<UnityEngine.UI.RawImage>().color = C1(7);
+                o.GetComponentInChildren<RawImage>().color = C1(7,7);
                 break;
         }
     }

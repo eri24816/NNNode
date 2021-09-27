@@ -3,6 +3,7 @@ Shader "Unlit/node"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Tex("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0.2,0.2,0.2,1)
 
         // Add these to avoid warning
@@ -58,6 +59,7 @@ Shader "Unlit/node"
             };
 
             sampler2D _MainTex;
+            sampler2D _Tex;
             float4 _Color;
             float4 _MainTex_ST;
 
@@ -74,8 +76,9 @@ Shader "Unlit/node"
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
+                fixed4 col2 = tex2D(_Tex, i.uv);
                 
-                return col*_Color*i.color;
+                return col2*+col*_Color*i.color;
             }
             ENDCG
         }

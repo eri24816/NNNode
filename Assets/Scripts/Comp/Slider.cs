@@ -18,14 +18,14 @@ namespace GraphUI
             base.Init(node, targetAttrName);
             targetAttr = Node.NodeAttr.Register(node, targetAttrName,"float",
                 (v) => sliderUI.value = (float)v,
-                isMainComp?() => sliderUI.value:(Node.NodeAttr.GetDel)null
+                isMainComp?() => float.Parse(sliderUI.value.ToString("G4")) : (Node.NodeAttr.GetDel)null 
                 ) ;
             Node.NodeAttr.Register(node, $"{name}/min", "float", (v) => sliderUI.minValue = (float)v, initValue: 0f,comp:this);
             Node.NodeAttr.Register(node, $"{name}/max", "float", (v) => sliderUI.maxValue = (float)v, initValue: 100f, comp: this);
 
             
         }
-        public void OnValueChanged(float v)
+        public void OnValueChanged(float v) 
         {
             inputFieldUI.text = v.ToString("G4").Replace("E+0","e").Replace("E-0", "e-").Replace("E+", "e").Replace("E-", "e-");
             if(targetAttr != null)

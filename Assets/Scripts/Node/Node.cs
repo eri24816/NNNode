@@ -47,6 +47,7 @@ namespace GraphUI
         NodeAttr Pos;
         protected string output = "";
         [SerializeField] Transform componentPanel;
+        [SerializeField] UnityEngine.UI.Image outline;
 
         public string type; // class name in python
         public bool isDemo;
@@ -511,18 +512,20 @@ namespace GraphUI
         public virtual void SetColor(Color color)
         {
             // Called by the color attribute setter
+            outline.color = color;
             foreach(Comp comp in comps)
             {
                 comp.SetColor(color);
                 
             }
+            /*
             selectColorTransition.SetColor("selected", color*0.8f);
             selectColorTransition.SetColor("unselected", Color.black);
             selectColorTransition.SetColor("hover", Color.white*0.3f);
             if (Application.isEditor)
                 selectColorTransition.SetDefault("selected");
             else
-                selectColorTransition.SetDefault("unselected");
+                selectColorTransition.SetDefault("unselected");*/
         }
     }
 }
