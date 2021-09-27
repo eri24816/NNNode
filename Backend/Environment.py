@@ -63,7 +63,8 @@ class Env():
         self.ws_clients = []
 
         # for run() thread
-        self.nodes_to_run = queue.Queue()
+        self.node_queue = queue.Queue() # for nodes wating to run, like those activated by user's double click or by activated dataflow
+        self.node_stack = list() # used when ask_for_value
         self.running_node : node.Node = None
         
 
@@ -213,8 +214,12 @@ class Env():
     def run(self):
         self.flag_exit = 0
         while not self.flag_exit:
-            self.running_node = self.nodes_to_run.get()
-            if self.running_node == 'EXIT_SIGNAL':
+
+            self.node_stack.append(self.node_queue.get())
+            if self.node_stack[0] == 'EXIT_SIGNAL':
                 return
-            self.running_node.run()
-            
+
+            while len(self.node_stack) > 0 and not self.flag_exit:
+                self.running_node = self.node_stack.pop()
+                self.running_node.run()
+                

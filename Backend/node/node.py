@@ -247,7 +247,7 @@ class Node:
         if self.active: 
             return # prevent duplication in env.nodes_to_run
         self.active = True
-        self.env.nodes_to_run.put(self)
+        self.env.node_queue.put(self)
         
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
@@ -279,9 +279,7 @@ class Node:
                 self.added_output += traceback.format_exc()
                 self.flush_output()
             else:
-                self.running_finished(True)
-
-        
+                self.running_finished(True)  
 
     def _run(self):
         # Actually define what the type of node acts
@@ -541,4 +539,3 @@ class FunctionNode(Node):
         # Inherit FunctionNode to write different function.
         # If one input port has more than one dataFlows connected, their data will input to this function as a list.
         pass
-
