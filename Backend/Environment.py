@@ -5,7 +5,8 @@ from typing import Dict
 from history import *
 import edge
 import node
-import queue
+from collections import deque
+from threading import Event
 import inspect
 
 # from server import Send_all
@@ -23,7 +24,27 @@ class num_iter:
         self.i+=1
         return self.i
 
+class MyDeque(deque):
+    # https://stackoverflow.com/questions/56821682/having-the-deque-with-the-advantages-of-queue-in-a-thread
+    def __init__(self):
+        super().__init__()
+        self.not_empty = Event()
+        #self.not_empty.set()
 
+    def append(self, elem):
+        super().append(elem)
+        self.not_empty.set()
+        print("append")
+
+    def appendleft(self, elem):
+        super().appendleft(elem)
+        self.not_empty.set()
+
+    def pop(self):
+        self.not_empty.wait()  # Wait until not empty, or next append call
+        if not (len(self) - 1):
+            self.not_empty.clear()
+        return super().pop()
 
 # the environment to run the code in
 class Env():
@@ -63,8 +84,8 @@ class Env():
         self.ws_clients = []
 
         # for run() thread
-        self.node_queue = queue.Queue() # for nodes wating to run, like those activated by user's double click or by activated dataflow
-        self.node_stack = list() # used when ask_for_value
+
+        self.node_stack = MyDeque()
         self.running_node : node.Node = None
         
 
@@ -214,12 +235,11 @@ class Env():
     def run(self):
         self.flag_exit = 0
         while not self.flag_exit:
-
-            self.node_stack.append(self.node_queue.get())
-            if self.node_stack[0] == 'EXIT_SIGNAL':
+            print('wait to pop')
+            self.running_node = self.node_stack.pop()
+            print("pop")
+            if self.running_node == 'EXIT_SIGNAL':
                 return
 
-            while len(self.node_stack) > 0 and not self.flag_exit:
-                self.running_node = self.node_stack.pop()
-                self.running_node.run()
+            self.running_node.run()
                 

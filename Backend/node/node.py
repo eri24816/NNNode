@@ -247,7 +247,7 @@ class Node:
         if self.active: 
             return # prevent duplication in env.nodes_to_run
         self.active = True
-        self.env.node_queue.put(self)
+        self.env.node_stack.append(self)
         
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
