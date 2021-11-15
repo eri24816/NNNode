@@ -2,6 +2,8 @@ from __future__ import annotations
 import math
 import numpy as np
 from typing import Dict, List
+import sys
+sys.path.append('D:/NNNode/Backend') # for debugging
 from history import History
 import sys
 import traceback
@@ -12,6 +14,8 @@ from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     import Environment
     import edge
+
+
 
 class node_StringIO():
     def __init__(self,node):
@@ -325,7 +329,7 @@ class Node:
             return 0 # nothing to undo
 
         if self.history.current.type=="atr":
-            self.attributes[self.history.current.content['name']].set(self.history.current.content['old'])
+            self.attributes[self.history.current.content['name']].set(self.history.current.content['old'],False)
         
         self.history.current.head_direction=-1
         self.history.current=self.history.current.last
@@ -341,7 +345,7 @@ class Node:
         self.history.current.head_direction=0
 
         if self.history.current.type=="atr":
-            self.attributes[self.history.current.content['name']].set(self.history.current.content['new'])
+            self.attributes[self.history.current.content['name']].set(self.history.current.content['new'],False)
 
         return 1
 

@@ -34,7 +34,6 @@ class MyDeque(deque):
     def append(self, elem):
         super().append(elem)
         self.not_empty.set()
-        print("append")
 
     def appendleft(self, elem):
         super().appendleft(elem)
@@ -235,9 +234,7 @@ class Env():
     def run(self):
         self.flag_exit = 0
         while not self.flag_exit:
-            print('wait to pop')
             self.running_node = self.node_stack.pop()
-            print("pop")
             if self.running_node == 'EXIT_SIGNAL':
                 return
 
