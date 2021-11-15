@@ -10,6 +10,7 @@ public class SoundEffect : MonoBehaviour
     public void Start()
     {
         i = this;
+        source.volume = 0.3f;
     }
     public static void Click()
     {

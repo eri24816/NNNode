@@ -1307,7 +1307,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.520395, g: 0.28235295, b: 0.74509805, a: 0.5}
+  m_Color: {r: 0.28235295, g: 0.5986517, b: 0.74509805, a: 0.5}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1692,7 +1692,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.520395, g: 0.28235295, b: 0.74509805, a: 0.5}
+  m_Color: {r: 0.28235295, g: 0.5986517, b: 0.74509805, a: 0.5}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2736,8 +2736,8 @@ MonoBehaviour:
   - {fileID: 357937049128392484, guid: 68467c8094c2607468cda4fc6c6a7454, type: 3}
   - {fileID: 1468223545780764545, guid: 0afe668810b5b2d488f7d82c15081cf4, type: 3}
   - {fileID: 1468223545780764545, guid: 7c75df2c70620094d98cb491fba962e7, type: 3}
-  mainForInspector: {r: 0.520395, g: 0.28235295, b: 0.74509805, a: 1}
-  secondaryForInspector: {r: 1, g: 0.43921566, b: 0.7076477, a: 1}
+  mainForInspector: {r: 0.28235295, g: 0.5986517, b: 0.74509805, a: 1}
+  secondaryForInspector: {r: 0.49701685, g: 1, b: 0.43921566, a: 1}
   bgBriteness: 0.05
   bg: {fileID: 2112478762}
   buttons:

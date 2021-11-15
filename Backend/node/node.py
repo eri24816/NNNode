@@ -230,9 +230,6 @@ class Node:
             self.env.Update_history("new", self.get_info())
             self.env.Add_direct_message({'command':'new','info':self.get_info()})
         
-
-        #Attribute(self,'pos','Vector3',v3(0,0,0))
-        
         if 'attr' in info:
             for attr_dict in info['attr']:
                 if attr_dict['name'] in self.attributes:
@@ -250,10 +247,14 @@ class Node:
         pass
 
     def activate(self):
+        '''
+        Call this to enqueue the node in env.
+        Later, env will call _run() of this node
+        '''
         if self.active: 
             return # prevent duplication in env.nodes_to_run
         self.active = True
-        self.env.node_stack.append(self)
+        self.env.node_stack.append(self) #It's normally working in LIFO order, but FIFO for manual activation by client.
         
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
