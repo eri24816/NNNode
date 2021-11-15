@@ -31,7 +31,6 @@ namespace GraphUI {
 
         public override void SetColor(Color color)
         {
-            print("aaaa");
             base.SetColor(color); 
             lineNumber.color = color;
             color.a = 0.3f;

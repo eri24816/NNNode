@@ -221,6 +221,8 @@ class Node:
         if self.id != -1:
             self.history = History()
 
+        self.object = None
+
         self.initialize() 
 
         self.color = Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)),'')

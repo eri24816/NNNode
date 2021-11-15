@@ -22,7 +22,7 @@ class DisplayNode(Node):
     def in_data_active(self):
         self.in_data.flows[0].deactivate()
         if self.mode.value == '__str__':
-            self.display_content.set(self.in_data.flows[0].data.__str__())
+            self.display_content.set(str(self.in_data.flows[0].data))
         elif self.mode.value == 'image':
             pass
         elif self.mode.value == 'stat':

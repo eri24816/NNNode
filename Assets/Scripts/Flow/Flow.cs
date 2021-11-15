@@ -218,7 +218,6 @@ namespace GraphUI
         public void DisplayActive()
         {
             runColorTransition.Switch("active");
-            print("a");
         }
         public void DisplayInactive()
         {
