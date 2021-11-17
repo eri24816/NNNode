@@ -37,6 +37,9 @@ class ForNode(Node):
     def set_iterator(self):
         self.iterator = iter(self.iterator_port.flows[0].data)
 
+    def running_finished(self, success = True):
+        pass
+
 class WhileNode(Node):
     shape = 'General'
     category = 'procedural'
@@ -67,3 +70,6 @@ class WhileNode(Node):
     
     def set_condition(self):
         self.condition = self.condition_port.flows[0].data
+
+    def running_finished(self, success = True):
+        pass

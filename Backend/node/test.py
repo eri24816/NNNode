@@ -18,6 +18,11 @@ class TestNode2(FunctionNode):
     out_names = ['KLD']
     max_in_data = [64,64]
 
+    def initialize(self):
+        super().initialize()
+        Attribute(self,'atrname','float',0)
+        Component(self,'name','Slider','atrname')
+
 class TestNode3(FunctionNode):
     display_name = 'sample'
     category = 'function'

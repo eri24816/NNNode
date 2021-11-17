@@ -60,7 +60,6 @@ def v3(x,y,z):
     '''
     return {'x':x,'y':y,'z':z}
 
-
 class Port():
     '''
     Different node classes might have Port classes that own different properties for frontend to read. 
@@ -185,12 +184,11 @@ class Node:
         '''
         return {
             "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'shape' : self.shape,
-        'portInfos' : [port.get_dict() for port in self.port_list],
-        'attr': [attr.dict()for _, attr in self.attributes.items()],
-        'comp': [comp.dict()for  comp in self.components]
+            'portInfos' : [port.get_dict() for port in self.port_list],
+            'attr': [attr.dict()for _, attr in self.attributes.items()],
+            'comp': [comp.dict()for  comp in self.components]
         }
     
-
     def __init__(self, info : Info, env : Environment.Env):
         '''
         For child classes, DO NOT override this. Override initialize() instead.
@@ -214,7 +212,6 @@ class Node:
         self.active = False
 
         self.output = info['output'] if 'output' in info else ''
-
         # added lines of output when running, which will be sent to client
         self.added_output = "" 
 
@@ -237,6 +234,7 @@ class Node:
                 else:
                     # Some attributes could be created by client. self.initialize() doesn't add them to self.attributes.
                     Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
+
 
     def initialize(self):
         '''
@@ -289,11 +287,16 @@ class Node:
                 self.running_finished(True)  
 
     def _run(self):
-        # Actually define what the type of node acts
+        '''
+        Actually define what the type of node acts
+        '''
         pass
     
-    def running_finished(self,success = True):
-        pass
+    def running_finished(self, success = True):
+        '''
+        If deactivating after running is unwanted, override this
+        '''
+        self.deactivate()
 
     # for client ------------------------------
     def recive_command(self,m):
@@ -546,3 +549,11 @@ class FunctionNode(Node):
         # Inherit FunctionNode to write different function.
         # If one input port has more than one dataFlows connected, their data will input to this function as a list.
         pass
+
+class ObjectNode(Node):
+    display_name = 'Object'
+    category = 'basic'
+
+    def initialize(self):
+        super().initialize()
+        

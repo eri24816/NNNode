@@ -344,6 +344,11 @@ namespace GraphUI
                     break;
                 case "nat":
                     throw new System.Exception("don't use nat");
+
+                case "npt":
+                    CreatePort(message["info"]);
+                    break;
+
                 case "rmv":
                     StartCoroutine(Removing());
                     break;
