@@ -454,7 +454,7 @@ class FunctionNode(Node):
     After running, it will activate its output dataflows and ControlFlow (if there is one).
     '''
 
-    display_name = 'Function'
+    #display_name = 'Function'
     category = 'function'
 
     class Info(Node.Info):
