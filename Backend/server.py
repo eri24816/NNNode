@@ -56,7 +56,7 @@ router = websockets_routes.Router()
 message_sender_started = False
 
 @router.route("/lobby") #* lobby
-async def lobby(websocket : websockets.server.WebSocketServerProtocol, path):
+async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
     global message_sender_started
     if not message_sender_started:
         asyncio.create_task(direct_message_sender())
@@ -83,7 +83,7 @@ async def lobby(websocket : websockets.server.WebSocketServerProtocol, path):
 
 # The main loop that handle an ws client connected to an env
 @router.route("/env/{env_name}")
-async def env_ws(websocket : websockets.server.WebSocketServerProtocol, path):
+async def env_ws(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
     env : Environment.Env = None
     env_name=path.params["env_name"]
     if env_name in envs:
@@ -198,7 +198,7 @@ async def env_ws(websocket : websockets.server.WebSocketServerProtocol, path):
             if id in env.nodes:
                 env.nodes[id].recive_command(m)
                 
-messages_to_client: asyncio.Queue[Tuple[list[websockets.server.WebSocketServerProtocol],Dict]] = None
+messages_to_client: asyncio.Queue[Tuple[list[websockets.legacy.server.WebSocketServerProtocol],Dict]] = None
 async def direct_message_sender():
     # put message in the queue to send them to client
     global messages_to_client
