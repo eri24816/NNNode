@@ -17,13 +17,16 @@ namespace GraphUI
         {
             TMP_Dropdown.AddOptions(options = optionsList.Split(',').ToList());
         }
-        public override void Init(Node node, string targetAttrName, bool isMainComp = true)
+
+        public override void Init(Node node, string targetAttrName,string type="", bool isMainComp = true)
         {
             
             base.Init(node, targetAttrName);
+
+            SetOptions(type.Split(':')[1]);
             
             targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",
-                (v) => TMP_Dropdown.SetValueWithoutNotify(options.IndexOf((string)v)),
+                (v) => { TMP_Dropdown.SetValueWithoutNotify(options.IndexOf((string)v)); },
                 () => options[TMP_Dropdown.value]
                 ) ;
         }

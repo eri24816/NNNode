@@ -12,7 +12,7 @@ namespace GraphUI {
         UnityEngine.UI.Image lineNumberPanel;
         [SerializeField]
         TMPro.TMP_Text lineNumber;
-        public override void Init(Node node, string targetAttrName, bool isMainComp = true)
+        public override void Init(Node node, string targetAttrName,string type="", bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
 

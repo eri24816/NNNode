@@ -22,29 +22,19 @@ public class Inspector : Hierachy
         foreach(var attr in node.attributes.Values)
         {
 
-            if (attr.type == "float")
+            if (attr.type == "float"|| attr.type == "string")
             {
-                var newComp = CreateAttrEditor(floatInput,attr).GetComponent<GraphUI.TextEditor>();
-                newComp.dataType = "float";
+                var newComp = CreateAttrEditor(attr.type == "string"?stringInput: floatInput,attr).GetComponent<GraphUI.TextEditor>();
+                newComp.dataType = attr.type;
                 //newComp.name = attr.name;
-                newComp.Init(node, attr.name,false);
+                newComp.Init(node, attr.name,attr.type,isMainComp:false);
             }
 
-
-            else if (attr.type == "string")
-            {
-                var newComp = CreateAttrEditor(stringInput, attr).GetComponent<GraphUI.TextEditor>();
-                newComp.dataType = "string";
-                //newComp.name = attr.name;
-                newComp.Init(node, attr.name,false);
-            }
             else if (attr.type.Length>=8 && attr.type.Substring(0,8) == "dropdown")
             {
                 var newComp = CreateAttrEditor(dropdown, attr).GetComponent<Dropdown>();
-                
-                newComp.SetOptions(attr.type.Substring(9));
                 //newComp.name = attr.name;
-                newComp.Init(node, attr.name, false);
+                newComp.Init(node, attr.name,type:attr.type,isMainComp: false);
                 
             }
         }

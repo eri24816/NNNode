@@ -282,7 +282,7 @@ namespace GraphUI
                 else
                     newComp = Instantiate(Manager.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
                 if (!isDemo)
-                    newComp.Init(this, comp_info);
+                    newComp.InitWithInfo(this, comp_info);
                 comps.Add(newComp);
             }
 

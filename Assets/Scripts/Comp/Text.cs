@@ -10,7 +10,7 @@ namespace GraphUI
         TMPro.TMP_Text text;
         Node.NodeAttr targetAttr;
 
-        public override void Init(Node node, string targetAttrName, bool isMainComp = true)
+        public override void Init(Node node, string targetAttrName,string type="", bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
             targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",

@@ -17,7 +17,11 @@ namespace GraphUI
             base.Init(infoJSON);
 
             if (nameText)
+            {
                 nameText.text = Name;
+                if(Name.Length>0)
+                    nameText.fontSize = 40/ Name.Length+20 ;
+            }
         }
 
         public override void SetupPort(Port port, Newtonsoft.Json.Linq.JToken portInfo)
