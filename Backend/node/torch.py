@@ -2,7 +2,7 @@ from .node import Component, Attribute, Port, FunctionNode, Node
 import torch
 
 class ConcatNode(FunctionNode):
-    shape = 'round'
+    shape = 'Round'
     category = 'torch/tensor'
     display_name = 'c'
 
@@ -12,12 +12,14 @@ class ConcatNode(FunctionNode):
 
     def initialize(self):
         super().initialize()
+        self.dim = Attribute(self,'dim','float',0)
+
         for port in self.in_data:
             port.with_order = True
-        self.function = torch.cat
+        self.function = lambda x: torch.cat(x,dim=int(self.dim.value))
 
 class StackNode(FunctionNode):
-    shape = 'round'
+    shape = 'Round'
     category = 'torch/tensor'
     display_name = 's'
 
@@ -29,5 +31,4 @@ class StackNode(FunctionNode):
         super().initialize()
         for port in self.in_data:
             port.with_order = True
-        self.function = torch.stack
-
+        self.function = lambda x: torch.stack(x,dim=int(self.dim.value))

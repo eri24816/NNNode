@@ -1,25 +1,38 @@
 from .node import Node, FunctionNode, Port, Attribute, Component
 
-class AppendNode(FunctionNode):
+class ListNode(Node):
     '''
     Add two or more items together
     ''' 
 
-    display_name = '[]+'
-    category = 'function'
+    display_name = 'list'
+    category = 'data'
     shape = 'General'
-    
-    in_names = ["list","items"]
-    out_names = ["list"]
-    max_in_data = [1,64]
 
     def initialize(self):
         super().initialize()
-        mode = Attribute(self,'mode','dropdown:once,accumulate','once')
-        Component(self,'mode','Dropdown:once,accumulate','mode')
+
+        Port(self,'DataPort',True,1,'set',on_edge_activate = self.set)
+
+        Port(self,'DataPort',True,64,'append',on_edge_activate = self.append,with_order= True)
+
+        Port(self,'DataPort',False,64,'get')
+
+        self.mode = Attribute(self,'mode','dropdown:once,accumulate','once')
+
+        self.display = Attribute(self,'display','string','[]')
+        Component(self,'display','Text','display')
+
         self.data = []
 
-    @staticmethod
-    def function(list,items):
-        list += items
-        return list
+    def set(self,port : Port):
+        self.data = port.flows[0].data.copy()
+        port.flows[0].deactivate()
+        self.display.set(repr(self.data))
+
+    def append(self,port : Port):
+        for flow in port.flows:
+            if flow.active:
+                self.data.append(flow.data)
+                flow.deactivate()
+        self.display.set(repr(self.data))

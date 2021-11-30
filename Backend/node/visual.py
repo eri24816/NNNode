@@ -19,7 +19,7 @@ class DisplayNode(Node):
         self.stat_mode = Attribute(self, 'stat/mode','dropdown:min,max,sum,mean,std,L1,L2','mean')
 
 
-    def in_data_active(self):
+    def in_data_active(self,port):
         self.in_data.flows[0].deactivate()
         if self.mode.value == '__str__':
             self.display_content.set(str(self.in_data.flows[0].data))

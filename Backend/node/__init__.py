@@ -15,6 +15,6 @@ from .user_defined import *
 from .visual import *
 from .procedural import *
 from .data import *
-#from.torch import *
+from.torch import *
 
 del FunctionNode,Component,Attribute,Port,Node

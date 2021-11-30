@@ -65,7 +65,8 @@ class Port():
     Different node classes might have Port classes that own different properties for frontend to read. 
     In such case, inherit this
     '''
-    def __init__(self,node: Node, type : str, isInput : bool, max_connections : int = '64', name : str = '', description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False):
+    def __init__(self,node: Node, type : str, isInput : bool, max_connections : int = '64', name : str = '',
+     description : str = '',pos = [0,0,0], on_edge_activate = lambda : None, with_order : bool = False,is_ready = lambda :False,require_value =None):
         self.id = str(len(node.port_list))
         node.port_list.append(self)
         self.type = type
@@ -74,9 +75,17 @@ class Port():
         self.name = name
         self.description = description 
         self.pos = pos
-        self.on_edge_activate = on_edge_activate # A delegate
-        self.flows : List[edge.ControlFlow] = [] 
+        self.flows : List[edge.DataFlow] = [] 
         self.with_order = with_order # Whether the order of edges connected to the port matters.
+
+        # Delegates==================
+
+        # For input ports, do somthing when an edge is activated
+        self.on_edge_activate = on_edge_activate 
+
+        # For output ports, if is_ready returns True, the port can instantly give an output value via require_value
+        self.is_ready = is_ready
+        self.require_value = require_value
 
     def get_dict(self):
         # for json.dump
@@ -252,7 +261,7 @@ class Node:
         if self.active: 
             return # prevent duplication in env.nodes_to_run
         self.active = True
-        self.env.node_stack.append(self) #It's normally working in LIFO order, but FIFO for manual activation by client.
+        self.env.node_stack.append(self) #It's normally working in LIFO order, but manual activation by client can be FIFO.
         
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
@@ -385,7 +394,7 @@ class CodeNode(Node):
         self.code = Attribute(self,'code','string','')
         Component(self,'input_field','TextEditor','code')
        
-    def in_control_activate(self):
+    def in_control_activate(self,port):
         # The node is activated as soon as its input flow is activated
         self.activate()
 
@@ -412,12 +421,12 @@ class EvalAssignNode(Node):
         super().initialize()
         
         self.in_data = Port(self,'DataPort',True,64,pos = [-1,0,0], on_edge_activate = self.in_data_active)
-        self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
+        self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0],is_ready = lambda:True,require_value = self.activate)
 
         self.code = Attribute(self,'code','string','')
         Component(self,'input_field','SmallTextEditor','code')
 
-    def in_data_active(self):
+    def in_data_active(self,port):
         #TODO : Check if in data is empty and ask for value
         self.activate()
         
@@ -487,9 +496,20 @@ class FunctionNode(Node):
         # Initialize ports from self.in_names, self.out_names and self.max_in_data
         self.in_data = [Port(self,'DataPort',True,name = port_name,max_connections= max_in_data,
          on_edge_activate = self.in_data_activate, pos= pos)for (port_name,max_in_data,pos) in zip(self.in_names,self.max_in_data,in_port_pos)]
-        self.out_data = [Port(self,'DataPort',False,name = port_name, pos = pos)for port_name,pos in zip(self.out_names,out_port_pos)]
+        self.out_data = [Port(self,'DataPort',False,name = port_name, pos = pos,is_ready = self.is_ready)for port_name,pos in zip(self.out_names,out_port_pos)]
 
-    def in_data_activate(self):
+    def is_ready(self):
+        '''
+        Return true if it's ready to ouput.
+        FunctionNode requires all the previous node to be ready, to be ready itself.
+        '''
+        for port in self.in_data:
+            for flow in port.flows:
+                if not (flow.is_ready or flow.active) :
+                    return False
+        return True
+
+    def in_data_activate(self,port):
         # A functionNode activates when all its input dataFlow is active.
         for port in self.in_data:
             for flow in port.flows:

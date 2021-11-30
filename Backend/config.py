@@ -3,6 +3,8 @@ color = {
     "function" : (0,1,0),
     "visual" : (1,1,0),
     "input" : (1,0,1),
+    "procedural" : (.8,.8,.9),
+    "torch/tensor" : (1,.5,0),
     "default" : (.8,.8,.8),
 }
 def get_color(category):

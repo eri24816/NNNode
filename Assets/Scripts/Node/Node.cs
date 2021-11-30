@@ -363,7 +363,8 @@ namespace GraphUI
             base.Remove();
             foreach (Port port in ports)
                 port.Remove();
-            Manager.ins.SendToServer(new API_update_message(id,"rmv",""));
+            if(id!="-1")
+                Manager.ins.SendToServer(new API_update_message(id,"rmv",""));
             StartCoroutine(Removing()); // Play removing animation and destroy the game objecct
         }
 

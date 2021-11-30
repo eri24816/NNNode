@@ -35,6 +35,7 @@ class Edge(): # abstract class
         self.id=info['id']
         self.env.Update_history("new", info)
         self.env.Add_direct_message({'command':'new','info':self.get_info()})
+        self.is_ready = self.tail_port.is_ready
 
 
     def get_info(self):
@@ -45,8 +46,11 @@ class Edge(): # abstract class
     def activate(self):
         if not self.active:
             self.active = True
-            self.head_port.on_edge_activate() # Imform head node
             self.env.Add_buffered_message(self.id, 'act', '2')
+            if self.head_port.on_edge_activate.__code__.co_argcount == 2:
+                self.head_port.on_edge_activate(self.head_port) # Imform head node
+            else:
+                self.head_port.on_edge_activate()
 
     def deactivate(self):
         if self.active:
@@ -74,7 +78,7 @@ class ControlFlow(Edge):
     def activate(self):
         super().activate()
         # inform the head node
-        self.head_port.on_edge_activate()
+        self.head_port.on_edge_activate(self.head_port)
 
 class DataFlow(Edge):
     def __init__(self, info : Edge.Info, env):
