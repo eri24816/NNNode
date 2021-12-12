@@ -1,7 +1,6 @@
 from __future__ import annotations
 import math
 import numpy as np
-from typing import Dict, List
 import sys
 sys.path.append('D:/NNNode/Backend') # for debugging
 from history import History
@@ -10,7 +9,9 @@ import traceback
 import copy
 import time
 import config
+
 from typing import TYPE_CHECKING, TypedDict
+from typing import Dict, List
 if TYPE_CHECKING:
     import Environment
     import edge
@@ -261,7 +262,7 @@ class Node:
         if self.active: 
             return # prevent duplication in env.nodes_to_run
         self.active = True
-        self.env.node_stack.append(self) #It's normally working in LIFO order, but manual activation by client can be FIFO.
+        self.env.node_stack.append(self) # It's normally working in LIFO order, but manual activation by client can be FIFO.
         
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
@@ -278,6 +279,7 @@ class Node:
         self.output += self.added_output
         self.env.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
         self.added_output = ''
+        
 
     def run(self):
         # Env calls this method
@@ -285,7 +287,7 @@ class Node:
         self.env.Add_buffered_message(self.id, 'clr') # Clear output
 
         # Redirect printed outputs and error messages to client
-        with stdoutIO(self):
+        with stdoutIO(self): #TODO: optimize this
             try:
                 self._run()
             except Exception:
@@ -457,10 +459,10 @@ class EvalAssignNode(Node):
         
 class FunctionNode(Node):
     '''
-    Similar to CodeNode, but a FunctionNode's code defines a function (start with "def").
+    A FunctionNode defines a function.
     The function is invoked when every input dataflows and the input controlflow (if there is one) are all activated.
     It can also be invoked directly by client(e.g. double click on the node).
-    After running, it will activate its output dataflows and ControlFlow (if there is one).
+    After running, it will activate its output dataflows (if there is one).
     '''
 
     #display_name = 'Function'
