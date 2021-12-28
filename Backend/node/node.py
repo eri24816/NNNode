@@ -199,6 +199,8 @@ class Node:
             'comp': [comp.dict()for  comp in self.components]
         }
     
+    #* Initializing
+
     def __init__(self, info : Info, env : Environment.Env):
         '''
         For child classes, DO NOT override this. Override initialize() instead.
@@ -245,7 +247,6 @@ class Node:
                     # Some attributes could be created by client. self.initialize() doesn't add them to self.attributes.
                     Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
 
-
     def initialize(self):
         '''
         Setup the node's attributes and components
@@ -273,12 +274,7 @@ class Node:
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '0')
 
-    def flush_output(self): # called when client send 'upd'
-        if self.added_output == '':
-            return
-        self.output += self.added_output
-        self.env.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
-        self.added_output = ''
+
         
 
     def run(self):
@@ -309,7 +305,15 @@ class Node:
         '''
         self.deactivate()
 
-    # for client ------------------------------
+    ## Operations from/to client ------------------------------
+
+    def flush_output(self): # called when client send 'upd'
+        if self.added_output == '':
+            return
+        self.output += self.added_output
+        self.env.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
+        self.added_output = ''
+
     def recive_command(self,m):
         '''
         {'id',command' : 'act'}

@@ -232,6 +232,7 @@ start_server = websockets.serve(router, "localhost", 1000)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 try:
+    print('NNNode server started')
     asyncio.get_event_loop().run_forever()
 except KeyboardInterrupt:
     print('KeyboardInterrupt')
