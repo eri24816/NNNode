@@ -19,13 +19,18 @@ class DisplayNode(Node):
         self.stat_mode = Attribute(self, 'stat/mode','dropdown:min,max,sum,mean,std,L1,L2','mean')
 
 
+    def is_ready(self):
+        if len(self.in_data.flows)>0 and self.in_data.flows[0].is_ready():
+            return True
+        return False
+
     def in_data_active(self,port):
-        self.in_data.flows[0].deactivate()
+        self.attempt_to_activate()
+
+    def _run(self):
         if self.mode.value == '__str__':
-            self.display_content.set(str(self.in_data.flows[0].data))
+            self.display_content.set(str(self.in_data.flows[0].get_value()))
         elif self.mode.value == 'image':
             pass
         elif self.mode.value == 'stat':
             pass
-    def activate(self):
-        pass

@@ -93,6 +93,8 @@ class SliderNode(Node):
 
         Component(self, 'slider','Slider','slider_value')
 
+        self.is_ready = lambda : True
+
     def running_finished(self, success = True):
         if success:
             for flow in self.out_data.flows:

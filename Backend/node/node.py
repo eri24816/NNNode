@@ -85,8 +85,8 @@ class Port():
         self.on_edge_activate = on_edge_activate 
 
         # For output ports, if is_ready returns True, the port can instantly give an output value via require_value
-        self.is_ready = is_ready
-        self.require_value = require_value
+        #self.is_ready = is_ready
+        #self.require_value = require_value
 
     def get_dict(self):
         # for json.dump
@@ -259,6 +259,10 @@ class Node:
 
     ## Core methods ------------------------------
 
+    def attempt_to_activate(self):
+        if self.is_ready() and not self.env.lock_deque:
+            self.activate()
+
     def activate(self):
         '''
         Call this to enqueue the node in env.
@@ -267,15 +271,13 @@ class Node:
         if self.active: 
             return # prevent duplication in env.nodes_to_run
         self.active = True
-        self.env.node_stack.append(self) # It's normally working in LIFO order, but manual activation by client can be FIFO.
+        self.env.add_to_deque(self) # It's normally working in LIFO order, but manual activation by client can be FIFO.
         
-        # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
 
     def deactivate(self):
         self.active = False
 
-        # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '0')
 
     def run(self):
@@ -293,6 +295,29 @@ class Node:
                 self.flush_output()
             else:
                 self.running_finished(True)  
+
+
+    ## Backward signal ------------------------------
+
+    def is_ready(self):
+        '''
+        Returns True if the node is ready to provide its outputs
+        '''
+        return False
+
+    def require_value(self):
+        '''
+        Called by a flow in front
+        Always check is_ready() == True before calling this
+        '''
+        assert self.is_ready()
+
+        # If a node produces a backward signal, prevent its sibling to be activated by setting lock_deque to True
+        if not self.env.lock_deque:
+            with self.env.get_deque_lock():
+                self.run()
+        else:
+            self.run()
 
 
     ## Virtual methods ------------------------------
@@ -326,7 +351,7 @@ class Node:
         '''
         command = m['command']
         if command == "act":
-            self.activate()
+            self.On_double_click()
         if command =='atr':
             self.attributes[m['name']].set(m['value'])
             
@@ -375,6 +400,9 @@ class Node:
 
         return 1
 
+    def On_double_click(self):
+        self.attempt_to_activate()
+
     def remove(self):
         for port in self.port_list:
             for flow in copy.copy(port.flows):
@@ -410,8 +438,6 @@ class CodeNode(Node):
         self.activate()
 
     def _run(self):
-        for flow in self.in_control.flows:
-            flow.deactivate()
 
         exec_(self.code.value,self.env.globals,self.env.locals)
 
@@ -437,22 +463,29 @@ class EvalAssignNode(Node):
         self.code = Attribute(self,'code','string','')
         Component(self,'input_field','SmallTextEditor','code')
 
+        #TODO: self.block_backward_signal = Attribute(self,'block_backward_signal','bool','')
+
+    def is_ready(self):
+        return True
+
+    def require_value(self):
+        # if block_backward_signal
+        self.value = eval(self.code.value,self.env.globals,self.env.locals)
+        for flow in self.out_data.flows:
+            flow.recive_value(self.value)
+
     def in_data_active(self,port):
-        #TODO : Check if in data is empty and ask for value
-        self.activate()
-        
+        self.attempt_to_activate()
 
     def _run(self):
         if len(self.in_data.flows)>0:
-            for flow in self.in_data.flows:
-                flow.deactivate()
 
             if len(self.in_data.flows) == 1:
-                self.value = self.in_data.flows[0].data
+                self.value = self.in_data.flows[0].get_value()
             else:
                 self.value = []
                 for flow in self.in_data.flows:
-                    self.value.append(flow.data)
+                    self.value.append(flow.get_value())
             #exec_(self.attributes['code'] + " = __value", self.env.globals, {'__value' : self.value})
             self.env.globals.update({self.code.value: self.value})
         else:
@@ -516,33 +549,14 @@ class FunctionNode(Node):
         '''
         for port in self.in_data:
             for flow in port.flows:
-                if not (flow.is_ready or flow.active) :
+                if not flow.is_ready() :
                     return False
         return True
 
     def in_data_activate(self,port):
-        # A functionNode activates when all its input dataFlow is active.
-        for port in self.in_data:
-            for flow in port.flows:
-                if not flow.active:
-                    return
-        self.activate()
-
-    def activate(self):
-        super().activate()
-
-        # TODO: Ask for value
-        # Or should it be put in _run() ?
-        for port in self.in_data:
-            for flow in port.flows:
-                if not flow.has_value:
-                    pass
-
+        self.attempt_to_activate()
 
     def _run(self):
-        for port in self.in_data:
-            for flow in port.flows:
-                flow.deactivate()
 
         # Gather data from input dataFlows
         funcion_input = []
@@ -551,10 +565,10 @@ class FunctionNode(Node):
                 if len(port.flows) == 0:
                     funcion_input.append(None) #TODO: Default value
                 else:
-                    funcion_input.append(port.flows[0].data)
+                    funcion_input.append(port.flows[0].get_value())
             else:
                 # Gather inpute data into a list
-                funcion_input.append([flow.data for flow in port.flows])
+                funcion_input.append([flow.get_value() for flow in port.flows])
         
         # Evaluate the function
         result = self.function(*funcion_input)

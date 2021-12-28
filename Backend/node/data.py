@@ -26,13 +26,11 @@ class ListNode(Node):
         self.data = []
 
     def set(self,port : Port):
-        self.data = port.flows[0].data.copy()
-        port.flows[0].deactivate()
+        self.data = port.flows[0].get_value().copy()
         self.display.set(repr(self.data))
 
     def append(self,port : Port):
         for flow in port.flows:
             if flow.active:
-                self.data.append(flow.data)
-                flow.deactivate()
+                self.data.append(flow.get_value())
         self.display.set(repr(self.data))

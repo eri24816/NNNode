@@ -45,6 +45,15 @@ class MyDeque(deque):
             self.not_empty.clear()
         return super().pop()
 
+class DequeLock:
+    def __init__(self,env:Env):
+        self.env = env
+    def __enter__(self):
+        self.env.lock_deque = True
+    def __exit__(self, type, value, traceback):
+        self.env.lock_deque = False
+
+
 # the environment to run the code in
 class Env():
     '''
@@ -85,9 +94,13 @@ class Env():
         # for run() thread
 
         self.node_stack = MyDeque()
+
+        # If a node produces a backward signal, prevent its sibling to be activated by setting lock_deque to True
+        self.lock_deque = False
         self.running_node : node.Node = None
         
-
+    def get_deque_lock(self):
+        return DequeLock(self)
     
     def Create(self,info:node.Node.Info): 
         '''
@@ -230,6 +243,10 @@ class Env():
         for node_class in self.node_classes.values():
             self.Add_direct_message({'command':'new','info':node_class.get_class_info()})
 
+    def add_to_deque(self,node):
+        if not self.lock_deque:
+            self.node_stack.append(node)
+
     # run in another thread from the main thread (server.py)
     def run(self):
         self.flag_exit = 0
@@ -238,5 +255,6 @@ class Env():
             if self.running_node == 'EXIT_SIGNAL':
                 return
 
+            self.lock_deque = False
             self.running_node.run()
                 
