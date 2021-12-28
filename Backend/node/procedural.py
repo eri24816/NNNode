@@ -8,24 +8,24 @@ class ForNode(Node):
     def initialize(self):
         super().initialize()
 
-        Port(self,'DataPort',True,1,name='start',on_edge_activate=self.attempt_to_activate)
+        Port(self,'DataPort',True,1,name='start',on_edge_activate=self.On_double_click)
 
-        self.iterator_port = Port(self,'DataPort',True,1,name='iterable',on_edge_activate=self.set_iterator)
+        self.iterator_port = Port(self,'DataPort',True,1,name='iterable')
         self.iterator = None
 
         self.item_port = Port(self,'DataPort',False,name='item')
 
-    def require_value(self):
-        # Doesn't accept backward signals
-        return
-
     def is_ready(self):
-        if (len(self.iterator_port.flows)==1 and self.iterator_port.flows[0].is_ready()):
-            return True
+        
         return False
 
+    def On_double_click(self):
+        if (len(self.iterator_port.flows)==1 and self.iterator_port.flows[0].is_ready()):
+            self.set_iterator()
+            self.activate()
+
     def _run(self):
-        self.set_iterator()
+        
         for port in self.port_list:
             if port.isInput:
                 for flow in port.flows:
@@ -65,12 +65,13 @@ class WhileNode(Node):
 
         self.item_port = Port(self,'DataPort',False,name='do')
 
-    def require_value(self):
-        # Doesn't accept backward signals
-        return
 
     def is_ready(self):
-        return True
+        return False
+
+    def On_double_click(self):
+        if (len(self.iterator_port.flows)==1 and self.iterator_port.flows[0].is_ready()):
+            self.activate()
 
     def _run(self):
 
