@@ -199,7 +199,8 @@ class Node:
             'comp': [comp.dict()for  comp in self.components]
         }
     
-    #* Initializing
+
+    ## Initialization ------------------------------
 
     def __init__(self, info : Info, env : Environment.Env):
         '''
@@ -255,6 +256,9 @@ class Node:
 
         pass
 
+
+    ## Core methods ------------------------------
+
     def activate(self):
         '''
         Call this to enqueue the node in env.
@@ -274,9 +278,6 @@ class Node:
         # for client ------------------------------
         self.env.Add_buffered_message(self.id, 'act', '0')
 
-
-        
-
     def run(self):
         # Env calls this method
         self.env.Add_buffered_message(self.id,'act','2') # 2 means "running"
@@ -293,6 +294,9 @@ class Node:
             else:
                 self.running_finished(True)  
 
+
+    ## Virtual methods ------------------------------
+
     def _run(self):
         '''
         Actually define what the type of node acts
@@ -304,6 +308,7 @@ class Node:
         If deactivating after running is unwanted, override this
         '''
         self.deactivate()
+
 
     ## Operations from/to client ------------------------------
 
