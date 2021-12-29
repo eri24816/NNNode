@@ -420,22 +420,20 @@ class CodeNode(Node):
     It will execute its code and activate its output ControlFlow (if there is one).
     '''
 
-    shape = 'Simple'
+    shape = 'VerticalSimple'
     category = 'basic'
     display_name = 'Code'
 
     def initialize(self):
         super().initialize()
 
-        self.in_control = Port(self,'ControlPort', True, on_edge_activate = self.in_control_activate, pos = [-1,0,0])
-        self.out_control = Port(self,'ControlPort', False, pos = [1,0,0])
-
         self.code = Attribute(self,'code','string','')
         Component(self,'input_field','TextEditor','code')
-       
-    def in_control_activate(self,port):
-        # The node is activated as soon as its input flow is activated
-        self.activate()
+
+        Component(self,'output_field','Text','output')
+    
+    def is_ready(self):
+        return True
 
     def _run(self):
 
@@ -443,9 +441,6 @@ class CodeNode(Node):
 
     def running_finished(self, success = True):
         self.flush_output()
-        if success:
-            for flow in self.out_control.flows:
-                flow.activate()
         self.deactivate()
 
 class EvalAssignNode(Node):
@@ -458,21 +453,28 @@ class EvalAssignNode(Node):
         super().initialize()
         
         self.in_data = Port(self,'DataPort',True,64,pos = [-1,0,0], on_edge_activate = self.in_data_active)
-        self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0],is_ready = lambda:True,require_value = self.activate)
+        self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
 
         self.code = Attribute(self,'code','string','')
         Component(self,'input_field','SmallTextEditor','code')
 
+        self.block_backward = Attribute(self,'block_backward','bool',True)
+
         #TODO: self.block_backward_signal = Attribute(self,'block_backward_signal','bool','')
 
     def is_ready(self):
-        return True
+        if self.block_backward.value:
+            return True
+        else:
+            return self.in_data.flows[0].is_ready()
 
     def require_value(self):
-        # if block_backward_signal
-        self.value = eval(self.code.value,self.env.globals,self.env.locals)
-        for flow in self.out_data.flows:
-            flow.recive_value(self.value)
+        if self.block_backward.value or not self.is_ready():
+            self.value = eval(self.code.value,self.env.globals,self.env.locals)
+            for flow in self.out_data.flows:
+                flow.recive_value(self.value)
+        else:
+            self.attempt_to_activate()
 
     def in_data_active(self,port):
         self.attempt_to_activate()

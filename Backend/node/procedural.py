@@ -70,7 +70,7 @@ class WhileNode(Node):
         return False
 
     def On_double_click(self):
-        if (len(self.iterator_port.flows)==1 and self.iterator_port.flows[0].is_ready()):
+        if (len(self.condition_port.flows)==1 and self.condition_port.flows[0].is_ready()):
             self.activate()
 
     def _run(self):
