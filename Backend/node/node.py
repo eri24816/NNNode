@@ -460,8 +460,6 @@ class EvalAssignNode(Node):
 
         self.block_backward = Attribute(self,'block_backward','bool',True)
 
-        #TODO: self.block_backward_signal = Attribute(self,'block_backward_signal','bool','')
-
     def is_ready(self):
         if self.block_backward.value:
             return True
