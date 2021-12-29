@@ -44,8 +44,7 @@ namespace GraphUI
         public Dictionary<string, NodeAttr> attributes ;
         public List<Comp> comps = new List<Comp>();
         //public Dictionary<string, Comp> components{ get; set; };
-        NodeAttr Pos;
-        protected string output = "";
+        NodeAttr Pos, Output;
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;
 
@@ -135,6 +134,8 @@ namespace GraphUI
                                 SendNat<float>(); break;
                             case "Vector3":
                                 SendNat<Vector3>(); break;
+                            case "bool":
+                                SendNat<bool>(); break;
                         }
 
                     NodeAttr a = new NodeAttr(node, name, type, setDel, getDel, comp);
@@ -224,6 +225,8 @@ namespace GraphUI
                         Send<float>();
                     else if (type == "string"||(type.Length >= 8 && type.Substring(0, 8) == "dropdown"))
                         Send<string>();
+                    else if (type == "bool")
+                        Send<bool>();
                 }
             }
             public void Send<T>()
@@ -256,7 +259,7 @@ namespace GraphUI
             else
             {
                 this.info = info;
-                transform.localScale = Vector3.one * 0.6f;
+                transform.localScale = Vector3.one * 0.3f;
                 Manager.ins.DemoNodes.Add(type, this);
                 transform.SetParent(Manager.ins.demoNodeContainer.FindCategoryPanel((string)info["category"], "CategoryPanelForNodeList"));
             }
@@ -266,6 +269,7 @@ namespace GraphUI
             else
                 // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
                 Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env");
+                Output = NodeAttr.Register(this, "output", "string", (v) => {OnOutputChanged((string)v);}, history_in: "",initValue:"");
 
             foreach (var attr_info in info["attr"])
             {
@@ -391,11 +395,11 @@ namespace GraphUI
 
         public virtual void AddOutput(string output)
         {
-            this.output += output;
+            Output.Set((string)Output.Get()+ output,send:false);
         }
         public virtual void ClearOutput()
         {
-            output = "";
+            Output.Set("",send:true);
         }
 
         public virtual void Reshape(float w, float l, float r) { }//Trapezoid shaped node
@@ -532,6 +536,10 @@ namespace GraphUI
                 selectColorTransition.SetDefault("selected");
             else
                 selectColorTransition.SetDefault("unselected");*/
+        }
+        void OnOutputChanged(string output)
+        {
+
         }
     }
 }

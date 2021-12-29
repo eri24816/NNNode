@@ -10,14 +10,16 @@ public class SoundEffect : MonoBehaviour
     public void Start()
     {
         i = this;
-        source.volume = 0.3f;
+        source.volume = 0.1f;
     }
-    public static void Click()
+    public static void Click(MonoBehaviour o = null)
     {
+        if (o) i.transform.position = o.transform.position;
         i.source.PlayOneShot(i.click);
     }
-    public static void Hover()
+    public static void Hover(MonoBehaviour o = null)
     {
+        if (o) i.transform.position = o.transform.position;
         i.source.PlayOneShot(i.hover);
     }
 }

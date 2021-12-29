@@ -7,7 +7,7 @@ public class Inspector : Hierachy
 {
     Hierachy hierachy;
     [SerializeField]
-    GameObject floatInput,stringInput,dropdown;
+    GameObject floatInput,stringInput,dropdown,checkBox;
 
     [SerializeField]
     GameObject itemPanel;
@@ -36,6 +36,13 @@ public class Inspector : Hierachy
                 //newComp.name = attr.name;
                 newComp.Init(node, attr.name,type:attr.type,isMainComp: false);
                 
+            }
+
+            if (attr.type == "bool")
+            {
+                var newComp = CreateAttrEditor(checkBox, attr).GetComponent<GraphUI.CheckBox>();
+                //newComp.name = attr.name;
+                newComp.Init(node, attr.name, attr.type, isMainComp: false);
             }
         }
     }

@@ -13,6 +13,8 @@ namespace GraphUI
         protected MonoBehaviour sendOnScrollTo;
         float lastClickTime;
         float doubleClickDelay = 0.2f;
+
+        float mouseExitToEnterTimeout=0.1f, mouseLastExitTime;
         public static Node TheOnlySelectedNode()
         {
             if (current.Count == 1 && current[0] is Node n) return n;
@@ -54,18 +56,21 @@ namespace GraphUI
 
         public virtual void OnPointerEnter(PointerEventData eventData)
         {
-            SoundEffect.Hover();
+            if (Time.time - mouseLastExitTime > mouseExitToEnterTimeout)
+            {
+                SoundEffect.Hover(this);
+            }
         }
 
         public virtual void OnPointerExit(PointerEventData eventData)
         {
-            
+            mouseLastExitTime = Time.time;
         }
         protected bool dragged;
         public void OnPointerDown(PointerEventData eventData)
         {
             dragged = false;
-            SoundEffect.Click();
+            SoundEffect.Click(this);
             if (eventData.button == 0)
             {
                 if (Time.time - lastClickTime < doubleClickDelay) OnDoubleClick();

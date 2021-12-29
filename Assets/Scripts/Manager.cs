@@ -22,6 +22,7 @@ public static class JsonHelper
             "string" => (string)j,
             "float" => (float)j,
             "Vector3" => j.ToObject<Vector3>(),
+            "bool" => (bool)j,
             _ => throw new System.Exception($"Type {type} not supported"),
         };
     } 
