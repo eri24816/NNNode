@@ -122,10 +122,47 @@ namespace GraphUI
             vh.Clear();
             vertex.color = color;
 
+            bool flagStraitLine = true;
             delta = new Vector3[resolution - 1];
             for (int i = 0; i < resolution - 1; i++)
             {
                 delta[i] = Vector3.Normalize(points[i + 1] - points[i]);
+                if(i>0&& Vector3.Cross(delta[i], delta[i-1]).magnitude/(delta[i].magnitude*delta[i-1].magnitude) > 1e-4)
+                {
+                    flagStraitLine = false;
+                }
+                if(i>0) print(Vector3.Cross(delta[i], delta[i - 1]).magnitude / (delta[i].magnitude * delta[i - 1].magnitude));
+            }
+
+            if (flagStraitLine)
+            {
+                Vector3 shift__ = width * Vector3.up;
+
+                vertex.position = points[0] + shift__ - transform.position;
+                vertex.uv0 = vertex.uv1 = vertex.uv2 = vertex.uv3 = new Vector2(0, 0);
+                vh.AddVert(vertex);
+                vertex.position = points[0] - shift__ - transform.position;
+                vertex.uv0 = vertex.uv1 = vertex.uv2 = vertex.uv3 = new Vector2(1, 0);
+                vh.AddVert(vertex);
+
+                vertex.position = points[resolution-1] + shift__ - transform.position;
+                vertex.uv0 = vertex.uv1 = vertex.uv2 = vertex.uv3 = new Vector2(0, (points[resolution-1]-points[0]).magnitude / width);
+                vh.AddVert(vertex);
+                vertex.position = points[resolution - 1] - shift__ - transform.position;
+                vertex.uv0 = vertex.uv1 = vertex.uv2 = vertex.uv3 = new Vector2(1, (points[resolution - 1] - points[0]).magnitude / width);
+                vh.AddVert(vertex);
+
+
+                for (int i = 0; i < 1; i++)
+                {
+                    vh.AddTriangle(i * 2, i * 2 + 2, i * 2 + 1);
+                    vh.AddTriangle(i * 2 + 1, i * 2 + 2, i * 2 + 3);
+
+                    vh.AddTriangle(i * 2, i * 2 + 1, i * 2 + 2);
+                    vh.AddTriangle(i * 2 + 1, i * 2 + 3, i * 2 + 2);
+                }
+
+                return;
             }
 
             float accuLenght = 0;
