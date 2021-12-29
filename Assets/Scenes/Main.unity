@@ -1142,7 +1142,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2045998389}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9998788
+  m_Size: 0.99996287
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1495,6 +1495,7 @@ MonoBehaviour:
   categoryPanelPrefab: {fileID: 1468223545780764545, guid: 7c75df2c70620094d98cb491fba962e7, type: 3}
   state: 0
   nameNum: 0
+  snap: 0.1
 --- !u!4 &1279014709
 Transform:
   m_ObjectHideFlags: 0
@@ -2684,7 +2685,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000014294435, y: 0.0022851864}
+  m_AnchoredPosition: {x: 0.000014294435, y: 0.00005083944}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1873357960

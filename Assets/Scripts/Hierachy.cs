@@ -49,6 +49,6 @@ public class Hierachy : MonoBehaviour
     {
         collapsed ^= true;
         if (collapsed) ((RectTransform)transform).sizeDelta = new Vector2(0, ((RectTransform)transform).sizeDelta.y);
-        else ((RectTransform)transform).sizeDelta = new Vector2(400, ((RectTransform)transform).sizeDelta.y);
+        else ((RectTransform)transform).sizeDelta = new Vector2(250, ((RectTransform)transform).sizeDelta.y);
     }
 }

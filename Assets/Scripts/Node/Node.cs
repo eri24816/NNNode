@@ -36,7 +36,7 @@ public class CoolDown
 }
 namespace GraphUI
 {
-    public class Node : Selectable, IEndDragHandler, IBeginDragHandler, IDragHandler, IUpdateMessageReciever
+    public class Node : Selectable,  IUpdateMessageReciever,IBeginDragHandler,IEndDragHandler,IDragHandler
     {
         #region vars
         public List<Port> ports;
@@ -380,10 +380,12 @@ namespace GraphUI
                 {
                     if (CamControl.worldMouseDelta.sqrMagnitude > 0)
                     {
-                        Pos.Set(transform.position + CamControl.worldMouseDelta);
+                        desiredPosition += CamControl.worldMouseDelta;
+                        Pos.Set(Manager.ins.GetSnappedPosition(desiredPosition));
+                        //Pos.Set(transform.position + CamControl.worldMouseDelta);
                         //transform.position += CamControl.worldMouseDelta;
-                        //transform.position = CamControl.ins.WorldPoint();
-                       
+
+
                     }
                 } 
 
@@ -413,7 +415,7 @@ namespace GraphUI
 
 
         bool dragging = false;
-
+        Vector3 desiredPosition;
  
         public void OnBeginDrag(PointerEventData eventData)
         {
@@ -426,20 +428,19 @@ namespace GraphUI
                 Node newNode = Manager.ins.CreateNode(info,true);
                 newNode.transform.localScale = 0.002f * Vector3.one;
                 StartCoroutine(newNode.DragCreating());
-
+                
                 return;
             }  
             else if(moveable)
             { 
                 if (!selected) OnPointerClick(eventData); // if not selected, select it first
+                dragged = true; // Prevent Selectable from selecting
                 foreach (Selectable s in current)
                     if (s is Node node)
-                    {
-                        node.dragging = true;
-                        dragged = true; // Prevent Selectable from selecting
-                    }
+                        node.BeginDrag();
             }
         }
+        public void BeginDrag() { dragging = true; desiredPosition = transform.position; }
         public void OnEndDrag(PointerEventData eventData)
         {
             if (!moveable) return;
@@ -447,9 +448,10 @@ namespace GraphUI
             foreach (Selectable s in current)
                 if (s is Node node)
                 {
-                    node.dragging = false;
+                    node.EndDrag();
                 }
         }
+        public void EndDrag() { dragging = false; }
         public void OnDrag(PointerEventData eventData) { }
 
         public virtual IEnumerator DragCreating()//Drag and drop
@@ -459,12 +461,13 @@ namespace GraphUI
             
             while (Input.GetMouseButton(0))
             {
-                transform.position = CamControl.worldMouse;
+                transform.position = Manager.ins.GetSnappedPosition( CamControl.worldMouse);
                 yield return null;
             }
             moveable = true;
 
             Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env",initValue:transform.position);
+            
         }
         public virtual IEnumerator Removing()// SAO-like?
         {

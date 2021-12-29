@@ -211,4 +211,9 @@ public class Manager : MonoBehaviour
         return node;
     }
 
+    public float snap = 0.02f;
+    public Vector3 GetSnappedPosition(Vector3 pos)
+    {
+        return new Vector3(Mathf.Round( pos.x/snap)*snap, Mathf.Round(pos.y / snap) * snap, pos.z);
+    }
 }
