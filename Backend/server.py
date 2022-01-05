@@ -24,7 +24,7 @@ API:
 
 
 
-prifix:
+prefix:
     client -> server:
     - cod
     - exc

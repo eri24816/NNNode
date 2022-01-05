@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
+
 namespace GraphUI
 {
     public class Line : Graphic,ICanvasRaycastFilter
@@ -79,24 +81,36 @@ namespace GraphUI
         public float curveDist = 0.8f,width=0.2f;
         Vector3[] points,delta;
 
+        float Sigmoid(float x)
+        {
+            return 1 / (1 + Mathf.Exp(-x));
+        }
+
+        float Cosine(Vector3 a,Vector3 b)
+        {
+             return Vector3.Dot(a,b)/(a.magnitude*b.magnitude+0.0001f);
+        }
+
         void CalculatePoints()
         {
 
             float dist = Vector3.Distance(tail, head);
-            float vel = shapeVel * Mathf.Min(1, dist);
+            float tail_vel_mag = shapeVel * Mathf.Min(3, 4*Sigmoid(-2 + Cosine(head - tail, -tail_vel)));
+            
+            float head_vel_mag = shapeVel * Mathf.Min(3, 4*Sigmoid(-2 + Cosine(tail - head ,- head_vel)));
 
             points = new Vector3[resolution];
             for (int i = 0; i < resolution / 2; i++)
             {
                 float t = ((float)i) / resolution / Mathf.Max(dist, 1) * curveDist;
                 float u = 1 - t;
-                points[i] = tail * u * u * u + (tail + tail_vel * vel) * 3 * u * u * t + (head + head_vel * vel) * 3 * u * t * t + head * t * t * t;
+                points[i] = u * u * u * tail + 3 * t * u * u * (tail + tail_vel * tail_vel_mag) + 3 * t * t * u * (head + head_vel * head_vel_mag) + t * t * t * head;
             }
             for (int i = resolution / 2; i < resolution; i++)
             {
                 float u = ((float)(resolution - i - 1)) / resolution / Mathf.Max(dist, 1) * curveDist;
                 float t = 1 - u;
-                points[i] = tail * u * u * u + (tail + tail_vel * vel) * 3 * u * u * t + (head + head_vel * vel) * 3 * u * t * t + head * t * t * t;
+                points[i] = u * u * u * tail + 3 * t * u * u * (tail + tail_vel * tail_vel_mag) + 3 * t * t * u * (head + head_vel * head_vel_mag) + t * t * t * head;
             }
 
             float minx = Mathf.Infinity, maxx = Mathf.NegativeInfinity, miny = Mathf.Infinity, maxy = Mathf.NegativeInfinity;
@@ -131,7 +145,6 @@ namespace GraphUI
                 {
                     flagStraitLine = false;
                 }
-                if(i>0) print(Vector3.Cross(delta[i], delta[i - 1]).magnitude / (delta[i].magnitude * delta[i - 1].magnitude));
             }
 
             if (flagStraitLine)

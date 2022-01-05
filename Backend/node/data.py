@@ -16,7 +16,7 @@ class ListNode(Node):
 
         Port(self,'DataPort',True,64,'append',on_edge_activate = self.append,with_order= True)
 
-        Port(self,'DataPort',False,64,'get')
+        self.get_port = Port(self,'DataPort',False,64,'get')
 
         self.mode = Attribute(self,'mode','dropdown:once,accumulate','once')
 
@@ -24,6 +24,13 @@ class ListNode(Node):
         Component(self,'display','Text','display')
 
         self.data = []
+
+    def is_ready(self):
+        return True
+
+    def require_value(self):
+        for flow in self.get_port.flows:
+            flow.recive_value(self.data)
 
     def set(self,port : Port):
         self.data = port.flows[0].get_value().copy()
