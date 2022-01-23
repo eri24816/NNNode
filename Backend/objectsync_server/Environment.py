@@ -1,66 +1,44 @@
 from __future__ import annotations
-from threading import Event
-from collections import deque
-import objectsync_server
+from asyncio.queues import Queue
 from typing import Dict
 from history import *
 import edge
 import node
-import inspect
+from collections import deque
+from threading import Event
 
-class MyDeque(deque):
-    # https://stackoverflow.com/questions/56821682/having-the-deque-with-the-advantages-of-queue-in-a-thread
-    def __init__(self):
-        super().__init__()
-        self.not_empty = Event()
-        #self.not_empty.set()
+# from server import Send_all
+# Above line causes circular import error so just define Send_all() again here.
+import json
+def Send_all(ws_list,message):
+    for ws in ws_list:
+        ws.send(json.dumps(message))
 
-    def append(self, elem):
-        super().append(elem)
-        self.not_empty.set()
 
-    def appendleft(self, elem):
-        super().appendleft(elem)
-        self.not_empty.set()
-
-    def pop(self):
-        self.not_empty.wait()  # Wait until not empty, or next append call
-        if not (len(self) - 1):
-            self.not_empty.clear()
-        return super().pop()
-
-class DequeLock:
-    def __init__(self,env:Env):
-        self.env = env
-    def __enter__(self):
-        self.env.lock_deque = True
-    def __exit__(self, type, value, traceback):
-        self.env.lock_deque = False
-
+class num_iter:
+    def __init__(self,start=-1):
+        self.i=start
+    def next(self):
+        self.i+=1
+        return self.i
 # the environment to run the code in
-class Env(objectsync_server.Env):
-
-    node_classes = {}
-    for m in inspect.getmembers(node, inspect.isclass):
-        node_classes.update({m[0]:m[1]})
+class Env():
 
     def __init__(self,name):
-        super(Env, self).__init__(name)
+        self.name=name
+        self.thread=None
+        self.id_iter = num_iter(-1)
         self.nodes: Dict[str,node.Node] = {} # {id : Node}
         self.edges={} # {id : Edge}
-        self.globals=globals()
-        self.locals={}
 
-        # for run() thread
+        self.history = History()
 
-        self.node_stack = MyDeque()
-
-        # If a node produces a backward signal, prevent its sibling to be activated by setting lock_deque to True
-        self.lock_deque = False
-        self.running_node : node.Node = None
-        
-    def get_deque_lock(self):
-        return DequeLock(self)
+        # unlike history, some types of changes aren't necessary needed to be updated sequentially on client, like code in a node or whether the node is running.
+        # one buffer per client
+        # format:[ { "<command>/<node id>": <value> } ]
+        # it's a dictionary so replicated updates will overwrite
+        self.message_buffer = {}
+        self.ws_clients = []
     
     def Create(self,info:node.Node.Info): 
         '''
@@ -91,6 +69,26 @@ class Env(objectsync_server.Env):
         else:
             with self.history.sequence(): # removing a node may cause some edges also being removed. When undoing and redoing, these multiple actions should be done in a sequence.
                 self.nodes[info['id']].remove()
+
+    def Update_history(self,type,content):
+        '''
+        When an attribute changes or something is created or removed, this will be called.
+        If such action is caused by undo/redo, history.lock() prevents history.Update() working.
+        '''
+        # don't repeat atr history within 2 seconds 
+        if type=="atr" and self.history.current.type=="atr" and content['id'] == self.history.current.content['id']:
+            if (time.time() - self.history.current.time)<2:
+                self.history.current.content['new']=content['new']
+                self.history.current.version+=1
+                return
+
+        self.history.Update(type,content)
+
+    def Add_direct_message(_, message):
+        '''
+        This will be overwritten by server.py
+        '''
+        pass
 
     def Add_buffered_message(self,id,command,content = ''):
         '''
@@ -175,26 +173,8 @@ class Env(objectsync_server.Env):
             self.Redo() # Continue redo forword through the action sequence
 
         return 1
-
-    def update_demo_nodes(self):
-        # In a regular create node process, we call self.Create() to generate a history item (command = "new"), 
-        # which will later be sent to client.
-        # However, demo nodes creation should not be undone, so here we put the message "new" in update_message buffer.
-        for node_class in self.node_classes.values():
-            self.Add_direct_message({'command':'new','info':node_class.get_class_info()})
-
-    def add_to_deque(self,node):
-        if not self.lock_deque:
-            self.node_stack.append(node)
+        
 
     # run in another thread from the main thread (server.py)
     def run(self):
-        self.flag_exit = 0
-        while not self.flag_exit:
-            self.running_node = self.node_stack.pop()
-            if self.running_node == 'EXIT_SIGNAL':
-                return
-
-            self.lock_deque = False
-            self.running_node.run()
-                
+        raise NotImplementedError()
