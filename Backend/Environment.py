@@ -38,7 +38,7 @@ class DequeLock:
         self.env.lock_deque = False
 
 # the environment to run the code in
-class Env(objectsync_server.Env):
+class Env(objectsync_server.Object):
 
     node_classes = {}
     for m in inspect.getmembers(node, inspect.isclass):

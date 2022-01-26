@@ -1,4 +1,5 @@
 from __future__ import annotations
+import objectsync_server as objsync
 import math
 import numpy as np
 import sys
@@ -6,14 +7,11 @@ sys.path.append('D:/NNNode/Backend') # for debugging
 from history import History
 import sys
 import traceback
-import copy
-import time
 import config
 
 from typing import TYPE_CHECKING, TypedDict
 from typing import Dict, List
 if TYPE_CHECKING:
-    import Environment
     import edge
 
 
@@ -101,64 +99,23 @@ class Port():
             'pos' : v3(*self.pos)
             }
 
-class Attribute:
-    '''
-    A node can have 0, 1, or more attributes and components. 
 
-    Attributes are states of nodes, they can be string, float or other types. Once an attribute is modified (whether in client or server),
-    cilent (or server) will send "atr" command to server (or client) to update the attribute.
-
-    Components are UI components that each controls an attribute, like slider or input field.
-
-    Not all attributes are controlled by components, like attribute "pos". 
-    '''
-    def __init__(self,node : Node,name,type, value,history_in = 'node'):
-        node.attributes[name]=self
-        self.node = node
-        self.name = name
-        self.type = type # string, float, etc.
-        self.value = value
-
-        # History is for undo/redo. Every new changes of an attribute creates an history item.
-        # self.history_in = '' -> no storing history
-        # self.history_in = 'node' -> store history in the node, like most of the attributes
-        # self.history_in = 'env' -> store history in the env, like node position
-        self.history_in = history_in 
-    
-    def set(self,value, store_history:bool = True):
-
-        # Update history
-        if store_history:
-            if self.history_in == 'node':
-                self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
-            elif self.history_in == 'env':
-                self.node.env.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
-
-        self.value = value
-
-        # Send to client
-        #self.node.env.Add_buffered_message(self.node.id,'atr',self.name)
-        self.node.env.Add_direct_message({'command':'atr','id':self.node.id,'name':self.name,'value':value})
-
-    def dict(self):
-        return {'name' : self.name, 'type' : self.type, 'value' : self.value, 'h' : self.history_in}
-    
 class Component:
     '''
     Like a slider or an input field
-    A component controls an attribute.
-    Component class have no set() method. When component value is modified, client should send "atr" command, which leads to Attribute.set()
+    A component controls an objsync.Attribute.
+    Component class have no set() method. When component value is modified, client should send "atr" command, which leads to objsync.Attribute.set()
     '''
     def __init__(self,node : Node,name,type,target_attr):
         node.components.append(self)
         self.name = name # for UI to display
         self.type = type # C# class name
-        self.target_attr = target_attr # attribute name
+        self.target_attr = target_attr # objsync.Attribute name
     
     def dict(self):
         return {'name':self.name,'type' : self.type, 'target_attr' : self.target_attr}
 
-class Node:
+class Node(objsync.Object):
     '''
     Base class of all types of nodes
     '''
@@ -183,7 +140,7 @@ class Node:
         '''
         When creating demo node, this is sent to client
         '''
-        tempNode = cls({'id' : -1, 'name' : ''},env = None)
+        tempNode = cls({'id' : -1, 'name' : ''},space = None)
         return tempNode.get_info()
     
     def get_info(self) -> Dict[str]:
@@ -195,31 +152,31 @@ class Node:
         return {
             "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'shape' : self.shape,
             'portInfos' : [port.get_dict() for port in self.port_list],
-            'attr': [attr.dict()for _, attr in self.attributes.items()],
+            'attr': [attr.dict()for _, attr in self.objsync.Attributes.items()],
             'comp': [comp.dict()for  comp in self.components]
         }
     
 
     ## Initialization ------------------------------
 
-    def __init__(self, info : Info, env : Environment.Env):
+    def __init__(self, info : Info, space : objsync.Space):
         '''
         For child classes, DO NOT override this. Override initialize() instead.
         '''
-        # The environment
-        self.env=env
+        super(objsync.Object, self).__init__(info['id'],space)
+        # The spaceironment
+        self.space=space
 
         # For the API, each ports of the node are identified by position in this list
         # Create ports in __init__ then add all port into this list
         self.port_list : List[Port] = []
 
-        # Each types of node have different attributes. Client can set them by sending "atr" command.
-        # Changes of attributes will create update messages and send to clients with "atr" command.
-        self.attributes : Dict[str,Attribute] = {}
-        self.components : List[Attribute] = []
+        # Each types of node have different objsync.Attributes. Client can set them by sending "atr" command.
+        # Changes of objsync.Attributes will create update messages and send to clients with "atr" command.
+        
+        self.components : List[Component] = []
 
         self.type=type(self).__name__
-        self.id=info['id']
 
         # Is the node ready to run?
         self.active = False
@@ -235,55 +192,52 @@ class Node:
 
         self.initialize() 
 
-        self.color = Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)),'')
+        self.color = objsync.Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)),'')
         if self.id != -1:
-            self.env.Update_history("new", self.get_info())
-            self.env.Add_direct_message({'command':'new','info':self.get_info()})
+            self.space.Update_history("new", self.get_info())
+            self.space.Add_direct_message({'command':'new','info':self.get_info()})
         
         if 'attr' in info:
             for attr_dict in info['attr']:
-                if attr_dict['name'] in self.attributes:
-                    self.attributes[attr_dict['name']].set(attr_dict['value'])
+                if attr_dict['name'] in self.objsync.Attributes:
+                    self.objsync.attributes[attr_dict['name']].set(attr_dict['value'])
                 else:
-                    # Some attributes could be created by client. self.initialize() doesn't add them to self.attributes.
-                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
+                    # Some objsync.Attributes could be created by client. self.initialize() doesn't add them to self.objsync.Attributes.
+                    objsync.Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
 
     def initialize(self):
         '''
-        Setup the node's attributes and components
+        Setup the node's objsync.Attributes and components
         This method is separated from __init__() because overrides of initialize() should be called after some setup in __init__()
         '''
-
-        pass
-
-
+    
     ## Core methods ------------------------------
 
     def attempt_to_activate(self):
-        if self.is_ready() and not self.env.lock_deque:
+        if self.is_ready() and not self.space.lock_deque:
             self.activate()
 
     def activate(self):
         '''
-        Call this to enqueue the node in env.
-        Later, env will call _run() of this node
+        Call this to enqueue the node in space.
+        Later, space will call _run() of this node
         '''
         if self.active: 
-            return # prevent duplication in env.nodes_to_run
+            return # prevent duplication in space.nodes_to_run
         self.active = True
-        self.env.add_to_deque(self) # It's normally working in LIFO order, but manual activation by client can be FIFO.
+        self.space.add_to_deque(self) # It's normally working in LIFO order, but manual activation by client can be FIFO.
         
-        self.env.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
+        self.space.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
 
     def deactivate(self):
         self.active = False
 
-        self.env.Add_buffered_message(self.id, 'act', '0')
+        self.space.Add_buffered_message(self.id, 'act', '0')
 
     def run(self):
-        # Env calls this method
-        self.env.Add_buffered_message(self.id,'act','2') # 2 means "running"
-        self.env.Add_buffered_message(self.id, 'clr') # Clear output
+        # space calls this method
+        self.space.Add_buffered_message(self.id,'act','2') # 2 means "running"
+        self.space.Add_buffered_message(self.id, 'clr') # Clear output
 
         # Redirect printed outputs and error messages to client
         with stdoutIO(self): #TODO: optimize this
@@ -313,8 +267,8 @@ class Node:
         assert self.is_ready()
 
         # If a node produces a backward signal, prevent its sibling to be activated by setting lock_deque to True
-        if not self.env.lock_deque:
-            with self.env.get_deque_lock():
+        if not self.space.lock_deque:
+            with self.space.get_deque_lock():
                 self.run()
         else:
             self.run()
@@ -341,7 +295,7 @@ class Node:
         if self.added_output == '':
             return
         self.output += self.added_output
-        self.env.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
+        self.space.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
         self.added_output = ''
 
     def recive_command(self,m):
@@ -349,68 +303,14 @@ class Node:
         {'id',command' : 'act'}
         {'id',command' : 'atr', 'name', 'value'}
         '''
+        super().recive_command(m)
         command = m['command']
+                    
         if command == "act":
             self.On_double_click()
-        if command =='atr':
-            self.attributes[m['name']].set(m['value'])
-            
-        if command == 'nat':
-            if m['name'] not in self.attributes:
-                Attribute(self,m['name'],m['type'],m['value'],m['h']).set(m['value'],False) # Set initial value
-
-    def Update_history(self, type, content):
-        '''
-        type, content:
-        stt, None - create the node
-        atr, {name, old, new} - change attribute
-        '''
-        # don't repeat atr history within 2 seconds 
-        if type=="atr" and self.history.current.type=="atr" and content['id'] == self.history.current.content['id']:
-            if (time.time() - self.history.current.time)<2:
-                self.history.current.content['new']=content['new']
-                self.history.current.version+=1
-                return
-
-        # add an item to the linked list
-        self.history.Update(type,content)         
-
-    def Undo(self):
-        if self.history.current.last==None:
-            return 0 # nothing to undo
-
-        if self.history.current.type=="atr":
-            self.attributes[self.history.current.content['name']].set(self.history.current.content['old'],False)
-        
-        self.history.current.head_direction=-1
-        self.history.current=self.history.current.last
-        self.history.current.head_direction = 0
-
-        return 1
-    
-    def Redo(self):
-        if self.history.current.next==None:
-            return 0 # nothing to redo
-        self.history.current.head_direction=1
-        self.history.current=self.history.current.next
-        self.history.current.head_direction=0
-
-        if self.history.current.type=="atr":
-            self.attributes[self.history.current.content['name']].set(self.history.current.content['new'],False)
-
-        return 1
 
     def On_double_click(self):
         self.attempt_to_activate()
-
-    def remove(self):
-        for port in self.port_list:
-            for flow in copy.copy(port.flows):
-                flow.remove()
-        self.env.nodes.pop(self.id)
-        self.env.Update_history('rmv',self.get_info())
-        self.env.Add_direct_message({'command':'rmv','id':self.id})
-        del self  #*?    
 
 class CodeNode(Node):
     '''
@@ -427,7 +327,7 @@ class CodeNode(Node):
     def initialize(self):
         super().initialize()
 
-        self.code = Attribute(self,'code','string','')
+        self.code = objsync.Attribute(self,'code','string','')
         Component(self,'input_field','TextEditor','code')
 
         Component(self,'output_field','Text','output')
@@ -437,7 +337,7 @@ class CodeNode(Node):
 
     def _run(self):
 
-        exec_(self.code.value,self.env.globals,self.env.locals)
+        exec_(self.code.value,self.space.globals,self.space.locals)
 
     def running_finished(self, success = True):
         self.flush_output()
@@ -455,10 +355,10 @@ class EvalAssignNode(Node):
         self.in_data = Port(self,'DataPort',True,64,pos = [-1,0,0], on_edge_activate = self.in_data_active)
         self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
 
-        self.code = Attribute(self,'code','string','')
+        self.code = objsync.Attribute(self,'code','string','')
         Component(self,'input_field','SmallTextEditor','code')
 
-        self.block_backward = Attribute(self,'block_backward','bool',True)
+        self.block_backward = objsync.Attribute(self,'block_backward','bool',True)
 
     def is_ready(self):
         if self.block_backward.value:
@@ -468,7 +368,7 @@ class EvalAssignNode(Node):
 
     def require_value(self):
         if self.block_backward.value or not self.is_ready():
-            self.value = eval(self.code.value,self.env.globals,self.env.locals)
+            self.value = eval(self.code.value,self.space.globals,self.space.locals)
             for flow in self.out_data.flows:
                 flow.recive_value(self.value)
         else:
@@ -486,10 +386,10 @@ class EvalAssignNode(Node):
                 self.value = []
                 for flow in self.in_data.flows:
                     self.value.append(flow.get_value())
-            #exec_(self.attributes['code'] + " = __value", self.env.globals, {'__value' : self.value})
-            self.env.globals.update({self.code.value: self.value})
+            #exec_(self.objsync.Attributes['code'] + " = __value", self.space.globals, {'__value' : self.value})
+            self.space.globals.update({self.code.value: self.value})
         else:
-            self.value = eval(self.code.value,self.env.globals,self.env.locals)
+            self.value = eval(self.code.value,self.space.globals,self.space.locals)
         
 
     def running_finished(self, success = True):
