@@ -61,36 +61,6 @@ class Env(objectsync_server.Object):
         
     def get_deque_lock(self):
         return DequeLock(self)
-    
-    def Create(self,info:node.Node.Info): 
-        '''
-        Create any type of node or edge in the environment
-        '''
-        # info: {id, type, ...}
-        type = info['type']
-        if type == 'ControlFlow':
-            c = edge.ControlFlow
-        elif type == 'DataFlow':
-            c = edge.DataFlow
-        else:
-            c = self.node_classes[type]
-        new_instance = c(info,self)
-
-        id=info['id']
-        if info['type']=="DataFlow" or info['type']=="ControlFlow":
-            assert id not in self.edges
-            self.edges.update({id:new_instance})
-        else:
-            assert id not in self.nodes
-            self.nodes.update({id:new_instance})
-
-    def Remove(self,info): # remove any type of node or edge
-        if info['id'] in self.edges:
-            self.edges[info['id']].remove()
-            
-        else:
-            with self.history.sequence(): # removing a node may cause some edges also being removed. When undoing and redoing, these multiple actions should be done in a sequence.
-                self.nodes[info['id']].remove()
 
     def Add_buffered_message(self,id,command,content = ''):
         '''
@@ -119,62 +89,6 @@ class Env(objectsync_server.Object):
             self.message_buffer[k]=content
         else:
             self.message_buffer[k]=content
-
-    def Undo(self):
-        if self.history.current.last==None:
-            return 0 # noting to undo
-
-        # undo
-        self.history.current.direction = -1
-        type=self.history.current.type
-        content=self.history.current.content
-
-        with self.history.lock():
-            if type == "new":
-                if content['id'] in self.nodes:
-                    self.history.current.content=self.nodes[content['id']].get_info()
-                self.Remove(content)
-            elif type=="rmv":
-                self.Create(content)
-            elif type=="atr":
-                self.nodes[content['id']].attributes[content['name']].set(content['old'])
-
-        seq_id_a = self.history.current.sequence_id
-        
-        self.history.current=self.history.current.last
-
-        seq_id_b = self.history.current.sequence_id
-        
-        if seq_id_a !=-1 and seq_id_a == seq_id_b:
-            self.Undo() # Continue undo backward through the action sequence
-
-        return 1
-
-    def Redo(self):
-        if self.history.current.next==None:
-            return 0 # noting to redo
-
-        self.history.current=self.history.current.next
-        self.history.current.direction=1
-        type=self.history.current.type
-        content=self.history.current.content
-
-        with self.history.lock():
-            if type=="new":
-                self.Create(content)
-            elif type=="rmv":
-                self.Remove(content)
-            elif type=="atr":
-                self.nodes[content['id']].attributes[content['name']].set(content['new'])
-
-        seq_id_a = self.history.current.sequence_id
-
-        seq_id_b =  self.history.current.next.sequence_id if self.history.current.next!=None else -1
-
-        if seq_id_a !=-1 and seq_id_a == seq_id_b:
-            self.Redo() # Continue redo forword through the action sequence
-
-        return 1
 
     def update_demo_nodes(self):
         # In a regular create node process, we call self.Create() to generate a history item (command = "new"), 

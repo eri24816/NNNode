@@ -143,29 +143,28 @@ class Node(objsync.Object):
         tempNode = cls({'id' : -1, 'name' : ''},space = None)
         return tempNode.get_info()
     
-    def get_info(self) -> Dict[str]:
+    def serialize(self) -> Dict[str]:
         '''
         Node info
         History item "new" stores this. When creating new node, this is sent to all clients.
         And when client sends redo, the node can be recreated from it. 
         '''
-        return {
-            "type":type(self).__name__,"id":self.id,"category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'shape' : self.shape,
+        d = super(Node, self).serialize()
+        d.update({
+            "category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'shape' : self.shape,
             'portInfos' : [port.get_dict() for port in self.port_list],
-            'attr': [attr.dict()for _, attr in self.objsync.Attributes.items()],
+            'attr': [attr.dict()for _, attr in self.attributes.items()],
             'comp': [comp.dict()for  comp in self.components]
-        }
-    
+        })
+        return d
 
     ## Initialization ------------------------------
 
-    def __init__(self, info : Info, space : objsync.Space):
+    def __init__(self, space : objsync.Space, d : Dict[str]):
         '''
         For child classes, DO NOT override this. Override initialize() instead.
         '''
-        super(objsync.Object, self).__init__(info['id'],space)
-        # The spaceironment
-        self.space=space
+        super(objsync.Object, self).__init__(space, d)
 
         # For the API, each ports of the node are identified by position in this list
         # Create ports in __init__ then add all port into this list
@@ -181,7 +180,7 @@ class Node(objsync.Object):
         # Is the node ready to run?
         self.active = False
 
-        self.output = info['output'] if 'output' in info else ''
+        self.output = d['output'] if 'output' in d else ''
         # added lines of output when running, which will be sent to client
         self.added_output = "" 
 
@@ -197,14 +196,7 @@ class Node(objsync.Object):
             self.space.Update_history("new", self.get_info())
             self.space.Add_direct_message({'command':'new','info':self.get_info()})
         
-        if 'attr' in info:
-            for attr_dict in info['attr']:
-                if attr_dict['name'] in self.objsync.Attributes:
-                    self.objsync.attributes[attr_dict['name']].set(attr_dict['value'])
-                else:
-                    # Some objsync.Attributes could be created by client. self.initialize() doesn't add them to self.objsync.Attributes.
-                    objsync.Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
-
+        
     def initialize(self):
         '''
         Setup the node's objsync.Attributes and components
@@ -298,12 +290,12 @@ class Node(objsync.Object):
         self.space.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
         self.added_output = ''
 
-    def recive_command(self,m):
+    def recive_message(self,m):
         '''
         {'id',command' : 'act'}
         {'id',command' : 'atr', 'name', 'value'}
         '''
-        super().recive_command(m)
+        super().recive_message(m)
         command = m['command']
                     
         if command == "act":

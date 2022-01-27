@@ -84,14 +84,14 @@ async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, pa
             spaces.update({space_name:new_space})
             new_thread.start()
 
-            new_space.Add_direct_message = lambda content: messages_to_client.put_nowait((new_space.ws_clients, content))
+            new_space.send_direct_message = lambda content: messages_to_client.put_nowait((new_space.ws_clients, content))
 
             print(f'space {space_name} created')
 
 # The main loop that handle an ws client connected to an space
 @router.route("/space/{space_name}")
 async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
-    space : Space.space = None
+    space : Space = None
     space_name=path.params["space_name"]
     if space_name in spaces:
         space=spaces[space_name]
@@ -109,7 +109,7 @@ async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol,
     space.update_demo_objs()
 
     async for message in websocket:
-        space.recive_value(message)
+        space.recieve_message(message,websocket)
                 
 messages_to_client: asyncio.Queue[Tuple[list[websockets.legacy.server.WebSocketServerProtocol],Dict]] = None
 async def direct_message_sender():

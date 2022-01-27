@@ -4,6 +4,8 @@ from typing import Dict
 from history import History
 import time
 
+from objectsync_server.space import Space
+
 class Attribute:
     '''
     A node can have 0, 1, or more attributes and components. 
@@ -15,7 +17,7 @@ class Attribute:
 
     Not all attributes are controlled by components, like attribute "pos". 
     '''
-    def __init__(self, obj : Object,name,type, value,history_in = 'node'):
+    def __init__(self, obj : Object,name,type, value,history_in = '-1'):
         obj.attributes[name]=self
         self.obj = obj
         self.name = name
@@ -23,27 +25,22 @@ class Attribute:
         self.value = value
 
         # History is for undo/redo. Every new changes of an attribute creates an history item.
-        # self.history_in = '' -> no storing history
-        # self.history_in = 'node' -> store history in the node, like most of the attributes
-        # self.history_in = 'space' -> store history in the space, like node position
         self.history_in = history_in 
     
     def set(self,value, store_history:bool = True):
 
         # Update history
         if store_history:
-            if self.history_in == 'node':
-                self.node.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
-            elif self.history_in == 'space':
-                self.node.space.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
+            if self.history_in != '-1':
+                self.obj.space.objs[self.history_in].Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
 
         self.value = value
 
         # Send to client
         #self.node.space.Add_buffered_message(self.node.id,'atr',self.name)
-        self.node.space.Add_direct_message({'command':'atr','id':self.node.id,'name':self.name,'value':value})
+        self.obj.space.Add_direct_message({'command':'atr','id':self.node.id,'name':self.name,'value':value})
 
-    def dict(self):
+    def serialize(self):
         return {'name' : self.name, 'type' : self.type, 'value' : self.value, 'h' : self.history_in}
     
 
@@ -51,14 +48,29 @@ class Object:
     '''
     Base class for ObjectSync objects.
     '''
-    def __init__(self,id,space):
-
-        self.id = id
+    def __init__(self,space : Space,d):
+        self.id = d['id']
         self.space = space
         self.history = History()
         self.attributes : Dict[str,Attribute] = {}
+        self.children_ids = Attribute(self,'children_ids','list',[],self.id)
+        self.parent_id = Attribute(self,'children_ids','str',d['parent_id'],'0')
 
-        self.children : dict[str, Object] = dict()
+        if 'attr' in d:
+            for attr_dict in d['attr']:
+                if attr_dict['name'] in self.objsync.Attributes:
+                    self.attributes[attr_dict['name']].set(attr_dict['value'])
+                else:
+                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
+
+
+    def serialize(self) -> Dict[str]:
+        d = dict()
+        d.update({
+            "id":self.id,
+            "type":type(self).__name__
+            })
+        return d
 
     def send_direct_message(_, message): pass
     def send_buffered_message(self,id,command,content = ''): pass
@@ -66,21 +78,11 @@ class Object:
     def recive_message(self,m):
         command = m['command']
 
-        if command == "new":
-
-            self.Create(m['info'])
-            self.space.send_all("msg %s %s created" % (m['info']['type'],m['info']['id']))
-
-        elif command == "rmv":
-            
-            self.Remove({"id" : m['id']})
-            self.space.send_all("msg %s removed" % m['id'])
-
         if command =='atr':
-            self.objsync.Attributes[m['name']].set(m['value'])
+            self.attributes[m['name']].set(m['value'])
             
         if command == 'nat':
-            if m['name'] not in self.objsync.Attributes:
+            if m['name'] not in self.attributes:
                 Attribute(self,m['name'],m['type'],m['value'],m['h']).set(m['value'],False) # Set initial value
 
     def Update_history(self, type, content):
@@ -103,34 +105,64 @@ class Object:
         if self.history.current.last==None:
             return 0 # nothing to undo
 
-        if self.history.current.type=="atr":
-            self.objsync.Attributes[self.history.current.content['name']].set(self.history.current.content['old'],False)
+        # undo
+        type=self.history.current.type
+        content=self.history.current.content
+
+        with self.history.lock():
+            if type == "new":
+                if content['id'] in self.nodes:
+                    self.history.current.content=self.nodes[content['id']].get_info()
+                self.Remove(content)
+            elif type=="rmv":
+                self.Create(content)
+            elif type=="atr":
+                self.nodes[content['id']].attributes[content['name']].set(content['old'])
+
+        seq_id_a = self.history.current.sequence_id
         
-        self.history.current.head_direction=-1
         self.history.current=self.history.current.last
-        self.history.current.head_direction = 0
+
+        seq_id_b = self.history.current.sequence_id
+        
+        if seq_id_a !=-1 and seq_id_a == seq_id_b:
+            self.Undo() # Continue undo backward through the action sequence
+
 
         return 1
     
     def Redo(self):
         if self.history.current.next==None:
             return 0 # nothing to redo
-        self.history.current.head_direction=1
-        self.history.current=self.history.current.next
-        self.history.current.head_direction=0
 
-        if self.history.current.type=="atr":
-            self.attributes[self.history.current.content['name']].set(self.history.current.content['new'],False)
+        self.history.current=self.history.current.next
+        self.history.current.direction=1
+        type=self.history.current.type
+        content=self.history.current.content
+
+        with self.history.lock():
+            if type=="new":
+                self.Create(content)
+            elif type=="rmv":
+                self.Remove(content)
+            elif type=="atr":
+                self.nodes[content['id']].attributes[content['name']].set(content['new'])
+
+        seq_id_a = self.history.current.sequence_id
+
+        seq_id_b =  self.history.current.next.sequence_id if self.history.current.next!=None else -1
+
+        if seq_id_a !=-1 and seq_id_a == seq_id_b:
+            self.Redo() # Continue redo forword through the action sequence
 
         return 1
 
-    def create_child(self,info): 
+    def add_child(self,info): 
         '''
         Create an object
         '''
         # info: {id, type, ...}
         type,id = info['type'],info['id']
-        assert id not in self.objs
 
         c = self.obj_classes[type]
         new_instance = c(info,self)

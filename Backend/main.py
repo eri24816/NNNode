@@ -1,4 +1,4 @@
-import objectsync_server
+import objectsync_server as objsync
 import Environment
 
-objectsync_server.start(Environment.Env)
+objsync.start(Environment.Env)
