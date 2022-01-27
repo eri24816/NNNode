@@ -135,16 +135,18 @@ class Space():
         d = m['info']
         type,id = d['type'],d['id']
 
-        c = self.obj_classes[type]
+        c = self.obj_classses[type]
         new_instance = c(d,self)
         self.objs.update({id:new_instance})
 
         parent_id = m['parent'] if 'parent' in m else '0'
+
         self.objs[parent_id].add_child(m['info'])
 
     def destroy(self,m):
         parent_id = self.objs[m['id']].parent_id.value
         self.objs[parent_id].remove_child({"id" : m['id']})
+
         self.objs.pop(m['id'])
 
     # run in another thread from the main thread (server.py)

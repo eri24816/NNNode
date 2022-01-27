@@ -157,16 +157,9 @@ class Object:
 
         return 1
 
-    def add_child(self,info): 
-        '''
-        Create an object
-        '''
-        # info: {id, type, ...}
-        type,id = info['type'],info['id']
-
-        c = self.obj_classes[type]
-        new_instance = c(info,self)
-        self.objs.update({id:new_instance})
+    def add_child(self,new_instance,d): 
+        
+        self.objs.update({d['id']:new_instance})
 
     def remove_child(self,info): # remove object
         with self.history.sequence(): # removing a node may cause some edges also being removed. When undoing and redoing, these multiple actions should be done in a sequence.
