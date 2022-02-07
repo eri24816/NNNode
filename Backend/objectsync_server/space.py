@@ -6,10 +6,7 @@ from collections import deque
 from threading import Event
 from object import Object
 
-# from server import Send_all
-# Above line causes circular import error so just define Send_all() again here.
 import json
-
 
 class num_iter:
     def __init__(self,start=-1):
@@ -31,7 +28,6 @@ class Space():
         # format:[ { "<command>/<node id>": <value> } ]
         # it's a dictionary so replicated updates will overwrite
         self.message_buffer = {}
-        
         self.base_obj : Object = base_obj_class(self,{'id':'0'})
         self.objs = {0:self.base_obj}       
     
@@ -40,32 +36,46 @@ class Space():
             ws.send(json.dumps(message))
 
     def recieve_message(self,message,ws):
+
         m=json.loads(message) # message is in Json
         command=m['command']
+
         print('-- client:\t',m)
-        if command == "new":
+
+        # Create an Object in the space
+        if command == "create":
             self.create(m)
             ws.send("msg %s %s created" % (m['info']['type'],m['info']['id']))
 
-        elif command == "rmv":
+        # Destroy an Object in the space
+        elif command == "destroy":
+            self.destroy(m)
+            ws.send("msg %s %s destroyed" % (m['info']['type'],m['info']['id']))
+
+        # Add an existing Object to another Object's child
+        elif command == "add":
+            self.add(m)
+            ws.send("msg %s %s added" % (m['info']['type'],m['info']['id']))
+
+        # Remove an existing Object from its parent
+        elif command == "remove":
             self.remove(m)
-            self.space.send_all("msg %s removed" % m['id'])
+            self.send_all("msg %s removed" % m['id'])
         
+        # Give client an unused id
         elif command == "gid":
-            '''
-            give client an unused id
-            '''
             ws.send(json.dumps({'command':"gid",'id':self.id_iter.next()}))
+
         #TODO
-        elif command == "sav":
-            '''
-            save the graph to disk
-            '''
-       
-        elif command == "lod":
-            '''
-            load the graph from disk
-            '''
+        # Save the graph to disk
+        elif command == "save":
+            pass
+
+        # Load the graph from disk
+        elif command == "load":
+            pass
+
+        # Let the object handle other messages
         else:
             self.objs[m['id']].recive_message(m,ws)
 
