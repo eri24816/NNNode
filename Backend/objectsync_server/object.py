@@ -144,7 +144,6 @@ class Object:
         if seq_id_a !=-1 and seq_id_a == seq_id_b:
             self.Undo() # Continue undo backward through the action sequence
 
-
         return 1
     
     def Redo(self):
