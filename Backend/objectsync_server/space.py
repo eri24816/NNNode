@@ -50,35 +50,6 @@ class Space():
         elif command == "rmv":
             self.remove(m)
             self.space.send_all("msg %s removed" % m['id'])
-            
-        elif command == "udo":
-            '''
-            undo  
-                {command:"udo",id}
-            '''
-            id= m['id']
-            if id in self.objs:
-                if self.objs[id].Undo():
-                    ws.send("msg obj %s undone" % id)
-                else:
-                    ws.send("msg obj %s noting to undo" % id)
-            else:
-                ws.send("err no such obj %s" % id)
-                
-        elif command == "rdo":
-            '''
-            redo
-                {command:"rdo",id}
-            '''
-            id= m['id']
-            if id in self.objs:
-                if self.objs[id].Redo():
-                    ws.send("msg obj %s redone" % id)
-                else:
-                    ws.send("msg obj %s noting to redo" % id)
-            else:
-                ws.send("err no such obj %s" % id)
-
         
         elif command == "gid":
             '''
@@ -96,7 +67,7 @@ class Space():
             load the graph from disk
             '''
         else:
-            self.objs[m['id']].recive_message(m)
+            self.objs[m['id']].recive_message(m,ws)
 
     def send_direct_message(_, message):
         '''
@@ -146,8 +117,8 @@ class Space():
     def destroy(self,m):
         parent_id = self.objs[m['id']].parent_id.value
         self.objs[parent_id].remove_child({"id" : m['id']})
-
-        self.objs.pop(m['id'])
+        self.objs[m['id']].destroy()
+        self.nodes.pop(m['id'])
 
     # run in another thread from the main thread (server.py)
     def run(self):

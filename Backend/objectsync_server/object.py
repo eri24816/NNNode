@@ -75,15 +75,31 @@ class Object:
     def send_direct_message(_, message): pass
     def send_buffered_message(self,id,command,content = ''): pass
 
-    def recive_message(self,m):
+    def recive_message(self,m,ws):
         command = m['command']
 
+        # Update an attribute
         if command =='atr':
             self.attributes[m['name']].set(m['value'])
-            
+        
+        # Add new attribute
         if command == 'nat':
             if m['name'] not in self.attributes:
                 Attribute(self,m['name'],m['type'],m['value'],m['h']).set(m['value'],False) # Set initial value
+
+        # Undo
+        if command == "udo":
+            if self.Undo():
+                ws.send(f"msg obj {self.id} undone")
+            else:
+                ws.send("msg obj {self.id} noting to undo")
+
+        # Redo
+        if command == "rdo":
+            if self.Redo():
+                ws.send("msg obj {self.id} redone")
+            else:
+                ws.send("msg obj {self.id} noting to redo")
 
     def Update_history(self, type, content):
         '''
@@ -161,15 +177,14 @@ class Object:
         
         self.objs.update({d['id']:new_instance})
 
-    def remove_child(self,info): # remove object
+    def remove_child(self,info):
         with self.history.sequence(): # removing a node may cause some edges also being removed. When undoing and redoing, these multiple actions should be done in a sequence.
             self.objs[info['id']].remove()
 
-    def remove(self):
+    def destroy(self):
         for port in self.port_list:
             for flow in copy.copy(port.flows):
                 flow.remove()
-        self.space.nodes.pop(self.id)
-        self.space.Update_history('rmv',self.get_info())
-        self.send_direct_message({'command':'rmv','id':self.id})
+        self.space.Update_history('des',self.get_info())
+        self.send_direct_message({'command':'des','id':self.id})
         del self  #*?    
