@@ -44,7 +44,7 @@ class Space():
 
         # Create an Object in the space
         if command == "create":
-            self.create(m)
+            self.create(m,True)
             ws.send("msg %s %s created" % (m['info']['type'],m['info']['id']))
 
         # Destroy an Object in the space
@@ -112,12 +112,12 @@ class Space():
         else:
             self.message_buffer[k]=content
 
-    def create(self,m):
+    def create(self,m,is_new=False):
         d = m['info']
         type,id = d['type'],d['id']
 
         c = self.obj_classses[type]
-        new_instance = c(d,self)
+        new_instance = c(d,self,is_new)
         self.objs.update({id:new_instance})
 
         parent_id = m['parent'] if 'parent' in m else '0'
@@ -129,6 +129,24 @@ class Space():
         self.objs[parent_id].remove_child({"id" : m['id']})
         self.objs[m['id']].destroy()
         self.nodes.pop(m['id'])
+
+    def get_co_ancestor(self,obj1,obj2):
+        '''
+        return the common ancestor of two objects
+        '''
+        list1 = []
+        while obj1.id != 0:
+            obj1 = self.objs[obj1.parent_id.value]
+            list1.append(obj1.id)
+
+        list2 = []      
+        while obj2.id != 0:
+            obj2 = self.objs[obj2.parent_id.value]
+            list2.append(obj2.id)
+
+        for i in len(list1):
+            if i in list2:
+                return i
 
     # run in another thread from the main thread (server.py)
     def run(self):
