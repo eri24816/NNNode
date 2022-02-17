@@ -112,19 +112,33 @@ class Space():
         else:
             self.message_buffer[k]=content
 
-    def create(self,m,is_new=False):
-        d = m['info']
+    def create(self,d,is_new=False,parent = None):
+        """        
+        Create a new object in the space
+
+        Args:
+            - d (dict): serialization of the object
+            - is_new (bool): whether the object is first time created. If not, it may be created by undoing, redoing or loading from a file. 
+            - parent ([type], optional): the id of its parent. Must provide if is_new == True.
+        """
         type,id = d['type'],d['id']
-
         c = self.obj_classses[type]
-        new_instance = c(d,self,is_new)
+
         self.objs.update({id:new_instance})
+        self.objs[parent].catch_history('create',new_instance.serialize())
 
-        parent_id = m['parent'] if 'parent' in m else '0'
+        # Instantiate the object
+        # Note that the constructor may automatically create more objects (as children)
+        new_instance : Object
+        if is_new:
+            new_instance = c(d,self,is_new,parent)
+        else:
+            new_instance = c(d,self,is_new)
+            parent = d['attributes']['parent_id']
 
-        self.objs[parent_id].add_child(m['info'])
+        self.objs[parent].OnChildCreated(new_instance)
 
-    def destroy(self,m):
+    def destroy(self,d):
         parent_id = self.objs[m['id']].parent_id.value
         self.objs[parent_id].remove_child({"id" : m['id']})
         self.objs[m['id']].destroy()
@@ -132,7 +146,7 @@ class Space():
 
     def get_co_ancestor(self,obj1,obj2):
         '''
-        return the common ancestor of two objects
+        return the nearest common ancestor of two objects
         '''
         list1 = []
         while obj1.id != 0:

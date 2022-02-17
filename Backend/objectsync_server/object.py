@@ -61,7 +61,7 @@ class Object:
     '''
     Base class for ObjectSync objects.
     '''
-    def __init__(self,space : Space, d, is_new=False):
+    def __init__(self,space : Space, d, is_new=False, parent = None):
         self.id = d['id']
         self.space = space
         self.history = History()
@@ -84,7 +84,7 @@ class Object:
 
         if is_new:
             # Called at the end of __init__() to ensure child objects are created after this object is completely created.
-            self.initialize_first_time()
+            self.initialize_first_time(parent_id = parent)
 
 
     def initialize(self):
@@ -94,13 +94,13 @@ class Object:
         '''
         pass
 
-    def initialize_first_time(self):
+    def initialize_first_time(self,parent):
         '''
         Add default child objects here.
         This function will be called only on 'create' command, but not on 'undo', 'redo' or 'copy' command.
         Called at the end of __init__() to ensure child objects are created after this object is completely created.
         '''
-        pass
+        self.parent_id.set(parent)
 
     def deserialize(self,d):
         if 'attr' in d:
@@ -134,7 +134,7 @@ class Object:
 
     # --------------------------
 
-    def recive_message(self,m,ws):
+    def recieve_message(self,m,ws):
         command = m['command']
 
         # Update an attribute
@@ -165,12 +165,11 @@ class Object:
 
     def catch_history(self,type,content):
         if self.catches_history.value:
-            self.Update_history(type,content)
+            self.update_history(type,content)
         else:
             self.throw_history(type,content)
 
-
-    def Update_history(self, type, content):
+    def add_history(self, type, content):
         '''
         type, content:
         stt, None - create the node
@@ -225,11 +224,11 @@ class Object:
         content=self.history.current.content
 
         with self.history.lock():
-            if type=="new":
+            if type=="create":
                 self.Create(content)
-            elif type=="rmv":
+            elif type=="destroy":
                 self.Remove(content)
-            elif type=="atr":
+            elif type=="attribute":
                 self.nodes[content['id']].attributes[content['name']].set(content['new'])
 
         seq_id_a = self.history.current.sequence_id
@@ -242,9 +241,10 @@ class Object:
         return 1
 
     def destroy(self):
-        for port in self.port_list:
-            for flow in copy.copy(port.flows):
-                flow.remove()
-        self.space.Update_history('des',self.get_info())
-        self.send_direct_message({'command':'des','id':self.id})
-        del self
+        self.send_direct_message({'command':'destroy','id':self.id})
+
+    def OnChildCreated(self,m):
+        pass
+
+    def OnChildDestroyed(self,m):
+        pass
