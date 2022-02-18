@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import Dict
+from typing import Any, Dict
 from history import History
 import time
 
@@ -110,7 +110,7 @@ class Object:
                 else:
                     Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
 
-    def serialize(self) -> Dict[str]:
+    def serialize(self) -> Dict[str,Any]:
         # Do we need to serialize history ?
         d = dict()
         d.update({
