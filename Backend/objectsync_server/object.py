@@ -61,6 +61,9 @@ class Object:
     '''
     Base class for ObjectSync objects.
     '''
+    has_history = True
+    forwards_command = True
+
     def __init__(self,space : Space, d, is_new=False, parent = None):
         self.id = d['id']
         self.space = space
@@ -68,11 +71,6 @@ class Object:
         self.attributes : Dict[str,Attribute] = {}
 
         self.parent_id = Attribute(self,'children_ids','str',d['parent_id'],'0',history_in='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
-
-        # They are not supposed to be Attributes because they shuld not be changed.
-        # Whatever.
-        self.throws_history = Attribute(self,'throws_history','bool',False,'0')
-        self.catches_history = Attribute(self,'catches_history','bool',False,'0')
 
         self.children_ids = [] # It's already sufficient that parent_id be an attribute.
 
@@ -84,7 +82,7 @@ class Object:
 
         if is_new:
             # Called at the end of __init__() to ensure child objects are created after this object is completely created.
-            self.initialize_first_time(parent_id = parent)
+            self.initialize_first_time(parent)
 
 
     def initialize(self):
