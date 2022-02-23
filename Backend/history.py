@@ -14,13 +14,6 @@ class Command(ABC):
         self.space = space
         self.node = node
         self.done = False
-        self.history_references : list[HistoryItem] = []
-
-        '''
-        On one user action, multiple commands may be executed sequentially.
-        '''
-        self.sequence_front = None
-        self.sequence_back = None
 
     @abstractmethod
     def forward(self):
@@ -36,7 +29,21 @@ class Command(ABC):
         '''
         self.done = False
 
-class AttributeCommand(Command):
+class CommandSequence(Command):
+    
+    def __init__(self,space:Space,commands:list[Command]):
+        super().__init__(space,node)
+        self.commands = commands
+        
+    def forward(self):
+        for command in self.commands:
+            command.forward()
+            
+    def backward(self):
+        for command in reversed(self.commands):
+            command.backward()
+        
+class CommandAttribute(Command):
 
     def __init__(self,space:Space,node:Object,name:str,value):
         super().__init__(space,node)
