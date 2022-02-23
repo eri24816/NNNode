@@ -6,10 +6,10 @@ if TYPE_CHECKING:
 
 import time
 
-
-
 class Command(ABC):
-
+    '''
+    If a action from the user is expected able to undo
+    '''
     def __init__(self,space:Space,node:Object):
         self.space = space
         self.node = node
