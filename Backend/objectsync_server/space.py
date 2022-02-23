@@ -1,7 +1,7 @@
 from __future__ import annotations
 from asyncio.queues import Queue
 from typing import Dict
-from history import *
+from objectsync_server.history import *
 from collections import deque
 from threading import Event
 from object import Object
@@ -16,7 +16,7 @@ class num_iter:
         return self.i
 # the environment to run the code in
 class Space():
-
+    obj_classses = {}
     def __init__(self,name,base_obj_class:type):
         self.name = name
         self.thread=None
@@ -31,7 +31,7 @@ class Space():
         self.base_obj : Object = base_obj_class(self,{'id':'0'})
         self.objs = {0:self.base_obj}       
     
-    def send_all(ws_list,message):
+    def send_all(self,ws_list,message):
         for ws in ws_list:
             ws.send(json.dumps(message))
 
@@ -124,11 +124,8 @@ class Space():
         type,id = d['type'],d['id']
         c = self.obj_classses[type]
 
-        self.objs.update({id:new_instance})
-        self.objs[parent].catch_history('create',new_instance.serialize())
-
         # Instantiate the object
-        # Note that the constructor may automatically create more objects (as children)
+        # Note that the constructor may automatically create more objects (usually as children)
         new_instance : Object
         if is_new:
             new_instance = c(d,self,is_new,parent)
@@ -136,13 +133,16 @@ class Space():
             new_instance = c(d,self,is_new)
             parent = d['attributes']['parent_id']
 
+        self.objs.update({id:new_instance})
+        self.objs[parent].catch_history('create',new_instance.serialize())
+
         self.objs[parent].OnChildCreated(new_instance)
 
     def destroy(self,d):
-        parent_id = self.objs[m['id']].parent_id.value
-        self.objs[parent_id].remove_child({"id" : m['id']})
-        self.objs[m['id']].destroy()
-        self.nodes.pop(m['id'])
+        parent_id = self.objs[d['id']].parent_id.value
+        self.objs[parent_id].remove_child({"id" : d['id']})
+        self.objs[d['id']].destroy()
+        self.objs.pop(d['id'])
 
     def get_co_ancestor(self,obj1,obj2):
         '''

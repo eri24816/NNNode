@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 from typing import Any, Dict
-from history import History
+from objectsync_server.history import History
 import time
 
 from objectsync_server.space import Space
@@ -65,9 +65,9 @@ class Object:
     forwards_command = True
 
     def __init__(self,space : Space, d, is_new=False, parent = None):
-        self.id = d['id']
         self.space = space
-        self.history = History()
+        self.id = d['id']
+        self.history = History(self)
         self.attributes : Dict[str,Attribute] = {}
 
         self.parent_id = Attribute(self,'children_ids','str',d['parent_id'],'0',history_in='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
