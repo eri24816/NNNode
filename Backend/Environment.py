@@ -3,7 +3,7 @@ from threading import Event
 from collections import deque
 import objectsync_server
 from typing import Dict
-from history import *
+from objectsync_server.history import *
 import edge
 import node
 import inspect
