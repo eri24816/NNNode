@@ -29,7 +29,7 @@ class Space():
         # it's a dictionary so replicated updates will overwrite
         self.message_buffer = {}
         self.base_obj : Object = base_obj_class(self,{'id':'0'})
-        self.objs = {0:self.base_obj}       
+        self.objs = {'0':self.base_obj}       
     
     def send_all(self,ws_list,message):
         for ws in ws_list:
@@ -140,8 +140,7 @@ class Space():
 
     def destroy(self,d):
         parent_id = self.objs[d['id']].parent_id.value
-        self.objs[parent_id].remove_child({"id" : d['id']})
-        self.objs[d['id']].destroy()
+        self.objs[d['id']].OnDestroy()
         self.objs.pop(d['id'])
 
     def get_co_ancestor(self,obj1,obj2):

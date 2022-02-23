@@ -238,8 +238,9 @@ class Object:
 
         return 1
 
-    def destroy(self):
-        self.send_direct_message({'command':'destroy','id':self.id})
+    def OnDestroy(self):
+        #self.send_direct_message({'command':'destroy','id':self.id})
+        pass
 
     def OnChildCreated(self,m):
         pass

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from tkinter import E
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Any
 if TYPE_CHECKING:
     from objectsync_server import Space, Object
 
@@ -11,9 +11,7 @@ class Command(ABC):
     '''
     If a action from the user is expected able to undo
     '''
-    def __init__(self,space:Space,obj:Object):
-        self.space = space
-        self.node = obj
+    def __init__(self):
         self.done = True
 
     @abstractmethod
@@ -39,8 +37,8 @@ class Command(ABC):
 
 class CommandSequence(Command):
     
-    def __init__(self, space:Space, obj: Object, commands:list[Command]):
-        super().__init__(space,obj)
+    def __init__(self, commands:list[Command]):
+        super().__init__()
         self.commands = commands
         
     def execute(self):
@@ -73,26 +71,44 @@ class CommandHead(Command):
 
 class CommandCreate(Command):
 
-    def __init
+    def __init__(self,space:Space,d:dict[str,Any],parent:str):
+        self.space = space
+        self.d = d
+        self.parent = parent
+
+    def execute(self):
+        self.space.create(self.d, is_new = True, parent=self.parent)
+
+    def redo(self):
+        self.space.create(self.d, is_new = False, parent=self.parent)
+
+    def undo(self):
+        ''' 
+        serialize the object before destroying for redo.
+        '''
+        self.d = self.space.objs[self.d['id']].serialize()
+        self.space.destroy(self.d['id'])
 
 class CommandAttribute(Command):
 
-    def __init__(self,space:Space,obj:Object,name:str,value):
-        super().__init__(space,obj)
+    def __init__(self,space:Space,obj:str,name:str,value):
+        super().__init__()
         self.name = name
         self.value = value
+        self.space = space
+        self.obj = obj
 
     def execute(self):
         super().execute()
-        self.node.attributes[self.name].set(self.value)
+        self.space.objs[self.obj].attributes[self.name].set(self.value)
 
     def redo(self):
         super().redo()
-        self.node.attributes[self.name].set(self.value)
+        self.space.objs[self.obj].attributes[self.name].set(self.value)
 
     def undo(self):
         super().undo()
-        self.node.attributes[self.name].set(self.value)
+        self.space.objs[self.obj].attributes[self.name].set(self.value)
 
 class HistoryItem:
     '''
@@ -109,7 +125,7 @@ class History:
 
     def __init__(self,object:Object):
         self.space = object.space
-        self.current : HistoryItem = HistoryItem(CommandHead(self.space,object.id))
+        self.current : HistoryItem = HistoryItem(CommandHead())
 
     def push(self,command : Command):
         self.current=HistoryItem(command,self.current)
