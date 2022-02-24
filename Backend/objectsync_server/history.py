@@ -58,7 +58,7 @@ class CommandSequence(Command):
 
 class CommandHead(Command):
     '''
-    A null Command represents the first HistoryItem in the History linked list.
+    A null Command that represents the first HistoryItem in the History linked list.
     '''
     def execute(self):
         raise NotImplementedError()
@@ -93,7 +93,7 @@ class CommandAttribute(Command):
 
     def __init__(self,space:Space,obj:str,name:str,value):
         super().__init__()
-        self.name = name
+        self.name = name                                                                                      
         self.value = value
         self.space = space
         self.obj = obj

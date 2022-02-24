@@ -155,7 +155,7 @@ def start(space_class_, obj_classes_):
     
     for n,c in obj_classes.items():
         if not issubclass(c,Object):
-            raise Exception(f"{n} in obj_classes should inherit objectsync_server.object.Object.")
+            raise Exception(f"{n} in obj_classes should inherit objectsync_server.Object.")
     
     start_server = websockets.serve(router, "localhost", 1000)
 
