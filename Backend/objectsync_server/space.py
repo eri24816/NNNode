@@ -5,6 +5,7 @@ from objectsync_server.history import *
 from collections import deque
 from threading import Event
 from object import Object
+from history import CommandManager
 
 import json
 
@@ -22,6 +23,7 @@ class Space():
         self.thread=None
         self.id_iter = num_iter(0)
         self.ws_clients = []
+        self.command_manager = CommandManager(self)
 
         # unlike history, some types of changes aren't necessary needed to be updated sequentially on client, like code in a node or whether the node is running.
         # one buffer per client
@@ -144,30 +146,6 @@ class Space():
         self.objs[d['id']].OnDestroy()
         self.objs.pop(d['id'])
 
-    def get_co_ancestor(self,objs) -> Object:
-        '''
-        return the nearest common ancestor of multiple objects
-        '''
-        min_len = 10000000000000000
-        parent_lists = []
-        for o in objs:
-            parent_list = []
-            parent_list.append(o)
-            while o.id != 0:
-                o = self.objs[o.parent_id.value]
-                parent_list.append(o)
-            parent_lists.append(reversed(parent_list))
-            min_len = min(len(parent_list), min_len)
-
-        last = self.base_obj
-        for i in range(min_len):
-            current = parent_lists[0][i]
-            for j in range(1,len(parent_lists)):
-                if current != j:
-                    return last
-            last = current
-
-        return last
     # run in another thread from the main thread (server.py)
     def run(self):
         raise NotImplementedError()

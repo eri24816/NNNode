@@ -31,16 +31,6 @@ class Attribute:
     
     def set(self,value, store_history:bool = True, specific_history_in = None):
 
-        # Update history
-        if store_history:
-            if specific_history_in != None:
-                self.obj.space.objs(specific_history_in).Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
-            elif self.history_in == 'throw_duplicate' or self.obj.throws_history.value:
-                # duplicate
-                self.obj.throw_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
-            elif self.history_in == 'self':
-                self.obj.Update_history("atr",{"id":self.node.id,"name": self.name,"old":self.value,"new":value})
-
         if self.callback != None:
             self.callback(self.value,value)
         
@@ -61,7 +51,7 @@ class Object:
     '''
     Base class for ObjectSync objects.
     '''
-    has_history = True
+    catches_command = True
     forwards_command = True
 
     def __init__(self,space : Space, d, is_new=False, parent = None):
