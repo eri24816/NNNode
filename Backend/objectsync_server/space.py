@@ -140,27 +140,34 @@ class Space():
 
     def destroy(self,d):
         parent_id = self.objs[d['id']].parent_id.value
+        self.objs[parent_id].OnChildDestroyed(d['id'])
         self.objs[d['id']].OnDestroy()
         self.objs.pop(d['id'])
 
-    def get_co_ancestor(self,obj1,obj2):
+    def get_co_ancestor(self,objs) -> Object:
         '''
-        return the nearest common ancestor of two objects
+        return the nearest common ancestor of multiple objects
         '''
-        list1 = []
-        while obj1.id != 0:
-            obj1 = self.objs[obj1.parent_id.value]
-            list1.append(obj1.id)
+        min_len = 10000000000000000
+        parent_lists = []
+        for o in objs:
+            parent_list = []
+            parent_list.append(o)
+            while o.id != 0:
+                o = self.objs[o.parent_id.value]
+                parent_list.append(o)
+            parent_lists.append(reversed(parent_list))
+            min_len = min(len(parent_list), min_len)
 
-        list2 = []      
-        while obj2.id != 0:
-            obj2 = self.objs[obj2.parent_id.value]
-            list2.append(obj2.id)
+        last = self.base_obj
+        for i in range(min_len):
+            current = parent_lists[0][i]
+            for j in range(1,len(parent_lists)):
+                if current != j:
+                    return last
+            last = current
 
-        for i in len(list1):
-            if i in list2:
-                return i
-
+        return last
     # run in another thread from the main thread (server.py)
     def run(self):
         raise NotImplementedError()

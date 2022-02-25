@@ -110,6 +110,37 @@ class CommandAttribute(Command):
         super().undo()
         self.space.objs[self.obj].attributes[self.name].set(self.value)
 
+class CommandManager():
+
+    def __init__(self,space:Space):
+        self.space = space
+        self.collected_commands : list[Command] = []
+        self.collected_storage_objs : list[Object] = []
+
+    def push(self,command:Command,storage_obj:Object):
+        self.collected_commands.append(command)
+        self.collected_storage_objs.append(storage_obj)
+
+    def flush(self):
+        if len(self.collected_commands) == 0:
+            return
+        if len(self.collected_commands) == 1:
+            command = self.collected_commands[0]
+            storage_obj = self.collected_storage_objs[0]
+        else:
+            command = CommandSequence(self.collected_commands)
+            storage_obj = self.space.get_co_ancestor(self.collected_storage_objs)
+        
+        while 1:
+            if not storage_obj.has_history:
+                continue
+            storage_obj.history.push(command)
+            if not storage_obj.forwards_command:
+                break
+            storage_obj = storage_obj.parent
+        
+
+
 class HistoryItem:
     '''
     Works as a linked list.
