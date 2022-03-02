@@ -5,7 +5,7 @@ from objectsync_server.command import *
 from collections import deque
 from threading import Event
 from object import Object
-from history import CommandManager
+from command import CommandManager
 
 import json
 
@@ -32,7 +32,10 @@ class Space():
         self.message_buffer = {}
         self.base_obj : Object = base_obj_class(self,{'id':'0'})
         self.objs = {'0':self.base_obj}       
-    
+
+    def __getitem__(self,key):
+        return self.objs[key]
+
     def send_all(self,ws_list,message):
         for ws in ws_list:
             ws.send(json.dumps(message))
@@ -53,16 +56,6 @@ class Space():
         elif command == "destroy":
             self.destroy(m)
             ws.send("msg %s %s destroyed" % (m['info']['type'],m['info']['id']))
-
-        # Add an existing Object to another Object's child
-        elif command == "add":
-            self.add(m)
-            ws.send("msg %s %s added" % (m['info']['type'],m['info']['id']))
-
-        # Remove an existing Object from its parent
-        elif command == "remove":
-            self.remove(m)
-            self.send_all("msg %s removed" % m['id'])
         
         # Give client an unused id
         elif command == "gid":
@@ -79,14 +72,14 @@ class Space():
 
         # Let the object handle other messages
         else:
-            self.objs[m['id']].recive_message(m,ws)
+            self.objs[m['id']].recieve_message(m,ws)
 
     def send_direct_message(_, message):
         '''
         This will be overwritten by server.py
         '''
 
-    def send_buffered_message(self,id,command,content = ''):
+    def send_buffered_message(self,id,command,content:Any = ''):
         '''
         new - create a demo node
         out - output
@@ -95,13 +88,13 @@ class Space():
         '''
 
         priority = 5 # the larger the higher, 0~9
-        if command == 'new':
+        if command == 'create':
             priority = 8
         
         k=str(9-priority)+command+"/"+str(id)
-        if command == 'new':
+        if command == 'create':
             k+='/'+content['type']
-        if command == 'atr':
+        if command == 'attribute':
             k+='/'+content
 
         if command == 'out':
@@ -130,6 +123,7 @@ class Space():
         # Note that the constructor may automatically create more objects (usually as children)
         new_instance : Object
         if is_new:
+            assert parent is not None
             new_instance = c(d,self,is_new,parent)
         else:
             new_instance = c(d,self,is_new)
@@ -149,3 +143,31 @@ class Space():
     # run in another thread from the main thread (server.py)
     def run(self):
         raise NotImplementedError()
+
+def get_co_ancestor(objs) -> Object:
+    '''
+    return the lowest common ancestor of multiple objects
+    '''
+    space = objs[0].space
+    min_len = 10000000000000000
+    parent_lists = []
+    for o in objs:
+        parent_list = []
+        parent_list.append(o)
+        while o.id != 0:
+            o = o.parent
+            parent_list.append(o)
+        parent_lists.append(reversed(parent_list))
+        min_len = min(len(parent_list), min_len)
+
+    last = space.base_obj
+    for i in range(min_len):
+        current = parent_lists[0][i]
+        for j in range(1,len(parent_lists)):
+            if current != j:
+                return last
+        last = current
+
+    return last
+
+    

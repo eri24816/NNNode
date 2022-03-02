@@ -1,10 +1,10 @@
 from __future__ import annotations
 import copy
-from typing import Any, Dict
-from objectsync_server.command import History
+from typing import Any, Dict, Union
+from objectsync_server.command import History, CommandAttribute
 import time
 
-from objectsync_server.space import Space
+from objectsync_server.space import Space, get_co_ancestor
 
 class Attribute:
     '''
@@ -17,7 +17,7 @@ class Attribute:
 
     Not all attributes are controlled by components, like attribute "pos". 
     '''
-    def __init__(self, obj : Object,name,type, value,history_in = 'self',callback=None):
+    def __init__(self, obj : Object,name,type, value:Union[str,function], history_obj:Union[str,function,None] = None,callback=None):
         obj.attributes[name]=self
         self.obj = obj
         self.name = name
@@ -25,7 +25,7 @@ class Attribute:
         self.value = value
 
         # History is for undo/redo. Every new changes of an attribute creates an history item.
-        self.history_in = history_in 
+        self.history_obj = history_obj if history_obj != None else obj.id
 
         self.callback = callback
     
@@ -39,12 +39,14 @@ class Attribute:
         else:
             self.value = value
 
-        # Send to client
-        #self.node.space.Add_buffered_message(self.node.id,'atr',self.name)
-        self.obj.space.Add_direct_message({'command':'atr','id':self.node.id,'name':self.name,'value':value})
+        history_obj = self.history_obj() if callable(self.history_obj) else self.history_obj
+        #CommandAttribute(self.obj.space, self.obj.id, self.name, value, history_obj).execute()
 
     def serialize(self):
-        return {'name' : self.name, 'type' : self.type, 'value' : self.value, 'h' : self.history_in}
+        d = {'name' : self.name, 'type' : self.type, 'value' : self.value}
+        if not callable(self.history_obj):
+            d['history_obj'] = self.history_obj
+        return 
     
 
 class Object:
@@ -60,7 +62,7 @@ class Object:
         self.history = History(self)
         self.attributes : Dict[str,Attribute] = {}
 
-        self.parent_id = Attribute(self,'children_ids','str',d['parent_id'],'0',history_in='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
+        self.parent_id = Attribute(self,'children_ids','str',d['parent_id'],history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
 
         self.children_ids = [] # It's already sufficient that parent_id be an attribute.
 
@@ -73,7 +75,6 @@ class Object:
         if is_new:
             # Called at the end of __init__() to ensure child objects are created after this object is completely created.
             self.initialize_first_time(parent)
-
 
     def initialize(self):
         '''
@@ -115,10 +116,12 @@ class Object:
         self.space.objs[old].children_ids.remove(self.id)
         self.space.objs[new].children_ids.append(self.id)
 
-        co_ancestor = self.space.get_co_ancestor(old,new)
+        co_ancestor = get_co_ancestor(old,new)
 
         # Manually update history to specify saving history to the co-ancestor.
         self.space.objs[co_ancestor].catch_history("atr",{"id":self.id,"name": 'parent_id',"old":old,"new":new})
+
+        self.parent = self.space.objs[new]
 
     # --------------------------
 

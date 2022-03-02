@@ -1,43 +1,19 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from tkinter import E, N
-from typing import TYPE_CHECKING, Union, Any
+from ast import Str
+from typing import TYPE_CHECKING, Optional, Any
 if TYPE_CHECKING:
     from objectsync_server import Space, Object
 
 import time
+from space import get_co_ancestor
 
-def get_co_ancestor(objs) -> Object:
-    '''
-    return the nearest common ancestor of multiple objects
-    '''
-    space = objs[0].space
-    min_len = 10000000000000000
-    parent_lists = []
-    for o in objs:
-        parent_list = []
-        parent_list.append(o)
-        while o.id != 0:
-            o = space.objs[o.parent_id.value]
-            parent_list.append(o)
-        parent_lists.append(reversed(parent_list))
-        min_len = min(len(parent_list), min_len)
-
-    last = space.base_obj
-    for i in range(min_len):
-        current = parent_lists[0][i]
-        for j in range(1,len(parent_lists)):
-            if current != j:
-                return last
-        last = current
-
-    return last
 
 class Command(ABC):
     '''
     Undoable changes
     '''
-    def __init__(self,space = None, history_in = 'self'):
+    def __init__(self,space :Optional[Space] = None):
         '''
         history_in: Where to push the command in history
             'self' - the object's history
@@ -45,12 +21,14 @@ class Command(ABC):
             'none' - no history
         '''
         self.done = False
-        self.space : Union[Space,None] = space
+        self.space = space
+
+        self.history_obj : str = "none"
 
     @abstractmethod
-    def execute(self):
+    def execute(self, push = True):
         self.done = True
-        if self.space != None:
+        if self.space != None and push and self.history_obj != "none":
             self.space.command_manager.push(self)
 
     @abstractmethod
@@ -61,14 +39,12 @@ class Command(ABC):
     def undo(self):
         self.done = False
 
-    def get_history_obj(self):
-        raise NotImplementedError()
-
 class CommandSequence(Command):
     
     def __init__(self, commands:list[Command]):
         super().__init__()
         self.commands = commands
+        self.history_obj = get_co_ancestor([c.history_obj for c in self.commands]).id
         
     def execute(self):
         super().execute()
@@ -85,15 +61,12 @@ class CommandSequence(Command):
         for command in reversed(self.commands):
             command.undo()
 
-    def get_history_obj(self):
-        return get_co_ancestor([c.get_history_obj() for c in self.commands])
-
 class CommandHead(Command):
     '''
     A null Command that represents the first HistoryItem in the History linked list.
     '''
-    def __init__(self,space = None, history_in = 'self'):
-        super(CommandHead,self).__init__(space,history_in)
+    def __init__(self,space = None):
+        super(CommandHead,self).__init__(space)
         self.done = True
     def execute(self):
         raise NotImplementedError()
@@ -107,10 +80,12 @@ class CommandHead(Command):
 class CommandCreate(Command):
 
     def __init__(self,space:Space,d:dict[str,Any],parent:str):
-        super().init(space)
+        super().__init__(space)
         self.space = space
         self.d = d
         self.parent = parent
+
+        self.history_obj = self.space[parent].id
 
     def execute(self):
         self.space.create(self.d, is_new = True, parent=self.parent)
@@ -122,56 +97,53 @@ class CommandCreate(Command):
         ''' 
         serialize the object before destroying for redo.
         '''
-        self.d = self.space.objs[self.d['id']].serialize()
+        self.d = self.space[self.d['id']].serialize()
         self.space.destroy(self.d['id'])
-
-    def get_history_obj(self):
-        return self.space.objs[self.parent]
 
 class CommandDestroy(Command):
     
-        def __init__(self,space:Space,id:int):
-            self.space = space
-            self.id = id
-            
-    
-        def execute(self):
-            self.parent = self.space.objs[self.id].parent_id.value
-            self.d = self.space.objs[self.id].serialize()
-            self.space.destroy(self.id)
-    
-        def redo(self):
-            self.space.create(self.d, is_new = False, parent=self.parent)
-    
-        def undo(self):
-            self.space.create(self.space.objs[self.id].serialize(), is_new = False, parent=self.space.objs[self.id].parent_id.value)
-    
-        def get_history_obj(self):
-            return self.space.objs[self.id]
+    def __init__(self,space:Space,id:str):
+        super().__init__(space)
+        self.id = id
+        assert self.space != None
+
+        self.history_obj = self.space[self.id].id
+
+    def execute(self):
+        self.parent = self.space[self.id].parent_id.value
+        self.d = self.space[self.id].serialize()
+        self.space.destroy(self.id)
+
+    def redo(self):
+        self.parent = self.space[self.id].parent_id.value
+        self.d = self.space[self.id].serialize()
+        self.space.destroy(self.id)
+
+    def undo(self):
+        self.space.create(self.space[self.id].serialize(), is_new = False, parent=self.parent)
 
 class CommandAttribute(Command):
 
-    def __init__(self,space:Space,obj:str,name:str,value):
+    def __init__(self,space:Space,obj:str,name:str,value,history_obj:Optional[str] = None):
         super().__init__()
         self.name = name                                                                                      
         self.value = value
         self.space = space
         self.obj = obj
 
+        self.history_obj = history_obj if history_obj != None else self.obj
+
     def execute(self):
         super().execute()
-        self.space.objs[self.obj].attributes[self.name].set(self.value)
+        self.space[self.obj].attributes[self.name].set(self.value)
 
     def redo(self):
         super().redo()
-        self.space.objs[self.obj].attributes[self.name].set(self.value)
+        self.space[self.obj].attributes[self.name].set(self.value)
 
     def undo(self):
         super().undo()
-        self.space.objs[self.obj].attributes[self.name].set(self.value)
-
-    def get_history_obj(self):
-        return self.space.objs[self.obj]
+        self.space[self.obj].attributes[self.name].set(self.value)
 
 class CommandManager():
 
@@ -189,7 +161,7 @@ class CommandManager():
             command = self.collected_commands[0]
         else:
             command = CommandSequence(self.collected_commands)
-        storage_obj = command.get_history_obj()
+        storage_obj = command.space[command.history_obj]
 
         while 1:
             if not storage_obj.catches_command:
@@ -197,7 +169,7 @@ class CommandManager():
             storage_obj.history.push(command)
             if not storage_obj.forwards_command:
                 break
-            storage_obj = self.space.objs[storage_obj.parent_id.value]
+            storage_obj = self.space[storage_obj.parent_id.value]
 
         self.collected_commands = []
 
@@ -207,8 +179,8 @@ class HistoryItem:
     '''
     def __init__(self,command:Command,last=None):
         self.command = command
-        self.last : Union[HistoryItem,None] = last
-        self.next : Union[HistoryItem,None] = None
+        self.last : Optional[HistoryItem] = last
+        self.next : Optional[HistoryItem] = None
         
         self.time=time.time()
 
