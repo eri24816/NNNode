@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 from typing import Any, Dict
-from objectsync_server.history import History
+from objectsync_server.command import History
 import time
 
 from objectsync_server.space import Space

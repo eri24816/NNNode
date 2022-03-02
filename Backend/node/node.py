@@ -4,7 +4,7 @@ import math
 import numpy as np
 import sys
 sys.path.append('D:/NNNode/Backend') # for debugging
-from objectsync_server.history import History
+from objectsync_server.command import History
 import sys
 import traceback
 import config

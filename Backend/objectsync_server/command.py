@@ -7,22 +7,23 @@ if TYPE_CHECKING:
 
 import time
 
-def get_co_ancestor(self,objs) -> Object:
+def get_co_ancestor(objs) -> Object:
     '''
     return the nearest common ancestor of multiple objects
     '''
+    space = objs[0].space
     min_len = 10000000000000000
     parent_lists = []
     for o in objs:
         parent_list = []
         parent_list.append(o)
         while o.id != 0:
-            o = self.objs[o.parent_id.value]
+            o = space.objs[o.parent_id.value]
             parent_list.append(o)
         parent_lists.append(reversed(parent_list))
         min_len = min(len(parent_list), min_len)
 
-    last = self.base_obj
+    last = space.base_obj
     for i in range(min_len):
         current = parent_lists[0][i]
         for j in range(1,len(parent_lists)):
@@ -34,10 +35,16 @@ def get_co_ancestor(self,objs) -> Object:
 
 class Command(ABC):
     '''
-    If a action from the user is expected able to undo
+    Undoable changes
     '''
-    def __init__(self,space = None, history_in =):
-        self.done = True
+    def __init__(self,space = None, history_in = 'self'):
+        '''
+        history_in: Where to push the command in history
+            'self' - the object's history
+            'parent' - the object's parent's history
+            'none' - no history
+        '''
+        self.done = False
         self.space : Union[Space,None] = space
 
     @abstractmethod
@@ -85,6 +92,9 @@ class CommandHead(Command):
     '''
     A null Command that represents the first HistoryItem in the History linked list.
     '''
+    def __init__(self,space = None, history_in = 'self'):
+        super(CommandHead,self).__init__(space,history_in)
+        self.done = True
     def execute(self):
         raise NotImplementedError()
 
@@ -97,6 +107,7 @@ class CommandHead(Command):
 class CommandCreate(Command):
 
     def __init__(self,space:Space,d:dict[str,Any],parent:str):
+        super().init(space)
         self.space = space
         self.d = d
         self.parent = parent
@@ -186,7 +197,7 @@ class CommandManager():
             storage_obj.history.push(command)
             if not storage_obj.forwards_command:
                 break
-            storage_obj = storage_obj.parent
+            storage_obj = self.space.objs[storage_obj.parent_id.value]
 
         self.collected_commands = []
 
