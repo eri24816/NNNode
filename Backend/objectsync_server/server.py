@@ -40,15 +40,15 @@ prefix:
 
 from asyncio.events import get_running_loop
 from asyncio.queues import Queue
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Optional
 import websockets
 import asyncio
 import threading
 from objectsync_server import Space, Object
 import json
 
-space_class : type = None
-spaces:Dict[Space.space]=dict()
+space_class : Optional[type] = None
+spaces:Dict[str,Space]=dict()
 
 obj_classes = Dict[str, type]
 
@@ -60,11 +60,11 @@ message_sender_started = False
 
 @router.route("/lobby") #* lobby
 async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
-    print( isinstance(space_class,Space.space))
+    print( isinstance(space_class,Space))
     global message_sender_started
     if not message_sender_started:
         asyncio.create_task(direct_message_sender())
-        asyncio.create_task(buffered_message_sender())
+        #asyncio.create_task(buffered_message_sender())
         message_sender_started = True
     async for message in websocket:
         command=message[:3]
@@ -77,8 +77,8 @@ async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, pa
             else:
                 await websocket.send("msg space %s has started" % space_name)
             
-            new_space=space_class(name=space_name)
-            new_thread=threading.Thread(target=new_space.run,name=space_name)
+            new_space=space_class(name=space_name,obj_classes=obj_classes)
+            new_thread=threading.Thread(target=new_space.main_loop,name=space_name)
             new_thread.setDaemon(True)
             new_space.thread=new_thread
             spaces.update({space_name:new_space})
@@ -91,7 +91,6 @@ async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, pa
 # The main loop that handle an ws client connected to an space
 @router.route("/space/{space_name}")
 async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
-    space : Space = None
     space_name=path.params["space_name"]
     if space_name in spaces:
         space=spaces[space_name]
@@ -102,7 +101,6 @@ async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol,
         return
 
     space.ws_clients.append(websocket)
-    
 
     #TODO: client load entire space
 
@@ -110,8 +108,8 @@ async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol,
 
     async for message in websocket:
         space.recieve_message(message,websocket)
-                
-messages_to_client: asyncio.Queue[Tuple[list[websockets.legacy.server.WebSocketServerProtocol],Dict]] = None
+
+messages_to_client: Optional[asyncio.Queue[Tuple[list[websockets.legacy.server.WebSocketServerProtocol],Dict]]] = None
 async def direct_message_sender():
     # put message in the queue to send them to client
     global messages_to_client
@@ -123,8 +121,8 @@ async def direct_message_sender():
                 continue
             await ws.send(json.dumps(message))
 
+'''
 async def buffered_message_sender():
-
     while(True):
         for space in spaces.values():
             # Each space has a message buffer
@@ -139,7 +137,7 @@ async def buffered_message_sender():
                 #print({'command': command_, 'id': id, 'value': value})
             space.message_buffer.clear()
         await asyncio.sleep(0.1)
-
+'''
 
 def start(space_class_, obj_classes_):
     global space_class, obj_classes
@@ -148,7 +146,7 @@ def start(space_class_, obj_classes_):
 
     if space_class == None:   
         raise Exception("Please assign objectsync_server.server.space_class for intantiating spaces")  
-    if not issubclass(space_class,Space.space):
+    if not issubclass(space_class,Space):
         raise Exception("objectsync_server.server.space_class should inherit objectsync_server.server.spaceironment.space.")
 
     obj_classes = obj_classes_

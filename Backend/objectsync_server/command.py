@@ -130,6 +130,7 @@ class CommandAttribute(Command):
         self.value = value
         self.space = space
         self.obj = obj
+        self.time = time.time()
 
         self.history_obj = history_obj if history_obj != None else self.obj
 
@@ -162,6 +163,13 @@ class CommandManager():
         else:
             command = CommandSequence(self.collected_commands)
         storage_obj = command.space[command.history_obj]
+
+        # don't repeat atr history within 2 seconds 
+        last_command = storage_obj.history.current.command
+        if isinstance(command ,CommandAttribute) and isinstance(last_command,CommandAttribute) and command.obj == last_command.obj and command.name == last_command.name:
+            if (command.time - last_command.time)<2:
+                last_command.value = command.value
+                return
 
         while 1:
             if not storage_obj.catches_command:
