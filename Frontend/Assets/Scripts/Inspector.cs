@@ -47,7 +47,7 @@ public class Inspector : Hierachy
         }
     }
 
-    GameObject CreateAttrEditor(GameObject prefab,Node.NodeAttr attr)
+    GameObject CreateAttrEditor(GameObject prefab,Node.Attribute attr)
     {
 
         int i = attr.name.LastIndexOf('/');

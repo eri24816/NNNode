@@ -169,9 +169,9 @@ namespace GraphUI
             }
             Manager.ins.state = Manager.State.idle;
         }
-        public override void Remove()
+        public override void Destroy()
         {
-            base.Remove();
+            base.Destroy();
             Manager.ins.SendToServer(new API_update_message(id,"rmv",""));
             RawRemove();
         }

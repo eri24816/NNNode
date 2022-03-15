@@ -8,12 +8,12 @@ namespace GraphUI
     {
         [SerializeField]
         UnityEngine.UI.Toggle toggle;
-        Node.NodeAttr targetAttr;
+        Node.Attribute targetAttr;
 
         public override void Init(Node node, string targetAttrName, string type = "", bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
-            targetAttr = Node.NodeAttr.Register(node, targetAttrName, "bool",
+            targetAttr = Node.Attribute.Register(node, targetAttrName, "bool",
                 (v) => toggle.SetIsOnWithoutNotify( (bool)v),
                 () => toggle.isOn
                 );

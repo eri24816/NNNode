@@ -41,10 +41,10 @@ namespace GraphUI
         #region vars
         public List<Port> ports;
         public string id, Name;
-        public Dictionary<string, NodeAttr> attributes ;
+        public Dictionary<string, Attribute> attributes ;
         public List<Comp> comps = new List<Comp>();
         //public Dictionary<string, Comp> components{ get; set; };
-        NodeAttr Pos, Output;
+        Attribute Pos, Output;
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;
 
@@ -86,7 +86,7 @@ namespace GraphUI
             public string id;
             public string info;
         }
-        public class NodeAttr
+        public class Attribute
         {
             struct API_atr<T> { public string id, command, name; public T value; }
             struct API_nat<T> { public string command, id, name, type, h;public T value; } // new attribute
@@ -106,12 +106,12 @@ namespace GraphUI
             public delegate object GetDel();
             public GetDel getDel;
 
-            public static NodeAttr Register(Node node, string name, string type, SetDel setDel = null, GetDel getDel = null, object initValue = null, object comp = null, string history_in = "node")
+            public static Attribute Register(Node node, string name, string type, SetDel setDel = null, GetDel getDel = null, object initValue = null, object comp = null, string history_in = "node")
             {
                 if (comp == null) comp = 0;
                 if (node.attributes.ContainsKey(name)) 
                 {
-                    NodeAttr attr = node.attributes[name];
+                    Attribute attr = node.attributes[name];
                     if (setDel != null)
                     {
                         attr.setDel.Add(new System.Tuple<object, SetDel>(comp, setDel));
@@ -138,14 +138,14 @@ namespace GraphUI
                                 SendNat<bool>(); break;
                         }
 
-                    NodeAttr a = new NodeAttr(node, name, type, setDel, getDel, comp);
+                    Attribute a = new Attribute(node, name, type, setDel, getDel, comp);
                     a.Set(initValue,false);
                     return a;
                 }
             }
                 
 
-            public NodeAttr(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp)
+            public Attribute(Node node, string name,string type,SetDel setDel,GetDel getDel,object comp)
             {
                 this.name = name; // Name format: category1/category2/.../attr_name
                 this.type = type;
@@ -161,8 +161,8 @@ namespace GraphUI
             bool setLock = false;
             class SetLock : System.IDisposable
             {
-                NodeAttr attr;
-                public SetLock(NodeAttr attr) { attr.setLock = true;this.attr = attr; }
+                Attribute attr;
+                public SetLock(Attribute attr) { attr.setLock = true;this.attr = attr; }
                 public void Dispose()
                 {
                     attr.setLock = false;
@@ -247,7 +247,7 @@ namespace GraphUI
             name = Name = (string)info["name"];
             id = (string)info["id"];
 
-            attributes = new Dictionary<string, NodeAttr>();
+            attributes = new Dictionary<string, Attribute>();
             //components = new Dictionary<string, Comp>();
 
             isDemo = id == "-1";
@@ -268,12 +268,12 @@ namespace GraphUI
                 Manager.ins.SendToServer(new API_new(this));
             else
                 // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
-                Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env");
-                Output = NodeAttr.Register(this, "output", "string", (v) => {OnOutputChanged((string)v);}, history_in: "",initValue:"");
+                Pos = Attribute.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env");
+                Output = Attribute.Register(this, "output", "string", (v) => {OnOutputChanged((string)v);}, history_in: "",initValue:"");
 
             foreach (var attr_info in info["attr"])
             {
-                var new_attr = new NodeAttr(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
+                var new_attr = new Attribute(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
                 new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
             }
 
@@ -290,7 +290,7 @@ namespace GraphUI
                 comps.Add(newComp);
             }
 
-            NodeAttr.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
+            Attribute.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
 
 
             foreach (var portInfo in info["portInfos"])
@@ -360,11 +360,11 @@ namespace GraphUI
             }
         }
 
-        public override void Remove()
+        public override void Destroy()
         {
             // Remove node from this client
             // Invoked by X button
-            base.Remove();
+            base.Destroy();
             foreach (Port port in ports)
                 port.Remove();
             if(id!="-1")
@@ -466,7 +466,7 @@ namespace GraphUI
             }
             moveable = true;
 
-            Pos = NodeAttr.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env",initValue:transform.position);
+            Pos = Attribute.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env",initValue:transform.position);
             
         }
         public virtual IEnumerator Removing()// SAO-like?

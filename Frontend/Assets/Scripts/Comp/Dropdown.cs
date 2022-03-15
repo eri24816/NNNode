@@ -9,7 +9,7 @@ namespace GraphUI
     {
         [SerializeField]
         TMPro.TMP_Text text;
-        Node.NodeAttr targetAttr;
+        Node.Attribute targetAttr;
         [SerializeField]
         TMPro.TMP_Dropdown TMP_Dropdown;
         List<string> options;
@@ -25,7 +25,7 @@ namespace GraphUI
 
             SetOptions(type.Split(':')[1]);
             
-            targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",
+            targetAttr = Node.Attribute.Register(node, targetAttrName, "string",
                 (v) => { TMP_Dropdown.SetValueWithoutNotify(options.IndexOf((string)v)); },
                 () => options[TMP_Dropdown.value]
                 ) ;

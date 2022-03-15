@@ -12,16 +12,16 @@ namespace GraphUI
         TMPro.CodeEditor inputFieldUI;
         [SerializeField]
         UnityEngine.UI.Image fill;
-        Node.NodeAttr targetAttr;
+        Node.Attribute targetAttr;
         public override void Init(Node node,  string targetAttrName,string type="", bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
-            targetAttr = Node.NodeAttr.Register(node, targetAttrName,"float",
+            targetAttr = Node.Attribute.Register(node, targetAttrName,"float",
                 (v) => sliderUI.value = (float)v,
-                isMainComp?() => float.Parse(sliderUI.value.ToString("G4")) : (Node.NodeAttr.GetDel)null 
+                isMainComp?() => float.Parse(sliderUI.value.ToString("G4")) : (Node.Attribute.GetDel)null 
                 ) ;
-            Node.NodeAttr.Register(node, $"{name}/min", "float", (v) => sliderUI.minValue = (float)v, initValue: 0f,comp:this);
-            Node.NodeAttr.Register(node, $"{name}/max", "float", (v) => sliderUI.maxValue = (float)v, initValue: 100f, comp: this);
+            Node.Attribute.Register(node, $"{name}/min", "float", (v) => sliderUI.minValue = (float)v, initValue: 0f,comp:this);
+            Node.Attribute.Register(node, $"{name}/max", "float", (v) => sliderUI.maxValue = (float)v, initValue: 100f, comp: this);
 
             
         }

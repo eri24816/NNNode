@@ -15,7 +15,7 @@ namespace GraphUI
         public override void Init(Newtonsoft.Json.Linq.JToken infoJSON)
         {
             base.Init(infoJSON);
-
+            // TODO: Use attribute
             if (nameText)
             {
                 nameText.text = Name;

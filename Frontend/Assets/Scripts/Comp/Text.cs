@@ -8,12 +8,12 @@ namespace GraphUI
     {
         [SerializeField]
         TMPro.TMP_Text text;
-        Node.NodeAttr targetAttr;
+        Node.Attribute targetAttr;
 
         public override void Init(Node node, string targetAttrName,string type="", bool isMainComp = true)
         {
             base.Init(node, targetAttrName);
-            targetAttr = Node.NodeAttr.Register(node, targetAttrName, "string",
+            targetAttr = Node.Attribute.Register(node, targetAttrName, "string",
                 (v) => text.text = (string)v,
                 () => text.text
                 ) ;
