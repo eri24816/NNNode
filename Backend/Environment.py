@@ -53,9 +53,6 @@ class Env(objectsync_server.Space):
         return DequeLock(self)
 
     def update_demo_nodes(self):
-        # In a regular create node process, we call self.Create() to generate a history item (command = "new"), 
-        # which will later be sent to client.
-        # However, demo nodes creation should not be undone, so here we put the message "new" in update_message buffer.
         for node_class in self.node_classes.values():
             self.send_direct_message({'command':'new','info':node_class.get_class_info()})
 

@@ -23,7 +23,7 @@ class Space():
         # one buffer per client
         # format:[ { "<command>/<node id>": <value> } ]
         # it's a dictionary so replicated updates will overwrite
-        self.message_buffer = {}
+        # self.message_buffer = {}
 
         self.obj_classses = obj_classses
         self.base_obj : Object = base_obj_class(self,{'id':'0'})
@@ -123,7 +123,6 @@ class Space():
         self.objs[parent_id].OnChildDestroyed(d['id'])
         self.objs[d['id']].OnDestroy()
     
-    # run in another thread from the main thread (server.py)
     def main_loop(self):
         raise NotImplementedError()
 
