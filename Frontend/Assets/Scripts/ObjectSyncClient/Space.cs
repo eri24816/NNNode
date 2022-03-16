@@ -9,7 +9,10 @@ using Newtonsoft.Json;
 
 namespace ObjectSync
 {
-
+    namespace Interfaces
+    {
+        public interface I
+    }
     public interface IUpdateMessageReciever
     {
         public void RecieveUpdateMessage(JToken message);
