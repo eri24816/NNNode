@@ -89,11 +89,9 @@ public class Manager : MonoBehaviour
             lobby.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
             lobby.Send("stt " + env_name);
 
-
             env = new WebSocket(WSPath + "env/" + env_name);
             env.Connect();
             env.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
-            StartCoroutine(AskForUpdate(hz: 5)); // repeat getting update message from server
         }
         
     }
@@ -130,17 +128,6 @@ public class Manager : MonoBehaviour
     {
         if (connectToServer&&node.id!="-1")
             env.Send("{\"command\":\"act\",\"id\":\"" + node.id + "\"}");
-    }
-    
-    //TODO: update before every env.Send()
-    IEnumerator AskForUpdate(float hz=5)
-    {
-        float timeSpan = 1f / hz;
-        while (env.IsAlive)
-        {
-            env.Send("{\"command\":\"upd\"}");
-            yield return new WaitForSeconds(timeSpan);
-        }
     }
 
     private void Update()

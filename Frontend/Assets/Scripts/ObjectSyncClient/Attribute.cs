@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 
-namespace ObjectSync {
+namespace ObjectSync 
+{
     public class Attribute 
     {
         public struct API_atr<T> { public string id, command, name; public T value; }
@@ -18,18 +19,18 @@ namespace ObjectSync {
 
         // Like get set of property
         public delegate void SetDel(object value);
-        public List<System.Tuple<object, SetDel>> setDel;
+        public List<SetDel> setDel;
         public delegate object GetDel();
         public GetDel getDel;
 
-        public Attribute(string id,string name, string type, SetDel setDel, GetDel getDel, object comp)
+        public Attribute(string id,string name, string type, SetDel setDel, GetDel getDel)
         {
             this.id = id;
             this.name = name; // Name format: category1/category2/.../attr_name
             this.type = type;
-            this.setDel = new List<System.Tuple<object, SetDel>>();
+            this.setDel = new List<SetDel>();
             if (setDel != null)
-                this.setDel.Add(new System.Tuple<object, SetDel>(comp, setDel));
+                this.setDel.Add(setDel);
             this.getDel = getDel;
             recvCD = new CoolDown(3);
             sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
@@ -53,20 +54,8 @@ namespace ObjectSync {
                     this.value = value;
                 else
                     this.value = getDel();
-
-                var toBeRemoved = new List<System.Tuple<object, SetDel>>();
                 foreach (var i in setDel)
-                {
-                    if (i.Item1 == null)
-                    {
-                        toBeRemoved.Add(i);
-                    }
-                }
-                foreach (var i in toBeRemoved)
-                    setDel.Remove(i);
-
-                foreach (var i in setDel)
-                    i.Item2(this.value);
+                    i(this.value);
                 if (send) Send();
             }
         }
@@ -107,7 +96,7 @@ namespace ObjectSync {
         }
         public void Send<T>()
         {
-            Manager.ins.SendToServer(new API_atr<T> { id = id, command = "atr", name = name, value = (T)Get() });
+            Space.ins.SendToServer(new API_atr<T> { id = id, command = "atr", name = name, value = (T)Get() });
         }
     }
 }
