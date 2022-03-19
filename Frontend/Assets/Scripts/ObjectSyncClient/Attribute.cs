@@ -12,7 +12,7 @@ namespace ObjectSync
             {
                 this.id = id; this.command = command; this.info = info;
             }
-            public string command = "cod";
+            public string command;
             public string id;
             public string info;
         }
@@ -57,7 +57,7 @@ namespace ObjectSync
             using (new SetLock(this)) // Avoid recursive Set() call
             {
                 Value = value;
-                OnSet.Invoke(this.Value);
+                OnSet.Invoke(Value);
                 if (send) Send();
             }
         }
@@ -93,7 +93,7 @@ namespace ObjectSync
         }
         public void Send<T>()
         {
-            obj.Space.SendToServer(new API.Attribute<T> { id = obj.Id, command = "atr", name = name, value = (T)Value });
+            obj.SendMessage(new API.Attribute<T> { id = obj.id, command = "atr", name = name, value = (T)Value });
         }
     }
 }

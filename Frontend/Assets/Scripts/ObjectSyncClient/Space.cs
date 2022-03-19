@@ -2,7 +2,6 @@
 using System.Collections;
 using UnityEngine;
 using WebSocketSharp;
-using GraphUI;
 using System.Collections.Concurrent;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -40,29 +39,20 @@ namespace ObjectSync
 
     public class Space
     {
-        ISpaceClient spaceClient;
+        readonly ISpaceClient spaceClient;
         public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
 
         public Dictionary<string, Object> objs;
 
-        public GameObject[] nodePrefabs;
-
-        public enum State
-        {
-            idle,
-            draggingFlow
-        }
-        public State state;
-
-        string WSPath = "ws://localhost:1000/";
-        string env_name = "my_env";
+        readonly string WSPath = "ws://localhost:1000/";
+        readonly string env_name = "my_env";
         WebSocket lobby, env;
-        ConcurrentQueue<string> messagesFromServer;
-        ConcurrentQueue<string> avaliableIds;
+        readonly ConcurrentQueue<string> messagesFromServer;
+        readonly ConcurrentQueue<string> avaliableIds;
 
-        public Space(ISpaceClient hasSpace)
+        public Space(ISpaceClient spaceClient)
         {
-            this.spaceClient = hasSpace;
+            this.spaceClient = spaceClient;
             messagesFromServer = new ConcurrentQueue<string>();
             avaliableIds = new ConcurrentQueue<string>();
             objs = new Dictionary<string, Object>();
@@ -74,11 +64,10 @@ namespace ObjectSync
                 lobby.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
                 lobby.Send("stt " + env_name);
 
-                env = new WebSocket(WSPath + "env/" + env_name);
+                env = new WebSocket(WSPath + "space/" + env_name);
                 env.Connect();
                 env.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
             }
-
         }
 
         public void SendMessage(object obj)
@@ -95,18 +84,14 @@ namespace ObjectSync
 
         public int nameNum = 0;
 
-        public void Undo(Node node = null)
+        public void Undo(string id)
         {
-            string id = node ? node.id : "";
-            if (connectToServer)
-                env.Send("{\"command\":\"udo\",\"id\":\"" + id + "\"}");
+            SendMessage("{\"command\":\"undo\",\"id\":\"" + id + "\"}");
         }
 
-        public void Redo(Node node = null)
+        public void Redo(string id)
         {
-            string id = node ? node.id : "";
-            if (connectToServer)
-                env.Send("{\"command\":\"rdo\",\"id\":\"" + id + "\"}");
+            SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
         }
 
         private void Update()
@@ -114,7 +99,7 @@ namespace ObjectSync
             if (avaliableIds.Count < 5)
             {
                 if (connectToServer)
-                    env.Send("{\"command\":\"gid\"}"); // request for an unused id
+                    SendMessage("{\"command\":\"get id\"}"); // request for an unused id
                 else
                     avaliableIds.Enqueue((nameNum++).ToString());
             }
@@ -133,7 +118,6 @@ namespace ObjectSync
                 }
                 else if (command == "gid")// get a unused id to assign to the object
                 {
-                    //var message = JsonUtility.FromJson<APIMessage.Gid>(received);
                     avaliableIds.Enqueue((string)recieved["id"]);
                 }
                 else // directly send update messages to the object
@@ -145,7 +129,7 @@ namespace ObjectSync
             }
         }
         
-        public Object CreateObject(JToken message, bool is_new = false)
+        public Object CreateObject(JToken message)
         {
             if (objs.ContainsKey((string)message["id"])) return null;
 
