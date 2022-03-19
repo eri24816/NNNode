@@ -5,11 +5,24 @@ namespace ObjectSync
 {
     public class Object
     {
-        public string Id { get; private set; }
-        public string Type { get; private set; }
+        readonly Space space;
+        readonly IObjectClient objectClient;
+        public readonly string id;
         public Dictionary<string, Attribute> attributes { get; private set; }
-        Object()
+        public Object(Space space,JToken message, IObjectClient objectClient)
         {
+            this.space = space;
+            JToken d = message["d"];
+            this.objectClient = objectClient;
+            id = (string)d["id"];
+
+            attributes = new Dictionary<string, Attribute>();
+
+            foreach (var attr_info in d["attr"])
+            {
+                var new_attr = new Attribute(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
+                new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
+            }
         }
         public Attribute RegisterAttr(string name, string type, Attribute.SetDel setDel = null, Attribute.GetDel getDel = null, object initValue = null, string history_in = "node")
         {
@@ -28,7 +41,7 @@ namespace ObjectSync
             }
             else
             {
-                void SendNat<T>() => Space.ins.SendToServer(new Attribute.API_nat<T> { command = "new attribute", id = Id, name = name, type = type, h = history_in, value = initValue == null ? default(T) : (T)initValue });
+                void SendNat<T>() => SendMessage(new Attribute.API_nat<T> { command = "new attribute", id = id, name = name, type = type, h = history_in, value = initValue == null ? default(T) : (T)initValue });
                 switch (type)
                 {
                     case "string":
@@ -41,7 +54,7 @@ namespace ObjectSync
                         SendNat<bool>(); break;
                 }
 
-                Attribute a = new Attribute(Id ,name, type, setDel, getDel);
+                Attribute a = new Attribute(id ,name, type, setDel, getDel);
                 a.Set(initValue, false);
                 return a;
             }
@@ -49,13 +62,9 @@ namespace ObjectSync
 
         public virtual void Init(JToken d)
         {
-            /*
-             * Parse the node info to setup the node.
-            */
 
-            Id = (string)d["id"];
 
-            attributes = new Dictionary<string, Attribute>();
+            
            
             if (createByThisClient)
                 Space.ins.SendToServer(new API_new(this));
@@ -90,6 +99,14 @@ namespace ObjectSync
             {
                 CreatePort(portInfo);
             }
+        }
+        public void RecieveMessage(JToken message)
+        {
+            objectClient.RecieveMessage(message);
+        }
+        public void SendMessage(object message)
+        {
+            space.SendMessage(message);
         }
     }
 }

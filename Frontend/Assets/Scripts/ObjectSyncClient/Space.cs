@@ -9,10 +9,17 @@ using Newtonsoft.Json;
 
 namespace ObjectSync
 {
-
-    public interface IUpdateMessageReciever
+    public interface IObjectClient
     {
-        public void RecieveUpdateMessage(JToken message);
+        public void RecieveMessage(JToken message);
+        public void OnCreate(JToken message, Object obj);
+        public void OnDestroy();
+    }
+
+    public interface ISpaceClient
+    {
+        public void RecieveMessage(JToken message);
+        public IObjectClient CreateHasObject(JToken message);
     }
 
     public static class JsonHelper
@@ -31,8 +38,9 @@ namespace ObjectSync
         }
     }
 
-    public class Space : MonoBehaviour
+    public class Space
     {
+        ISpaceClient spaceClient;
         public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
 
         public Dictionary<string, Object> objs;
@@ -51,12 +59,13 @@ namespace ObjectSync
         WebSocket lobby, env;
         ConcurrentQueue<string> messagesFromServer;
         ConcurrentQueue<string> avaliableIds;
-        void Start()
+
+        public Space(ISpaceClient hasSpace)
         {
+            this.spaceClient = hasSpace;
             messagesFromServer = new ConcurrentQueue<string>();
             avaliableIds = new ConcurrentQueue<string>();
             objs = new Dictionary<string, Object>();
-
 
             if (connectToServer)
             {
@@ -72,13 +81,13 @@ namespace ObjectSync
 
         }
 
-        public void SendToServer(object obj)
+        public void SendMessage(object obj)
         {
             if (connectToServer)
                 env.Send(JsonUtility.ToJson(obj)); // Here I use UnityEngine.JsonUtility instead of Json.NET because the latter produces error converting Vector3.
         }
 
-        public string GetNewID()
+        string GetNewID()
         {
             Debug.Assert(avaliableIds.TryDequeue(out string id));
             return id;
@@ -100,12 +109,6 @@ namespace ObjectSync
                 env.Send("{\"command\":\"rdo\",\"id\":\"" + id + "\"}");
         }
 
-        public void Activate(Node node)
-        {
-            if (connectToServer && node.id != "-1")
-                env.Send("{\"command\":\"act\",\"id\":\"" + node.id + "\"}");
-        }
-
         private void Update()
         {
             if (avaliableIds.Count < 5)
@@ -118,62 +121,40 @@ namespace ObjectSync
 
             while (messagesFromServer.TryDequeue(out string receivedString))
             {
-                print(WSPath + " says: " + receivedString);
+                Debug.Log(WSPath + " says: " + receivedString);
                 if (receivedString[0] != '{') return; // Filter out debugging message
                 var recieved = JObject.Parse(receivedString);
                 string command = (string)recieved["command"];
                 if (command == "new")
                 {
-                    var info = recieved["info"];
-                    var id = (string)info["id"];
-                    if (!Nodes.ContainsKey(id) && !Flows.ContainsKey(id))
-                    {
-                        var type = (string)info["type"];
-                        if (type == "ControlFlow" || type == "DataFlow")
-                        {
-                            GameObject prefab = Theme.ins.Create((string)info["type"]);
-                            var flow = prefab.GetComponent<Flow>();
-                            flow.id = (string)info["id"];
-                            flow.head = Nodes[(string)info["head"]].ports[(int)info["head_port_id"]];
-                            flow.head.Edges.Add(flow);
-                            flow.tail = Nodes[(string)info["tail"]].ports[(int)info["tail_port_id"]];
-                            flow.tail.Edges.Add(flow);
-                            Flows.Add(id, flow);
-                        }
-                        else
-                        {
-                            CreateNode(info);
-                        }
-                    }
+                    var id = (string)recieved["id"];
+                    if (!objs.ContainsKey(id))
+                        CreateObject(recieved);
                 }
-
-                else if (command == "gid")// get a unused id to assign to new nodes or flows
+                else if (command == "gid")// get a unused id to assign to the object
                 {
                     //var message = JsonUtility.FromJson<APIMessage.Gid>(received);
                     avaliableIds.Enqueue((string)recieved["id"]);
                 }
-
-                else // directly send update messages to node
+                else // directly send update messages to the object
                 {
                     var id = (string)recieved["id"];
-                    if (Nodes.ContainsKey(id))
-                        Nodes[id].RecieveUpdateMessage(recieved);
-                    else if (Flows.ContainsKey(id))
-                        Flows[id].RecieveUpdateMessage(recieved);
+                    if (objs.ContainsKey(id))
+                        objs[id].RecieveMessage(recieved);
                 }
             }
         }
-        public Node CreateNode(JToken info, bool createByThisClient = false)
+        
+        public Object CreateObject(JToken message, bool is_new = false)
         {
-            if (Nodes.ContainsKey((string)info["id"])) return null;/*
-        GameObject prefab = nodePrefabDict[message.info.shape+"Node"];
-        var node = Instantiate(prefab).GetComponent<Node>();*/
-            var node = Theme.ins.Create((string)info["shape"] + "Node").GetComponent<Node>(); ;
-            node.createByThisClient = createByThisClient;
-            node.Init(info);
-            return node;
+            if (objs.ContainsKey((string)message["id"])) return null;
+
+            IObjectClient objectClient = spaceClient.CreateHasObject(message);
+            Object newObj = new Object(this, message, objectClient);
+
+            objectClient.OnCreate(message, newObj);
+            
+            return newObj;
         }
-
-
     }
 }
