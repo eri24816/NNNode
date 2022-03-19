@@ -3,35 +3,41 @@ using System.Collections.Generic;
 
 namespace ObjectSync 
 {
+    namespace API
+    {
+        public struct Attribute<T> { public string id, command, name; public T value; }
+        public class UpdateMessage
+        {
+            public UpdateMessage(string id, string command, string info)
+            {
+                this.id = id; this.command = command; this.info = info;
+            }
+            public string command = "cod";
+            public string id;
+            public string info;
+        }
+    }
     public class Attribute 
     {
-        public struct API_atr<T> { public string id, command, name; public T value; }
-        public struct API_nat<T> { public string command, id, name, type, h; public T value; } // new attribute
+        public object Value { get; private set; } // If delegate GetValue is not null, this field will not be used.
 
-        object value; // If delegate GetValue is not null, this field will not be used.
+        readonly Object obj;
         public string type; // For inspector to know how to generate the attribute editor
-        public readonly string name, id;
+        public readonly string name;
         readonly CoolDown recvCD, sendCD;
         object recievedValue;
 
         // Delay recieving value after sending value
         readonly float delay = 1;
 
-        // Like get set of property
-        public delegate void SetDel(object value);
-        public List<SetDel> setDel;
-        public delegate object GetDel();
-        public GetDel getDel;
+        public delegate void SetDelegate(object value);
+        public event SetDelegate OnSet;
 
-        public Attribute(string id,string name, string type, SetDel setDel, GetDel getDel)
+        public Attribute(Object obj,string name, string type)
         {
-            this.id = id;
+            this.obj = obj;
             this.name = name; // Name format: category1/category2/.../attr_name
             this.type = type;
-            this.setDel = new List<SetDel>();
-            if (setDel != null)
-                this.setDel.Add(setDel);
-            this.getDel = getDel;
             recvCD = new CoolDown(3);
             sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
         }
@@ -50,19 +56,10 @@ namespace ObjectSync
             if (setLock) return;
             using (new SetLock(this)) // Avoid recursive Set() call
             {
-                if (value != null)
-                    this.value = value;
-                else
-                    this.value = getDel();
-                foreach (var i in setDel)
-                    i(this.value);
+                Value = value;
+                OnSet.Invoke(this.Value);
                 if (send) Send();
             }
-        }
-        public object Get()
-        {
-            if (getDel != null) return getDel();
-            return value;
         }
         public void Recieve(JToken message)
         {
@@ -96,7 +93,7 @@ namespace ObjectSync
         }
         public void Send<T>()
         {
-            Space.ins.SendToServer(new API_atr<T> { id = id, command = "atr", name = name, value = (T)Get() });
+            obj.Space.SendToServer(new API.Attribute<T> { id = obj.Id, command = "atr", name = name, value = (T)Value });
         }
     }
 }

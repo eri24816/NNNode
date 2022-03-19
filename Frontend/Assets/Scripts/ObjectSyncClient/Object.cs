@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace ObjectSync
 {
+    namespace API
+    {
+        public struct NewAttribute<T> { public string command, id, name, type, h; public T value; } // new attribute
+    }
     public class Object
     {
         readonly Space space;
@@ -24,19 +28,16 @@ namespace ObjectSync
                 new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
             }
         }
-        public Attribute RegisterAttr(string name, string type, Attribute.SetDel setDel = null, Attribute.GetDel getDel = null, object initValue = null, string history_in = "node")
+        public Attribute RegisterAttr(string name, string type, Attribute.SetDelegate setDel = null, object initValue = null, string history_in = "node")
         {
-            if (attributes.ContainsKey(name))
+            if (Attributes.ContainsKey(name))
             {
-                Attribute attr = attributes[name];
+                Attribute attr = Attributes[name];
                 if (setDel != null)
                 {
-                    attr.setDel.Add(setDel);
-                    setDel(attr.Get());
+                    attr.OnSet+=setDel;
+                    setDel(attr.Value);
                 }
-                if (getDel != null)
-                    attr.getDel = getDel;
-
                 return attr;
             }
             else
@@ -54,7 +55,8 @@ namespace ObjectSync
                         SendNat<bool>(); break;
                 }
 
-                Attribute a = new Attribute(id ,name, type, setDel, getDel);
+                Attribute a = new Attribute(this,name,type);
+                a.OnSet += setDel;
                 a.Set(initValue, false);
                 return a;
             }
@@ -75,21 +77,8 @@ namespace ObjectSync
 
             foreach (var attr_info in d["attr"])
             {
-                var new_attr = new Attribute(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
+                var new_attr = new Attribute(this,(string)attr_info["name"], (string)attr_info["type"]);
                 new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
-            }
-
-            foreach (var comp_info in d["comp"])
-            {
-                Comp newComp;
-                string type = (string)comp_info["type"];
-                if (type.Length >= 8 && type.Substring(0, 8) == "Dropdown")
-                    newComp = Instantiate(Space.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
-                else
-                    newComp = Instantiate(Space.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
-                if (!isDemo)
-                    newComp.InitWithInfo(this, comp_info);
-                comps.Add(newComp);
             }
 
             Attribute.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
