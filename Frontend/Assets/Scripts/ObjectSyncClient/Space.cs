@@ -40,7 +40,6 @@ namespace ObjectSync
     public class Space
     {
         readonly ISpaceClient spaceClient;
-        public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
 
         public Dictionary<string, Object> objs;
 
@@ -57,23 +56,21 @@ namespace ObjectSync
             avaliableIds = new ConcurrentQueue<string>();
             objs = new Dictionary<string, Object>();
 
-            if (connectToServer)
-            {
-                lobby = new WebSocket(WSPath + "lobby");
-                lobby.Connect();
-                lobby.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
-                lobby.Send("stt " + env_name);
+            lobby = new WebSocket(WSPath + "lobby");
+            lobby.Connect();
+            lobby.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
+            lobby.Send("stt " + env_name);
 
-                env = new WebSocket(WSPath + "space/" + env_name);
-                env.Connect();
-                env.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
-            }
+            env = new WebSocket(WSPath + "space" +
+                "/" + env_name);
+            env.Connect();
+            env.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
+            
         }
 
         public void SendMessage(object obj)
         {
-            if (connectToServer)
-                env.Send(JsonUtility.ToJson(obj)); // Here I use UnityEngine.JsonUtility instead of Json.NET because the latter produces error converting Vector3.
+            env.Send(JsonUtility.ToJson(obj)); // Here I use UnityEngine.JsonUtility instead of Json.NET because the latter produces error converting Vector3.
         }
 
         string GetNewID()
@@ -98,10 +95,7 @@ namespace ObjectSync
         {
             if (avaliableIds.Count < 5)
             {
-                if (connectToServer)
-                    SendMessage("{\"command\":\"get id\"}"); // request for an unused id
-                else
-                    avaliableIds.Enqueue((nameNum++).ToString());
+                SendMessage("{\"command\":\"get id\"}"); // request for an unused id
             }
 
             while (messagesFromServer.TryDequeue(out string receivedString))
@@ -114,9 +108,9 @@ namespace ObjectSync
                 {
                     var id = (string)recieved["id"];
                     if (!objs.ContainsKey(id))
-                        CreateObject(recieved);
+                        Create(recieved);
                 }
-                else if (command == "gid")// get a unused id to assign to the object
+                else if (command == "get id")// get a unused id to assign to the object
                 {
                     avaliableIds.Enqueue((string)recieved["id"]);
                 }
@@ -129,7 +123,7 @@ namespace ObjectSync
             }
         }
         
-        public Object CreateObject(JToken message)
+        public Object Create(JToken message)
         {
             if (objs.ContainsKey((string)message["id"])) return null;
 

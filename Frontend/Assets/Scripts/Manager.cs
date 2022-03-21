@@ -6,11 +6,7 @@ using GraphUI;
 using System.Collections.Concurrent;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-
-public interface IUpdateMessageReciever
-{
-    public void RecieveUpdateMessage(JToken message);
-}
+using ObjectSync;
 
 public static class JsonHelper
 {
@@ -28,7 +24,7 @@ public static class JsonHelper
     } 
 }
 
-public class Manager : MonoBehaviour
+public class Manager : MonoBehaviour, ObjectSync.ISpaceClient
 {
     public bool connectToServer = true;// Set this to false when debugging and don't want to connect to server.
 
@@ -202,5 +198,15 @@ public class Manager : MonoBehaviour
     public Vector3 GetSnappedPosition(Vector3 pos)
     {
         return new Vector3(Mathf.Round( pos.x/snap)*snap, Mathf.Round(pos.y / snap) * snap, pos.z);
+    }
+
+    public void RecieveMessage(JToken message)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public IObjectClient CreateHasObject(JToken message)
+    {
+        throw new System.NotImplementedException();
     }
 }

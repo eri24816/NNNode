@@ -36,7 +36,7 @@ public class CoolDown
 }
 namespace GraphUI
 {
-    public class Node : Selectable,  IUpdateMessageReciever,IBeginDragHandler,IEndDragHandler,IDragHandler
+    public class Node : Selectable,  IBeginDragHandler,IEndDragHandler,IDragHandler,ObjectSync.IObjectClient
     {
         #region vars
         public List<Port> ports;
