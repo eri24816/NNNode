@@ -30,9 +30,7 @@ namespace ObjectSync
         // Delay recieving value after sending value
         readonly float delay = 1;
 
-        public delegate void SetDelegate(object value);
-        public event SetDelegate OnSet;
-
+        public event System.Action<object> OnSet;
         public Attribute(Object obj,string name, string type)
         {
             this.obj = obj;

@@ -5,7 +5,37 @@ namespace ObjectSync
 {
     namespace API
     {
-        public struct NewAttribute<T> { public string command, id, name, type, h; public T value; } // new attribute
+        namespace Out
+        {
+            public class NewAttribute<T> {
+                public string command = "new attribute", id, name, type, history_object;
+                public T value; 
+            }
+            public class Create
+            {
+                public string command = "create";
+                public string type;
+            }
+        }
+        namespace In
+        {
+            public class NewAttribute<T>
+            {
+                public string command = "new attribute", id, name, type;
+                public T value;
+            }
+            public class Create
+            {
+                public string command = "create";
+                public D d;
+                [System.Serializable]
+                public struct D
+                {
+                    public string id;
+                    public string frontendType;
+                }
+            }
+        }
     }
     public class Object
     {
@@ -28,11 +58,11 @@ namespace ObjectSync
                 new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
             }
         }
-        public Attribute RegisterAttr(string name, string type, Attribute.SetDelegate setDel = null, object initValue = null, string history_in = "node")
+        public Attribute RegisterAttribute(string name, string type, System.Action<object> setDel = null, object initValue = null, string history_Object = "node")
         {
             if (Attributes.ContainsKey(name))
             {
-                Attribute attr =Attributes[name];
+                Attribute attr = Attributes[name];
                 if (setDel != null)
                 {
                     attr.OnSet+=setDel;
@@ -42,7 +72,7 @@ namespace ObjectSync
             }
             else
             {
-                void SendNat<T>() => SendMessage(new API.NewAttribute<T> { command = "new attribute", id = id, name = name, type = type, h = history_in, value = initValue == null ? default(T) : (T)initValue });
+                void SendNat<T>() => SendMessage(new API.Out.NewAttribute<T> { command = "new attribute", id = id, name = name, type = type, history_object = history_Object, value = initValue == null ? default(T) : (T)initValue });
                 switch (type)
                 {
                     case "string":

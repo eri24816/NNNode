@@ -64,11 +64,10 @@ namespace GraphUI
             public struct Info
             {
                 public string id;
-                public string name;
                 public string category;
                 public string type;
                 public Vector3 pos;
-                public string frontend_type;
+                public string frontendType;
                 public Port.API_new[] portInfos; // PortInfo classes (or structs?) are defined in each node classes
                 public Comp.API_new[] comp;
             }
@@ -385,6 +384,21 @@ namespace GraphUI
         void OnOutputChanged(string output)
         {
 
+        }
+
+        public void RecieveMessage(JToken message)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void OnCreate(JToken message, ObjectSync.Object obj)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void OnDestroy()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
