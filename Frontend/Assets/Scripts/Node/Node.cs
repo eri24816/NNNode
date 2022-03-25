@@ -95,18 +95,18 @@ namespace GraphUI
             if (id != "-1")
             {
                 transform.localScale = Vector3.one * 0.002f;
-                Manager.ins.Nodes.Add(id, this);
+                SpaceClient.ins.Nodes.Add(id, this);
             }
             else
             {
                 this.info = info;
                 transform.localScale = Vector3.one * 0.3f;
-                Manager.ins.DemoNodes.Add(type, this);
-                transform.SetParent(Manager.ins.demoNodeContainer.FindCategoryPanel((string)info["category"], "CategoryPanelForNodeList"));
+                SpaceClient.ins.DemoNodes.Add(type, this);
+                transform.SetParent(SpaceClient.ins.demoNodeContainer.FindCategoryPanel((string)info["category"], "CategoryPanelForNodeList"));
             }
 
             if (createByThisClient)
-                Manager.ins.SendToServer(new API_new(this));
+                SpaceClient.ins.SendToServer(new API_new(this));
             else
                 // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
                 Pos = Attribute.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env");
@@ -123,9 +123,9 @@ namespace GraphUI
                 Comp newComp;
                 string type = (string)comp_info["type"];
                 if (type.Length >= 8 && type.Substring(0, 8) == "Dropdown")
-                    newComp = Instantiate(Manager.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
+                    newComp = Instantiate(SpaceClient.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
                 else
-                    newComp = Instantiate(Manager.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
+                    newComp = Instantiate(SpaceClient.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
                 if (!isDemo)
                     newComp.InitWithInfo(this, comp_info);
                 comps.Add(newComp);
@@ -144,9 +144,9 @@ namespace GraphUI
         {
             GameObject prefab;
             if ((string)portInfo["type"] == "ControlPort")
-                prefab = (bool)portInfo["isInput"] ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
+                prefab = (bool)portInfo["isInput"] ? SpaceClient.ins.inControlPortPrefab : SpaceClient.ins.outControlPortPrefab;
             else
-                prefab = (bool)portInfo["isInput"] ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
+                prefab = (bool)portInfo["isInput"] ? SpaceClient.ins.inDataPortPrefab : SpaceClient.ins.outDataPortPrefab;
 
             Port newPort = Instantiate(prefab, transform).GetComponent<Port>();
             ports.Add(newPort);
@@ -209,7 +209,7 @@ namespace GraphUI
             foreach (Port port in ports)
                 port.Remove();
             if(id!="-1")
-                Manager.ins.SendToServer(new API_update_message(id,"rmv",""));
+                SpaceClient.ins.SendToServer(new API_update_message(id,"rmv",""));
             StartCoroutine(Removing()); // Play removing animation and destroy the game objecct
         }
 
@@ -222,7 +222,7 @@ namespace GraphUI
                     if (CamControl.worldMouseDelta.sqrMagnitude > 0)
                     {
                         desiredPosition += CamControl.worldMouseDelta;
-                        Pos.Set(Manager.ins.GetSnappedPosition(desiredPosition));
+                        Pos.Set(SpaceClient.ins.GetSnappedPosition(desiredPosition));
                         //Pos.Set(transform.position + CamControl.worldMouseDelta);
                         //transform.position += CamControl.worldMouseDelta;
 
@@ -250,7 +250,7 @@ namespace GraphUI
         protected override void OnDoubleClick()
         {
             base.OnDoubleClick();
-            Manager.ins.Activate(this);
+            SpaceClient.ins.Activate(this);
         }
 
 
@@ -265,8 +265,8 @@ namespace GraphUI
             if (isDemo) // Create a new node
             {
                 //Node newNode = Instantiate(gameObject).GetComponent<Node>();newNode.id = Manager.ins.GetNewID();newNode.isDemo = false;
-                info["id"] = Manager.ins.GetNewID();
-                Node newNode = Manager.ins.CreateNode(info,true);
+                info["id"] = SpaceClient.ins.GetNewID();
+                Node newNode = SpaceClient.ins.CreateNode(info,true);
                 newNode.transform.localScale = 0.002f * Vector3.one;
                 StartCoroutine(newNode.DragCreating());
                 
@@ -302,7 +302,7 @@ namespace GraphUI
             
             while (Input.GetMouseButton(0))
             {
-                transform.position = Manager.ins.GetSnappedPosition( CamControl.worldMouse);
+                transform.position = SpaceClient.ins.GetSnappedPosition( CamControl.worldMouse);
                 yield return null;
             }
             moveable = true;
@@ -314,7 +314,7 @@ namespace GraphUI
         {
             yield return null;
             Unselect();
-            Manager.ins.Nodes.Remove(id);
+            SpaceClient.ins.Nodes.Remove(id);
             Destroy(gameObject);
         }
 
@@ -325,14 +325,14 @@ namespace GraphUI
             base.Select();
 
             if(!isDemo)
-                Manager.ins.nodeInspector.Open(this);
+                SpaceClient.ins.nodeInspector.Open(this);
 
             selectColorTransition.Switch("selected");
             
         }
         public override void Unselect()
         {
-            Manager.ins.nodeInspector.Clear();
+            SpaceClient.ins.nodeInspector.Clear();
 
             base.Unselect();
 

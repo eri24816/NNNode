@@ -10,9 +10,9 @@ namespace GraphUI
         {
             GameObject prefab;
             if ((string)portInfo["type"] == "ControlPort")
-                prefab = (bool)portInfo["isInput"] ? Manager.ins.inControlPortPrefab : Manager.ins.outControlPortPrefab;
+                prefab = (bool)portInfo["isInput"] ? SpaceClient.ins.inControlPortPrefab : SpaceClient.ins.outControlPortPrefab;
             else
-                prefab = (bool)portInfo["isInput"] ? Manager.ins.inDataPortPrefab : Manager.ins.outDataPortPrefab;
+                prefab = (bool)portInfo["isInput"] ? SpaceClient.ins.inDataPortPrefab : SpaceClient.ins.outDataPortPrefab;
 
             Port newPort = Instantiate(prefab,transform).GetComponent<Port>();
             ports.Add(newPort);

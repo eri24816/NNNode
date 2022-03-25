@@ -51,7 +51,7 @@ namespace GraphUI
 
         protected virtual void Start()
         {
-            transform.SetParent(Manager.ins.canvasTransform);
+            transform.SetParent(SpaceClient.ins.canvasTransform);
             line = GetComponent<Line>();
             if(tail)
                 tail.RecalculateEdgeDir();
@@ -86,7 +86,7 @@ namespace GraphUI
                     break;
                 case "rmv":
                     RawRemove();
-                    Manager.ins.Flows.Remove(id);
+                    SpaceClient.ins.Flows.Remove(id);
                     break;
             }
         }
@@ -101,12 +101,12 @@ namespace GraphUI
 
         public IEnumerator Creating()
         {
-            Manager.ins.state = Manager.State.draggingFlow;
+            SpaceClient.ins.state = SpaceClient.State.draggingFlow;
             line.raycastTarget = false;
             yield return null; // wait for next frame
             if (tail && head)
             {
-                Manager.ins.state = Manager.State.idle;
+                SpaceClient.ins.state = SpaceClient.State.idle;
                 yield break;
             }
             bool dragTail = head;
@@ -155,10 +155,10 @@ namespace GraphUI
                     head = targetPort;
 
                 targetPort.Edges.Insert(targetPort.GetNewEdgeOrder(CamControl.worldMouse),this);
-                id = Manager.ins.GetNewID();
-                Manager.ins.SendToServer(new API_new(this));
-                Manager.ins.Flows.Add(id, this);
-                Manager.ins.state = Manager.State.idle;
+                id = SpaceClient.ins.GetNewID();
+                SpaceClient.ins.SendToServer(new API_new(this));
+                SpaceClient.ins.Flows.Add(id, this);
+                SpaceClient.ins.state = SpaceClient.State.idle;
                 targetPort.RecalculateEdgeDir();
                 line.raycastTarget = true;
                 yield break;
@@ -167,19 +167,19 @@ namespace GraphUI
             {
                 RawRemove();
             }
-            Manager.ins.state = Manager.State.idle;
+            SpaceClient.ins.state = SpaceClient.State.idle;
         }
         public override void Destroy()
         {
             base.Destroy();
-            Manager.ins.SendToServer(new API_update_message(id,"rmv",""));
+            SpaceClient.ins.SendToServer(new API_update_message(id,"rmv",""));
             RawRemove();
         }
         public void RawRemove()
         {
             if (tail) { tail.Disconnect(this); tail.RecalculateEdgeDir(); }
             if (head) { head.Disconnect(this); head.RecalculateEdgeDir(); }
-            Manager.ins.Flows.Remove(id);
+            SpaceClient.ins.Flows.Remove(id);
 
             Destroy(gameObject);
         }
@@ -195,7 +195,7 @@ namespace GraphUI
         }
         public override void Unselect()
         {
-            Manager.ins.nodeInspector.Clear();
+            SpaceClient.ins.nodeInspector.Clear();
 
             base.Unselect();
 

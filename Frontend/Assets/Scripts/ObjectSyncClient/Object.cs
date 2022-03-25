@@ -5,37 +5,7 @@ namespace ObjectSync
 {
     namespace API
     {
-        namespace Out
-        {
-            public class NewAttribute<T> {
-                public string command = "new attribute", id, name, type, history_object;
-                public T value; 
-            }
-            public class Create
-            {
-                public string command = "create";
-                public string type;
-            }
-        }
-        namespace In
-        {
-            public class NewAttribute<T>
-            {
-                public string command = "new attribute", id, name, type;
-                public T value;
-            }
-            public class Create
-            {
-                public string command = "create";
-                public D d;
-                [System.Serializable]
-                public struct D
-                {
-                    public string id;
-                    public string frontendType;
-                }
-            }
-        }
+        
     }
     public class Object
     {
@@ -52,21 +22,21 @@ namespace ObjectSync
 
             Attributes = new Dictionary<string, Attribute>();
 
-            foreach (var attr_info in d["attr"])
+            foreach (var attr_info in d["attributes"])
             {
                 var new_attr = new Attribute(this, (string)attr_info["name"], (string)attr_info["type"]);
                 new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
             }
         }
-        public Attribute RegisterAttribute(string name, string type, System.Action<object> setDel = null, object initValue = null, string history_Object = "node")
+        public Attribute RegisterAttribute(string name, string type, System.Action<object> onSet = null, object initValue = null, string history_Object = "node")
         {
             if (Attributes.ContainsKey(name))
             {
                 Attribute attr = Attributes[name];
-                if (setDel != null)
+                if (onSet != null)
                 {
-                    attr.OnSet+=setDel;
-                    setDel(attr.Value);
+                    attr.OnSet+=onSet;
+                    onSet(attr.Value);
                 }
                 return attr;
             }
@@ -86,18 +56,28 @@ namespace ObjectSync
                 }
 
                 Attribute a = new Attribute(this,name,type);
-                a.OnSet += setDel;
+                a.OnSet += onSet;
                 a.Set(initValue, false);
                 return a;
             }
         }
         public void RecieveMessage(JToken message)
         {
+            string command = (string)message["command"];
+            if(command == "attribute")
+            {
+                Attributes[(string)message["name"]].Recieve(message);
+            }
             objectClient.RecieveMessage(message);
         }
         public void SendMessage(object message)
         {
             space.SendMessage(message);
+        }
+        public void Update()
+        {
+            foreach(var a in Attributes)
+                a.Value.Update();
         }
     }
 }

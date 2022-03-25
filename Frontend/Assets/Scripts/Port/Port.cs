@@ -149,7 +149,7 @@ namespace GraphUI
             {
                 if (isInput) f.tail.Disconnect(f);
                 else f.head.Disconnect(f);
-                Manager.ins.Flows.Remove(f.id);
+                SpaceClient.ins.Flows.Remove(f.id);
                 Destroy(f.gameObject);
             }
         }
@@ -162,7 +162,7 @@ namespace GraphUI
         public void OnDrag(PointerEventData eventData)
         {
             if (node.isDemo) return;
-            if (Manager.ins.state == Manager.State.idle && Input.GetMouseButton(0))
+            if (SpaceClient.ins.state == SpaceClient.State.idle && Input.GetMouseButton(0))
             {
                 if (Edges.Count < maxEdges)
                 {

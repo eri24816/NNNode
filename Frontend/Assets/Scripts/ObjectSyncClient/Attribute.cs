@@ -3,20 +3,7 @@ using System.Collections.Generic;
 
 namespace ObjectSync 
 {
-    namespace API
-    {
-        public struct Attribute<T> { public string id, command, name; public T value; }
-        public class UpdateMessage
-        {
-            public UpdateMessage(string id, string command, string info)
-            {
-                this.id = id; this.command = command; this.info = info;
-            }
-            public string command;
-            public string id;
-            public string info;
-        }
-    }
+
     public class Attribute 
     {
         public object Value { get; private set; } // If delegate GetValue is not null, this field will not be used.
@@ -70,7 +57,6 @@ namespace ObjectSync
             recvCD.Delay(delay);
         }
 
-        // Call this constantly
         public void Update()
         {
             if (recvCD.Update())
@@ -91,7 +77,7 @@ namespace ObjectSync
         }
         public void Send<T>()
         {
-            obj.SendMessage(new API.Attribute<T> { id = obj.id, command = "atr", name = name, value = (T)Value });
+            obj.SendMessage(new API.Out.Attribute<T> { id = obj.id, command = "atr", name = name, value = (T)Value });
         }
     }
 }

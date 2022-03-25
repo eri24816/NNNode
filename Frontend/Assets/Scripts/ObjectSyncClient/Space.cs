@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections;
-using UnityEngine;
 using WebSocketSharp;
 using System.Collections.Concurrent;
 using Newtonsoft.Json.Linq;
@@ -8,6 +6,52 @@ using Newtonsoft.Json;
 
 namespace ObjectSync
 {
+    namespace API
+    {
+        namespace Out
+        {
+            public class NewAttribute<T>
+            {
+                public string command = "new attribute", id, name, type, history_object;
+                public T value;
+            }
+            public class Attribute<T>
+            {
+                public string command = "attribute";
+                public string id, name; public T value;
+            }
+            public class Create
+            {
+                public string command = "create";
+                public string type;
+            }
+        }
+        namespace In
+        {
+            public class NewAttribute<T>
+            {
+                public string command = "new attribute", id, name, type;
+                public T value;
+            }
+            public class Attribute<T>
+            {
+                public string command = "attribute";
+                public string id, name; public T value;
+            }
+            public class Create
+            {
+                public string command = "create";
+                public D d;
+                [System.Serializable]
+                public struct D
+                {
+                    public string id;
+                    public string frontendType;
+                }
+            }
+        }
+    }
+
     public interface IObjectClient
     {
         public void RecieveMessage(JToken message);
@@ -18,23 +62,10 @@ namespace ObjectSync
     public interface ISpaceClient
     {
         public void RecieveMessage(JToken message);
-        public IObjectClient CreateHasObject(JToken message);
-    }
+        public IObjectClient CreateObjectClient(JToken message);
 
-    public static class JsonHelper
-    {
-        public static object JToken2type(JToken j, string type)
-        {
-            if (type.Length >= 8 && type.Substring(0, 8) == "dropdown") type = "string";
-            return type switch
-            {
-                "string" => (string)j,
-                "float" => (float)j,
-                "Vector3" => j.ToObject<Vector3>(),
-                "bool" => (bool)j,
-                _ => throw new System.Exception($"Type {type} not supported"),
-            };
-        }
+        // Define custom attribute type conversion
+        public object ConvertJsonToType(JToken j, string type);
     }
 
     public class Space
@@ -43,40 +74,26 @@ namespace ObjectSync
 
         public Dictionary<string, Object> objs;
 
-        readonly string WSPath = "ws://localhost:1000/";
-        readonly string env_name = "my_env";
-        WebSocket lobby, env;
-        readonly ConcurrentQueue<string> messagesFromServer;
-        readonly ConcurrentQueue<string> avaliableIds;
+        readonly WebSocket spaceWS;
 
-        public Space(ISpaceClient spaceClient)
+        bool running = true;
+        readonly ConcurrentQueue<string> messagesFromServer;
+
+        public Space(ISpaceClient spaceClient, string route)
         {
             this.spaceClient = spaceClient;
             messagesFromServer = new ConcurrentQueue<string>();
-            avaliableIds = new ConcurrentQueue<string>();
             objs = new Dictionary<string, Object>();
 
-            lobby = new WebSocket(WSPath + "lobby");
-            lobby.Connect();
-            lobby.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
-            lobby.Send("stt " + env_name);
 
-            env = new WebSocket(WSPath + "space" +
-                "/" + env_name);
-            env.Connect();
-            env.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
-            
+            spaceWS = new WebSocket(route);
+            spaceWS.Connect();
+            spaceWS.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
         }
 
         public void SendMessage(object obj)
         {
-            env.Send(JsonUtility.ToJson(obj)); // Here I use UnityEngine.JsonUtility instead of Json.NET because the latter produces error converting Vector3.
-        }
-
-        string GetNewID()
-        {
-            Debug.Assert(avaliableIds.TryDequeue(out string id));
-            return id;
+            spaceWS.Send(JsonConvert.SerializeObject(obj));
         }
 
         public int nameNum = 0;
@@ -90,44 +107,57 @@ namespace ObjectSync
         {
             SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
         }
-
-        private void Update()
+        public object JToken2type(JToken j, string type)
         {
-            if (avaliableIds.Count < 5)
+            if (type.Length >= 8 && type.Substring(0, 8) == "dropdown") type = "string";
+            return type switch
             {
-                SendMessage("{\"command\":\"get id\"}"); // request for an unused id
-            }
+                "string" => (string)j,
+                "float" => (float)j,
+                "bool" => (bool)j,
+                _ => spaceClient.ConvertJsonToType(j,type),
+            };
+        }
+
+        public void Update()
+        {
+            /* Call this constantly */
 
             while (messagesFromServer.TryDequeue(out string receivedString))
             {
-                Debug.Log(WSPath + " says: " + receivedString);
                 if (receivedString[0] != '{') return; // Filter out debugging message
-                var recieved = JObject.Parse(receivedString);
-                string command = (string)recieved["command"];
+                var message = JObject.Parse(receivedString);
+                string command = (string)message["command"];
+
                 if (command == "new")
                 {
-                    var id = (string)recieved["id"];
+                    var id = (string)message["id"];
                     if (!objs.ContainsKey(id))
-                        Create(recieved);
-                }
-                else if (command == "get id")// get a unused id to assign to the object
-                {
-                    avaliableIds.Enqueue((string)recieved["id"]);
+                        Create(message);
                 }
                 else // directly send update messages to the object
                 {
-                    var id = (string)recieved["id"];
+                    var id = (string)message["id"];
                     if (objs.ContainsKey(id))
-                        objs[id].RecieveMessage(recieved);
+                        objs[id].RecieveMessage(message);
                 }
+
+                spaceClient.RecieveMessage(message);
+            }
+            foreach(var obj in objs)
+            {
+                obj.Value.Update();
             }
         }
         
         public Object Create(JToken message)
         {
-            if (objs.ContainsKey((string)message["id"])) return null;
+            if( !objs.ContainsKey((string)message["id"]))
+            {
+                throw new System.Exception("id exists");
+            }
 
-            IObjectClient objectClient = spaceClient.CreateHasObject(message);
+            IObjectClient objectClient = spaceClient.CreateObjectClient(message);
             Object newObj = new Object(this, message, objectClient);
 
             objectClient.OnCreate(message, newObj);
