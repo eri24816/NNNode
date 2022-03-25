@@ -39,42 +39,21 @@ namespace GraphUI
     public class Node : Selectable,  IBeginDragHandler,IEndDragHandler,IDragHandler,ObjectSync.IObjectClient
     {
         #region vars
+        ObjectSync.Object syncObject;
         public List<Port> ports;
         public string id, Name;
-        public Dictionary<string, Attribute> attributes ;
         public List<Comp> comps = new List<Comp>();
         //public Dictionary<string, Comp> components{ get; set; };
-        Attribute Pos, Output;
+        ObjectSync.Attribute<Vector3> Pos;
+        ObjectSync.Attribute<string> Output;
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;
 
-        public string type; // class name in python
-        public bool isDemo;
         bool moveable = true;
         public ColorTransition selectColorTransition, runColorTransition;
 
         JToken info;
         #endregion
-
-        public class API_new
-        {
-            public string command = "new";
-            public Info info;
-            [System.Serializable]
-            public struct Info
-            {
-                public string id;
-                public string category;
-                public string type;
-                public Vector3 pos;
-                public string frontendType;
-                public Port.API_new[] portInfos; // PortInfo classes (or structs?) are defined in each node classes
-                public Comp.API_new[] comp;
-            }
-            
-            // TODO: directly take node as argument
-            public API_new(Node node) {info.id = node.id; info.name = node.name; info.type = node.type; info.pos = node.transform.position; }
-        }
 
         public bool createByThisClient = false;
         public virtual void Init(JToken info)
@@ -83,16 +62,7 @@ namespace GraphUI
              * Parse the node info to setup the node.
             */
 
-
-            type = (string)info["type"];
-            name = Name = (string)info["name"];
-            id = (string)info["id"];
-
-            attributes = new Dictionary<string, Attribute>();
-            //components = new Dictionary<string, Comp>();
-
-            isDemo = id == "-1";
-            if (id != "-1")
+            if (syncObject.id != "-1")
             {
                 transform.localScale = Vector3.one * 0.002f;
                 SpaceClient.ins.Nodes.Add(id, this);
@@ -101,43 +71,13 @@ namespace GraphUI
             {
                 this.info = info;
                 transform.localScale = Vector3.one * 0.3f;
-                SpaceClient.ins.DemoNodes.Add(type, this);
                 transform.SetParent(SpaceClient.ins.demoNodeContainer.FindCategoryPanel((string)info["category"], "CategoryPanelForNodeList"));
             }
 
-            if (createByThisClient)
-                SpaceClient.ins.SendToServer(new API_new(this));
-            else
-                // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
-                Pos = Attribute.Register(this, "transform/pos", "Vector3", (v) => { transform.position = (Vector3)v; }, () => { return transform.position; }, history_in: "env");
-                Output = Attribute.Register(this, "output", "string", (v) => {OnOutputChanged((string)v);}, history_in: "",initValue:"");
-
-            foreach (var attr_info in info["attr"])
-            {
-                var new_attr = new Attribute(this, (string)attr_info["name"], (string)attr_info["type"], null, null, null);
-                new_attr.Set(JsonHelper.JToken2type(attr_info["value"], new_attr.type), false);
-            }
-
-            foreach (var comp_info in info["comp"])
-            {
-                Comp newComp;
-                string type = (string)comp_info["type"];
-                if (type.Length >= 8 && type.Substring(0, 8) == "Dropdown")
-                    newComp = Instantiate(SpaceClient.ins.compPrefabDict["Dropdown"], componentPanel).GetComponent<Comp>();
-                else
-                    newComp = Instantiate(SpaceClient.ins.compPrefabDict[type], componentPanel).GetComponent<Comp>();
-                if (!isDemo)
-                    newComp.InitWithInfo(this, comp_info);
-                comps.Add(newComp);
-            }
-
-            Attribute.Register(this, "color", "Vector3", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); }, history_in: "");
-
-
-            foreach (var portInfo in info["portInfos"])
-            {
-                CreatePort(portInfo);
-            }
+            // If createByThisClient, set Pos attribute after the node is dropped to its initial position (in OnDragCreating()).
+            Pos = syncObject.RegisterAttribute<Vector3>( "transform/pos", (v) => { transform.position = v; }, "space",transform.position);
+            Output = syncObject.RegisterAttribute<string>("output", (v) => {OnOutputChanged(v);},"","");
+            syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); },"");
         }
 
         protected virtual void CreatePort(JToken portInfo)
@@ -184,20 +124,9 @@ namespace GraphUI
                         case "2": DisplayActive(); break;
                     }
                     break;
-                case "atr":
-                    attributes[(string)message["name"]].Recieve(message); // Forward the message to the attribute
-                    break;
-                case "nat":
-                    throw new System.Exception("don't use nat");
-
-                case "npt":
-                    CreatePort(message["info"]);
-                    break;
-
                 case "rmv":
                     StartCoroutine(Removing());
                     break;
-                    
             }
         }
 
@@ -238,7 +167,7 @@ namespace GraphUI
 
         public virtual void AddOutput(string output)
         {
-            Output.Set((string)Output.Get()+ output,send:false);
+            Output.Set(Output.Value + output,send:false);
         }
         public virtual void ClearOutput()
         {
@@ -393,7 +322,8 @@ namespace GraphUI
 
         public void OnCreate(JToken message, ObjectSync.Object obj)
         {
-            throw new System.NotImplementedException();
+            syncObject = obj;
+            Init(message["d"]);
         }
 
         public void OnDestroy()

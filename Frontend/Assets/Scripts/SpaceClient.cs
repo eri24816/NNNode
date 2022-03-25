@@ -25,7 +25,7 @@ public static class JsonHelper
 
 public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 {
-    ObjectSync.Space space;
+    public ObjectSync.Space space;
 
     public static SpaceClient ins;
 
@@ -98,7 +98,6 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
     public void RecieveMessage(JToken message)
     {
-
         string command = (string)message["command"];
     }
 

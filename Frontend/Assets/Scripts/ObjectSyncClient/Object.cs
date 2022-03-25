@@ -24,7 +24,7 @@ namespace ObjectSync
                 new_attr.Set(attr_info["value"], false);
             }
         }
-        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, T initValue = default, string history_Object = "node")
+        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, string history_Object = "node", T initValue = default)
         {
             if (Attributes.ContainsKey(name))
             {
