@@ -76,10 +76,11 @@ namespace ObjectSync
 
         readonly WebSocket spaceWS;
 
-        bool running = true;
         readonly ConcurrentQueue<string> messagesFromServer;
 
-        public Space(ISpaceClient spaceClient, string route)
+        public AttributeFactory attributeFactory;
+
+        public Space(ISpaceClient spaceClient, string route, AttributeFactory attributeFactory = null)
         {
             this.spaceClient = spaceClient;
             messagesFromServer = new ConcurrentQueue<string>();
@@ -89,6 +90,8 @@ namespace ObjectSync
             spaceWS = new WebSocket(route);
             spaceWS.Connect();
             spaceWS.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
+
+            this.attributeFactory = attributeFactory ?? new AttributeFactory();
         }
 
         public void SendMessage(object obj)
@@ -106,17 +109,6 @@ namespace ObjectSync
         public void Redo(string id)
         {
             SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
-        }
-        public object JToken2type(JToken j, string type)
-        {
-            if (type.Length >= 8 && type.Substring(0, 8) == "dropdown") type = "string";
-            return type switch
-            {
-                "string" => (string)j,
-                "float" => (float)j,
-                "bool" => (bool)j,
-                _ => spaceClient.ConvertJsonToType(j,type),
-            };
         }
 
         public void Update()

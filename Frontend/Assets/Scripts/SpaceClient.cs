@@ -73,14 +73,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     
     }
 
-     
-    public int nameNum = 0;
 
-    public void Activate(Node node)
-    {
-        if (node.id!="-1")
-            env.Send("{\"command\":\"act\",\"id\":\"" + node.id + "\"}");
-    }
 
     private void Update()
     {
