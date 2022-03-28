@@ -5,8 +5,8 @@ namespace ObjectSync
 {
     public class Object
     {
-        readonly Space space;
-        readonly IObjectClient objectClient;
+        public readonly Space space;
+        public readonly IObjectClient objectClient;
         public readonly string id;
         public Dictionary<string, IAttribute> Attributes { get; private set; }
         public Object(Space space,JToken message, IObjectClient objectClient)
@@ -24,7 +24,7 @@ namespace ObjectSync
                 new_attr.Set(attr_info["value"], false);
             }
         }
-        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, string history_Object = "node", T initValue = default)
+        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, string history_object = "node", T initValue = default)
         {
             if (Attributes.ContainsKey(name))
             {
@@ -41,7 +41,7 @@ namespace ObjectSync
                 Attribute<T> a = new Attribute<T>(this, name);
                 Attributes[name] = a;
 
-                SendMessage(new API.Out.NewAttribute<T> { command = "new attribute", id = id, name = a.name, type = a.type, history_object = history_Object, value = initValue });
+                SendMessage(new API.Out.NewAttribute<T> { command = "new attribute", id = id, name = a.name, type = a.type, history_object = history_object, value = initValue });
                 
                 if(onSet != null)
                     a.OnSet += onSet;
@@ -57,6 +57,10 @@ namespace ObjectSync
                 Attributes[(string)message["name"]].Recieve(message);
             }
             objectClient.RecieveMessage(message);
+        }
+        public void OnDestroy()
+        {
+            objectClient.OnDestroy();
         }
         public void SendMessage(object message)
         {

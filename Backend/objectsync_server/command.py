@@ -162,7 +162,13 @@ class CommandManager():
             command = self.collected_commands[0]
         else:
             command = CommandSequence(self.collected_commands)
-        storage_obj = command.space[command.history_obj]
+
+        if command.history_obj == "parent":
+            storage_obj = self.space[command.obj].parent_id.value
+        elif command.history_obj == "self":
+            storage_obj = command.obj
+        else:
+            storage_obj = self.space[command.history_obj]
 
         # don't repeat atr history within 2 seconds 
         last_command = storage_obj.history.current.command

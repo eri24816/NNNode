@@ -32,7 +32,7 @@ namespace GraphUI
             current.CopyTo(temp);
             foreach (Selectable s in temp)
             {
-                s.Destroy();
+                s.OnDestroy();
             }
         }
         public virtual void OnPointerClick(PointerEventData eventData)
@@ -110,7 +110,7 @@ namespace GraphUI
                 }
             }
         }
-        public virtual void Destroy()
+        public virtual void OnDestroy()
         {
             if (current.Contains(this)) current.Remove(this);
         }

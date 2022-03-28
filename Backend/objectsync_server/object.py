@@ -24,7 +24,6 @@ class Attribute:
         self.type = type # string, float, etc.
         self.value = value
 
-        # History is for undo/redo. Every new changes of an attribute creates an history item.
         self.history_obj = history_obj if history_obj != None else obj.id
 
         self.callback = callback

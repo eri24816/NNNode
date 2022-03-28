@@ -304,6 +304,9 @@ class Node(objsync.Object):
     def On_double_click(self):
         self.attempt_to_activate()
 
+class TestNode(Node):
+    pass
+
 class CodeNode(Node):
     '''
     A node with editable code, like a block in jupyter notebook.

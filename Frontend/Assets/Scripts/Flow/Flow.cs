@@ -169,9 +169,9 @@ namespace GraphUI
             }
             SpaceClient.ins.state = SpaceClient.State.idle;
         }
-        public override void Destroy()
+        public override void OnDestroy()
         {
-            base.Destroy();
+            base.OnDestroy();
             SpaceClient.ins.SendToServer(new API_update_message(id,"rmv",""));
             RawRemove();
         }

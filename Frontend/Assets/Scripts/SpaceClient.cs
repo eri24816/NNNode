@@ -33,8 +33,8 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
 
-    public GameObject[] nodePrefabs;
-    public Dictionary<string, GameObject> nodePrefabDict;
+    public GameObject[] prefabs;
+    public Dictionary<string, GameObject> PrefabDict;
 
     public GameObject inDataPortPrefab, outDataPortPrefab,inControlPortPrefab,outControlPortPrefab;
 
@@ -42,6 +42,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public Hierachy demoNodeContainer;
     public Inspector nodeInspector;
     public GameObject categoryPanelPrefab;
+    public Theme theme;
     
     
     public enum State
@@ -64,51 +65,30 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
         space = new ObjectSync.Space(this, WSPath + "space" + "/" + spaceName);
 
-        DemoNodes = new Dictionary<string, Node>();
-        nodePrefabDict = new Dictionary<string, GameObject>();
-        foreach (GameObject prefab in nodePrefabs)
-            nodePrefabDict.Add(prefab.name, prefab);
+        PrefabDict = new Dictionary<string, GameObject>();
+        foreach (GameObject prefab in prefabs)
+            PrefabDict.Add(prefab.name, prefab);
 
         ins = this;
-    
     }
 
-
-
-    private void Update()
+    private void LateUpdate()
     {
         space.Update();
     }
-    public Node CreateNode(JToken info,bool createByThisClient = false)
-    {
-        if (Nodes.ContainsKey((string)info["id"]))return null;/*
-        GameObject prefab = nodePrefabDict[message.info.shape+"Node"];
-        var node = Instantiate(prefab).GetComponent<Node>();*/
-        var node = Theme.ins.Create((string)info["shape"] + "Node").GetComponent<Node>(); ;
-        node.createByThisClient = createByThisClient;
-        node.Init(info);
-        return node;
-    }
 
     public float snap = 0.02f;
-    public Vector3 GetSnappedPosition(Vector3 pos)
-    {
-        return new Vector3(Mathf.Round( pos.x/snap)*snap, Mathf.Round(pos.y / snap) * snap, pos.z);
-    }
+
 
     public void RecieveMessage(JToken message)
     {
         string command = (string)message["command"];
+        print(message.ToString());
     }
 
     public IObjectClient CreateObjectClient(JToken message)
     {
-        throw new System.NotImplementedException();
-    }
-
-    IObjectClient ISpaceClient.CreateObjectClient(JToken message)
-    {
-        throw new System.NotImplementedException();
+        return theme.Create((string)message["d"]["type"]).GetComponent<IObjectClient>();
     }
 
     public object ConvertJsonToType(JToken j, string type)
@@ -118,5 +98,10 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
             "Vector3" => j.ToObject<Vector3>(),
             _ => throw new System.Exception($"Type {type} not supported"),
         };
+    }
+
+    public Vector3 GetSnappedPosition(Vector3 pos)
+    {
+        return new Vector3(Mathf.Round(pos.x / snap) * snap, Mathf.Round(pos.y / snap) * snap, pos.z);
     }
 }

@@ -121,11 +121,17 @@ namespace ObjectSync
                 var message = JObject.Parse(receivedString);
                 string command = (string)message["command"];
 
-                if (command == "new")
+                if (command == "create")
                 {
                     var id = (string)message["id"];
                     if (!objs.ContainsKey(id))
                         Create(message);
+                }
+                else if (command == "destroy")
+                {
+                    var id = (string)message["id"];
+                    objs[id].OnDestroy();
+                    objs.Remove(id);
                 }
                 else // directly send update messages to the object
                 {
@@ -153,6 +159,8 @@ namespace ObjectSync
             Object newObj = new Object(this, message, objectClient);
 
             objectClient.OnCreate(message, newObj);
+
+            objs.Add((string)message["id"], newObj);
             
             return newObj;
         }
