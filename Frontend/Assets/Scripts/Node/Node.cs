@@ -40,9 +40,8 @@ namespace GraphUI
     {
         #region vars
         ObjectSync.Object syncObject;
-        public List<Port> ports;
+        //public List<Port> ports;
         public string id, Name;
-        public List<Comp> comps = new List<Comp>();
         //public Dictionary<string, Comp> components{ get; set; };
 
         ObjectSync.Attribute<Vector3> Pos;
@@ -73,7 +72,7 @@ namespace GraphUI
             ParentID = syncObject.RegisterAttribute<string>("output", (v) => { OnOutputChanged(v); }, "", "");
             syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); },"");
         }
-
+        /*
         protected virtual void CreatePort(JToken portInfo)
         {
             GameObject prefab;
@@ -92,7 +91,7 @@ namespace GraphUI
             // Called by Port.Init()
             ((RectTransform)port.transform).anchorMin = ((RectTransform)port.transform).anchorMax = new Vector2((float)portInfo["pos"]["x"] / 2 + .5f, (float)portInfo["pos"]["y"] / 2 + .5f);
 
-        }
+        }*/
 
         public virtual void OnParentChanged()
         {
@@ -247,7 +246,7 @@ namespace GraphUI
         }
         public override void Unselect()
         {
-            SpaceClient.ins.nodeInspector.Clear();
+            //SpaceClient.ins.nodeInspector.Clear();
 
             base.Unselect();
 
@@ -281,12 +280,7 @@ namespace GraphUI
         public virtual void SetColor(Color color)
         {
             // Called by the color attribute setter
-            outline.color = color;
-            foreach(Comp comp in comps)
-            {
-                comp.SetColor(color);
-                
-            }
+
             /*
             selectColorTransition.SetColor("selected", color*0.8f);
             selectColorTransition.SetColor("unselected", Color.black);

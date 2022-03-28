@@ -1,5 +1,6 @@
-from .node import Component, Attribute, Port, FunctionNode, Node
+from .node import Component, Port, FunctionNode, Node
 import torch
+from objectsync_server import Attribute
 
 class ConcatNode(FunctionNode):
     shape = 'Round'

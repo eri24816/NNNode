@@ -1,4 +1,5 @@
-from .node import Node, FunctionNode, Port, Attribute, Component
+from .node import Node, FunctionNode, Port, Component
+from objectsync_server import Attribute
 
 class AddFunctionNode(FunctionNode):
     '''

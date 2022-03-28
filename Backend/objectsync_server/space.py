@@ -2,9 +2,9 @@ from __future__ import annotations
 from asyncio.queues import Queue
 from math import inf
 from typing import Dict
-from objectsync_server.command import *
-from object import Object
-from command import CommandManager, CommandCreate, CommandDestroy
+#rom objectsync_server.command import *
+from .object import Object
+from objectsync_server.command import CommandManager, CommandCreate, CommandDestroy
 
 import json
 from itertools import count
@@ -126,30 +126,6 @@ class Space():
     def main_loop(self):
         raise NotImplementedError()
 
-def get_co_ancestor(objs) -> Object:
-    '''
-    return the lowest common ancestor of multiple objects
-    '''
-    space = objs[0].space
-    min_len = int(inf)
-    parent_lists = []
-    for o in objs:
-        parent_list = []
-        parent_list.append(o)
-        while o.id != 0:
-            o = o.parent
-            parent_list.append(o)
-        parent_lists.append(reversed(parent_list))
-        min_len = min(len(parent_list), min_len)
 
-    last = space.base_obj
-    for i in range(min_len):
-        current = parent_lists[0][i]
-        for j in range(1,len(parent_lists)):
-            if current != j:
-                return last
-        last = current
-
-    return last
 
     

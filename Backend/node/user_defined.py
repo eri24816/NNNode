@@ -1,4 +1,5 @@
-from .node import Component,Attribute,Port, FunctionNode, Node
+from .node import Component,Port, FunctionNode, Node
+from objectsync_server import Attribute
 '''
 Define your own nodes here!
 

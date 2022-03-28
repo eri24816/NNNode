@@ -3,6 +3,7 @@ from threading import Event
 from collections import deque
 import objectsync_server
 from typing import Dict
+from objectsync_server import server
 from objectsync_server.command import *
 import edge
 import node
@@ -39,8 +40,8 @@ class DequeLock:
 
 class Env(objectsync_server.Space):
 
-    def __init__(self,name, obj_classses,base_obj_class):
-        super(Env, self).__init__(name, obj_classses,base_obj_class)
+    def __init__(self,name, obj_classes,base_obj_class):
+        super(Env, self).__init__(name, obj_classes,base_obj_class)
         self.globals=globals()
         self.locals={}
         self.node_stack = MyDeque()
@@ -69,4 +70,6 @@ class Env(objectsync_server.Space):
 
             self.lock_deque = False
             self.running_node.run()
-                
+
+from objectsync_server.server import set_space_class
+set_space_class(Env)

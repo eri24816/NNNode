@@ -1,5 +1,5 @@
-from .node import Node, Port, Attribute, Component
-
+from .node import Node, Port, Component
+from objectsync_server import Attribute
 class ForNode(Node):
     shape = 'General'
     category = 'procedural'

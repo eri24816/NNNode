@@ -12,7 +12,7 @@ public class CamControl : MonoBehaviour
     public bool touchPadMode=false;
     public static Vector3 mouseDelta, mouse,worldMouseDelta,worldMouse;
     public static Collider colliderHover;
-    public static Port portHover;
+    //public static Port portHover;
     public UnityEngine.UI.ScrollRect nodeList;
     Plane focusPlane; 
     Camera cam;
@@ -73,8 +73,8 @@ public class CamControl : MonoBehaviour
         Physics.Raycast(cam.ScreenPointToRay(mouse), out RaycastHit hit);
         colliderHover = hit.collider;
 
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) SpaceClient.ins.Undo(Selectable.TheOnlySelectedNode());
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) SpaceClient.ins.Redo(Selectable.TheOnlySelectedNode());
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) SpaceClient.ins.space.Undo(Selectable.TheOnlySelectedNode().id);
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) SpaceClient.ins.space.Redo(Selectable.TheOnlySelectedNode().id);
         if (Input.GetKeyDown(KeyCode.Delete))
         {
             Selectable.Delete();

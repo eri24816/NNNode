@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 namespace GraphUI
 {
-    public class Flow : Selectable, IUpdateMessageReciever
+    public class Flow : Selectable
     {
         public class API_new
         {

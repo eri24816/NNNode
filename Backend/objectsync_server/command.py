@@ -6,8 +6,6 @@ if TYPE_CHECKING:
     from objectsync_server import Space, Object
 
 import time
-from space import get_co_ancestor
-
 
 class Command(ABC):
     '''
@@ -241,4 +239,29 @@ class History:
         self.current.command.done = True
         return 1
 
- 
+from math import inf
+def get_co_ancestor(objs) -> Object:
+    '''
+    return the lowest common ancestor of multiple objects
+    '''
+    space = objs[0].space
+    min_len = int(inf)
+    parent_lists = []
+    for o in objs:
+        parent_list = []
+        parent_list.append(o)
+        while o.id != 0:
+            o = o.parent
+            parent_list.append(o)
+        parent_lists.append(reversed(parent_list))
+        min_len = min(len(parent_list), min_len)
+
+    last = space.base_obj
+    for i in range(min_len):
+        current = parent_lists[0][i]
+        for j in range(1,len(parent_lists)):
+            if current != j:
+                return last
+        last = current
+
+    return last

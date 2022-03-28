@@ -41,14 +41,22 @@ prefix:
 from asyncio.events import get_running_loop
 from asyncio.queues import Queue
 from typing import Dict, Tuple, Optional
+import typing
+from typing import TYPE_CHECKING
 import websockets
 import asyncio
 import threading
-from objectsync_server import Space, Object
+if True:
+    from .space import Space
+    from .object import Object
 import json
 
 space_class : Optional[type] = None
-spaces:Dict[str,Space]=dict()
+
+if TYPE_CHECKING:
+    spaces: typing.Dict[str,Space]=dict()
+else:
+    spaces=dict()
 
 obj_classes = Dict[str, type]
 
@@ -57,6 +65,10 @@ import websockets_routes
 router = websockets_routes.Router()
 
 message_sender_started = False
+
+def set_space_class(space_class_):
+    global space_class
+    space_class = space_class_
 
 @router.route("/lobby") #* lobby
 async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
@@ -77,7 +89,7 @@ async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, pa
             else:
                 await websocket.send("msg space %s has started" % space_name)
             
-            new_space=space_class(name=space_name,obj_classes=obj_classes)
+            new_space=space_class(name=space_name,obj_classes=obj_classes,base_obj_class = Object)
             new_thread=threading.Thread(target=new_space.main_loop,name=space_name)
             new_thread.setDaemon(True)
             new_space.thread=new_thread
@@ -151,15 +163,22 @@ def start(space_class_, obj_classes_):
 
     obj_classes = obj_classes_
     
-    for n,c in obj_classes.items():
+    for c in obj_classes:
         if not issubclass(c,Object):
-            raise Exception(f"{n} in obj_classes should inherit objectsync_server.Object.")
+            raise Exception(f"{type(c)} in obj_classes should inherit objectsync_server.Object.")
     
     start_server = websockets.serve(router, "localhost", 1000)
 
     asyncio.get_event_loop().run_until_complete(start_server)
+
+    print('ObjectSync server started')
+    print('Space class:')
+    print(f'\t{space_class.__name__}')
+    print('Object classes:')
+    for c in obj_classes:
+        print(f'\t{c.__name__}')
+
     try:
-        print('ObjectSync server started')
         asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
         print('KeyboardInterrupt')

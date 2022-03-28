@@ -30,7 +30,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public static SpaceClient ins;
 
     public Dictionary<string, Node> Nodes;
-    public Dictionary<string, Flow> Flows;
+    //public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
 
     public GameObject[] prefabs;
@@ -40,7 +40,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
     public Transform canvasTransform;
     public Hierachy demoNodeContainer;
-    public Inspector nodeInspector;
+    //public Inspector nodeInspector;
     public GameObject categoryPanelPrefab;
     public Theme theme;
     

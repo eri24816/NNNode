@@ -88,7 +88,7 @@ public class Theme : MonoBehaviour
             case "GeneralNode":
             case "SimpleNode":
             case "RoundNode":
-            case "VerticalSimpleNode":
+            case "TestNode1":
                 Node node = o.GetComponent<Node>();
                 
                 node.selectColorTransition.SetColor("selected", C2(8));
@@ -103,8 +103,9 @@ public class Theme : MonoBehaviour
                 node.runColorTransition.SetDefault("inactive"); // TODO : Maybe it is running 
 
                 //node.SetColor(C1(10));
-
+                
                 break;
+                /*
             case "DataFlow":
                 Flow flow = o.GetComponent<Flow>();
                 flow.selectColorTransition.SetColor("selected", C1(10));
@@ -121,6 +122,7 @@ public class Theme : MonoBehaviour
             case "CategoryPanelForNodeList":
                 o.GetComponentInChildren<RawImage>().color = C1(7,7);
                 break;
+                */
         }
     }
 

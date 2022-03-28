@@ -3,8 +3,10 @@ import copy
 from typing import Any, Dict, Union, Optional
 from objectsync_server.command import History, CommandAttribute
 import time
-
-from objectsync_server.space import Space, get_co_ancestor
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from objectsync_server.space import Space
+from objectsync_server.command import get_co_ancestor
 
 class Attribute:
     '''
