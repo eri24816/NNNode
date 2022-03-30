@@ -45,8 +45,10 @@ class Space():
 
         # Create an Object in the space
         if command == "create":
-            CommandCreate(self,m['d'],m['d']['attributes']['parent']['value']).execute()
-            ws.send("msg %s %s created" % (m['info']['type'],m['d']['id']))
+            d = m['d']
+            d['id'] = self.id_iter.__next__()
+            CommandCreate(self,d,m['parent']).execute()
+            ws.send(f"msg {m['d']['type']} {d['id']} created")
 
         # Destroy an Object in the space
         elif command == "destroy":
@@ -106,10 +108,10 @@ class Space():
         new_instance : Object
         if is_new:
             assert parent is not None
-            new_instance = c(d,self,is_new,parent)
+            new_instance = c(self,d,is_new,parent)
         else:
-            new_instance = c(d,self,is_new)
-            parent = d['attributes']['parent_id']
+            new_instance = c(self,d,is_new)
+            parent = d['attributes']['parent_id'].value
 
         self.objs.update({id:new_instance})
         self.send_direct_message({'command':'create','d':d})

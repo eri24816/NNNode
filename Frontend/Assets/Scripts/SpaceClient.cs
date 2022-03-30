@@ -53,7 +53,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public State state;
     readonly string WSPath = "ws://localhost:1000/";
     readonly string spaceName = "my_space";
-    void Start()
+    private void Start()
     {
         Application.targetFrameRate = 60;
 
@@ -61,7 +61,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
         WebSocket lobbyWS = new WebSocket(WSPath + "lobby");
         lobbyWS.Connect();
         lobbyWS.Send("stt " + spaceName);
-        lobbyWS.Close();
+        lobbyWS.Close(CloseStatusCode.Normal, "disconnect");
 
         space = new ObjectSync.Space(this, WSPath + "space" + "/" + spaceName);
 
@@ -70,8 +70,13 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
             PrefabDict.Add(prefab.name, prefab);
 
         ins = this;
-    }
 
+        space.SendMessage(new ObjectSync.API.Out.Create { parent = "0", d = {type="TestNode1" } }) ;
+    }
+    private void OnDestroy()
+    {
+        //space.Close();
+    }
     private void LateUpdate()
     {
         space.Update();

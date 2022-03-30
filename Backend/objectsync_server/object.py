@@ -68,7 +68,9 @@ class Object:
         self.history = History(self)
         self.attributes : Dict[str,Attribute] = {}
 
-        self.parent_id = Attribute(self,'children_ids','str',d['parent_id'],history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
+        if is_new:
+            self.parent_id = Attribute(self,'children_ids','str',d['parent_id']if 'parent_id' in d else parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
+        
         import types
         def parent_attribute_set_com_decorator(self,value):
             self.history_obj = get_co_ancestor([self.value,value])

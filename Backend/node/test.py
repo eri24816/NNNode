@@ -1,13 +1,10 @@
 from .node import Component, Port, FunctionNode, Node
 from objectsync_server import  Attribute
-class TestNode1(FunctionNode):
+class TestNode1(Node):
     display_name = 'CNN block'
     category = 'function'
     shape = 'General'
 
-    in_names = ['in','bn']
-    out_names = ['out']
-    max_in_data = [64,64]
 
 class TestNode2(FunctionNode):
     display_name = 'KLD loss'

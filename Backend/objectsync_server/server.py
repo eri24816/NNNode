@@ -72,7 +72,7 @@ def set_space_class(space_class_):
 
 @router.route("/lobby") #* lobby
 async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
-    print( isinstance(space_class,Space))
+    #print( isinstance(space_class,Space))
     global message_sender_started
     if not message_sender_started:
         asyncio.create_task(direct_message_sender())
@@ -113,13 +113,16 @@ async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol,
         return
 
     space.ws_clients.append(websocket)
+    print(f"Client connected to {space_name}")
 
     #TODO: client load entire space
 
-    space.update_demo_objs()
-
-    async for message in websocket:
-        space.recieve_message(message,websocket)
+    #space.update_demo_objs()
+    try:
+        async for message in websocket:
+            space.recieve_message(message,websocket)
+    except websockets.exceptions.ConnectionClosed:
+        print(f"Client disconnected from {space_name}")
 
 messages_to_client: Optional[asyncio.Queue[Tuple[list[websockets.legacy.server.WebSocketServerProtocol],Dict]]] = None
 async def direct_message_sender():
@@ -163,7 +166,7 @@ def start(space_class_, obj_classes_):
 
     obj_classes = obj_classes_
     
-    for c in obj_classes:
+    for c in obj_classes.values():
         if not issubclass(c,Object):
             raise Exception(f"{type(c)} in obj_classes should inherit objectsync_server.Object.")
     
@@ -173,13 +176,16 @@ def start(space_class_, obj_classes_):
 
     print('ObjectSync server started')
     print('Space class:')
-    print(f'\t{space_class.__name__}')
+    print(f'\t{space_class}')
     print('Object classes:')
-    for c in obj_classes:
-        print(f'\t{c.__name__}')
+    for c in obj_classes.values():
+        print(f'\t{c}')
+
+    print("="*50)
 
     try:
         asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
         print('KeyboardInterrupt')
+        exit()
 

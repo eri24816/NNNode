@@ -23,7 +23,14 @@ namespace ObjectSync
             public class Create
             {
                 public string command = "create";
-                public string type;
+
+                public string parent="0";
+                public D d;
+                [System.Serializable]
+                public struct D
+                {
+                    public string type;
+                }
             }
         }
         namespace In
@@ -46,7 +53,7 @@ namespace ObjectSync
                 public struct D
                 {
                     public string id;
-                    public string frontendType;
+                    public string type;
                 }
             }
         }
@@ -80,6 +87,8 @@ namespace ObjectSync
 
         public AttributeFactory attributeFactory;
 
+        readonly string route;
+
         public Space(ISpaceClient spaceClient, string route, AttributeFactory attributeFactory = null)
         {
             this.spaceClient = spaceClient;
@@ -92,6 +101,12 @@ namespace ObjectSync
             spaceWS.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
 
             this.attributeFactory = attributeFactory ?? new AttributeFactory();
+
+            this.route = route;
+
+#if UNITY_EDITOR
+            UnityEngine.Debug.Log($"Connected to space {route}");
+#endif
         }
 
         public void SendMessage(object obj)
@@ -117,6 +132,9 @@ namespace ObjectSync
 
             while (messagesFromServer.TryDequeue(out string receivedString))
             {
+#if UNITY_EDITOR
+                UnityEngine.Debug.Log($"{route} > {receivedString}");
+#endif
                 if (receivedString[0] != '{') return; // Filter out debugging message
                 var message = JObject.Parse(receivedString);
                 string command = (string)message["command"];
@@ -163,6 +181,13 @@ namespace ObjectSync
             objs.Add((string)message["id"], newObj);
             
             return newObj;
+        }
+        public void Close()
+        {
+            spaceWS.Close(CloseStatusCode.Normal,"disconnect from space");
+        }
+        ~Space() {
+            Close();
         }
     }
 }

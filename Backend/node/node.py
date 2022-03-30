@@ -160,12 +160,7 @@ class Node(objsync.Object):
 
     ## Initialization ------------------------------
 
-    def __init__(self, space : objsync.Space, d : Dict[str]):
-        '''
-        For child classes, DO NOT override this. Override initialize() instead.
-        '''
-        super(objsync.Object, self).__init__(space, d)
-
+    def initialize(self):
         # For the API, each ports of the node are identified by position in this list
         # Create ports in __init__ then add all port into this list
         self.port_list : List[Port] = []
@@ -175,33 +170,9 @@ class Node(objsync.Object):
         
         self.components : List[Component] = []
 
-        self.type=type(self).__name__
-
         # Is the node ready to run?
         self.active = False
-
-        self.output = d['output'] if 'output' in d else ''
-        # added lines of output when running, which will be sent to client
-        self.added_output = "" 
-
-        if self.id != -1:
-            self.history = History()
-
-        self.object = None
-
-        self.initialize() 
-
         self.color = objsync.Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)),'')
-        if self.id != -1:
-            self.space.Update_history("new", self.get_info())
-            self.space.Add_direct_message({'command':'new','info':self.get_info()})
-        
-        
-    def initialize(self):
-        '''
-        Setup the node's objsync.Attributes and components
-        This method is separated from __init__() because overrides of initialize() should be called after some setup in __init__()
-        '''
     
     ## Core methods ------------------------------
 

@@ -10,12 +10,16 @@ from .torch import *
 
 del FunctionNode,Component,Attribute,Port
 
-node_class_list = [TestNode1]
+object_class_list = [TestNode1]
 import sys, inspect
 def print_classes():
     for name, obj in inspect.getmembers(sys.modules[__name__]):
         if inspect.isclass(obj):
             if isinstance(obj,Node):
-                node_class_list.append(obj)
+                object_class_list.append(obj)
+
+object_class_dict=dict()
+for c in object_class_list:
+    object_class_dict[c.__name__]=c
 
 del Node
