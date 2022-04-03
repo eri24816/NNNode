@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using System;
 
 namespace ObjectSync
 {
@@ -9,7 +8,7 @@ namespace ObjectSync
 
         void Recieve(JToken message);
         void Send();
-        void Set(object value = null, bool send = true);
+        void Set(JToken value = null, bool send = true);
         void Update();
     }
 }

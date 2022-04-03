@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, TypedDict
 from typing import Dict, List
 if TYPE_CHECKING:
     import edge
+    from Environment import Env
 
 
 
@@ -134,16 +135,8 @@ class Node(objsync.Object):
         name : str              # Just for frontend. In backend we never use it but use "id" instead
         output : str            # Output is necessary for all classes of node to at least store exceptions occured in nodes
         portInfos : List[Dict]  # PortInfos are determined by server side Node classes and is used to tell client how to set up ports
-
-    @classmethod
-    def get_class_info(cls)->Info:
-        '''
-        When creating demo node, this is sent to client
-        '''
-        tempNode = cls({'id' : -1, 'name' : ''},space = None)
-        return tempNode.get_info()
     
-    def serialize(self) -> Dict[str]:
+    def serialize(self) -> Dict:
         '''
         Node info
         History item "new" stores this. When creating new node, this is sent to all clients.
@@ -151,10 +144,8 @@ class Node(objsync.Object):
         '''
         d = super(Node, self).serialize()
         d.update({
-            "category" : self.category,"doc":self.__doc__,"name":self.display_name,"output":self.output,'shape' : self.shape,
+            "category" : self.category,"doc":self.__doc__,"name":self.display_name,'shape' : self.shape,
             'portInfos' : [port.get_dict() for port in self.port_list],
-            'attr': [attr.dict()for _, attr in self.attributes.items()],
-            'comp': [comp.dict()for  comp in self.components]
         })
         return d
 
@@ -164,11 +155,6 @@ class Node(objsync.Object):
         # For the API, each ports of the node are identified by position in this list
         # Create ports in __init__ then add all port into this list
         self.port_list : List[Port] = []
-
-        # Each types of node have different objsync.Attributes. Client can set them by sending "atr" command.
-        # Changes of objsync.Attributes will create update messages and send to clients with "atr" command.
-        
-        self.components : List[Component] = []
 
         # Is the node ready to run?
         self.active = False
@@ -185,6 +171,7 @@ class Node(objsync.Object):
         Call this to enqueue the node in space.
         Later, space will call _run() of this node
         '''
+        self.space : Env
         if self.active: 
             return # prevent duplication in space.nodes_to_run
         self.active = True
@@ -293,7 +280,7 @@ class CodeNode(Node):
     def initialize(self):
         super().initialize()
 
-        self.code = objsync.Attribute(self,'code','string','')
+        self.code = objsync.Attribute(self,'code','String','')
         Component(self,'input_field','TextEditor','code')
 
         Component(self,'output_field','Text','output')
@@ -321,10 +308,10 @@ class EvalAssignNode(Node):
         self.in_data = Port(self,'DataPort',True,64,pos = [-1,0,0], on_edge_activate = self.in_data_active)
         self.out_data = Port(self,'DataPort',False,64,pos = [1,0,0])
 
-        self.code = objsync.Attribute(self,'code','string','')
+        self.code = objsync.Attribute(self,'code','String','')
         Component(self,'input_field','SmallTextEditor','code')
 
-        self.block_backward = objsync.Attribute(self,'block_backward','bool',True)
+        self.block_backward = objsync.Attribute(self,'block_backward','Boolean',True)
 
     def is_ready(self):
         if self.block_backward.value:

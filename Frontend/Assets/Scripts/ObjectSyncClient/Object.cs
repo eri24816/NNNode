@@ -9,22 +9,22 @@ namespace ObjectSync
         public readonly IObjectClient objectClient;
         public readonly string id;
         public Dictionary<string, IAttribute> Attributes { get; private set; }
-        public Object(Space space,JToken message, IObjectClient objectClient)
+        public Object(Space space,JToken d, IObjectClient objectClient)
         {
             this.space = space;
             this.objectClient = objectClient;
             Attributes = new Dictionary<string, IAttribute>();
 
-            JToken d = message["d"];
             id = (string)d["id"];
 
             foreach (var attr_info in d["attributes"])
             {
                 var new_attr = space.attributeFactory.Produce(this, (string)attr_info["name"], (string)attr_info["type"]);
                 new_attr.Set(attr_info["value"], false);
+                Attributes.Add((string)attr_info["name"], new_attr);
             }
         }
-        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, string history_object = "node", T initValue = default)
+        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, string history_object = "none", T initValue = default)
         {
             if (Attributes.ContainsKey(name))
             {
@@ -58,9 +58,9 @@ namespace ObjectSync
             }
             objectClient.RecieveMessage(message);
         }
-        public void OnDestroy()
+        public void OnDestroy(JToken message)
         {
-            objectClient.OnDestroy();
+            objectClient.OnDestroy_(message);
         }
         public void SendMessage(object message)
         {

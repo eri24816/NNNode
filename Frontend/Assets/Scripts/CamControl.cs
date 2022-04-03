@@ -73,8 +73,8 @@ public class CamControl : MonoBehaviour
         Physics.Raycast(cam.ScreenPointToRay(mouse), out RaycastHit hit);
         colliderHover = hit.collider;
 
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) SpaceClient.ins.space.Undo(Selectable.TheOnlySelectedNode().id);
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) SpaceClient.ins.space.Redo(Selectable.TheOnlySelectedNode().id);
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Selectable.TheOnlySelectedNode()?.Undo();
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Selectable.TheOnlySelectedNode()?.Redo();
         if (Input.GetKeyDown(KeyCode.Delete))
         {
             Selectable.Delete();

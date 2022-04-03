@@ -42,7 +42,8 @@ class CommandSequence(Command):
     def __init__(self, commands:list[Command]):
         super().__init__()
         self.commands = commands
-        self.history_obj = get_co_ancestor([c.history_obj for c in self.commands]).id
+        space = commands[0].space
+        self.history_obj = get_co_ancestor([space[c.history_obj] for c in self.commands]).id
         
     def execute(self):
         super().execute()
@@ -58,6 +59,12 @@ class CommandSequence(Command):
         super().undo()
         for command in reversed(self.commands):
             command.undo()
+
+    def __str__(self):
+        res = "Sequence: " 
+        for command in self.commands:
+            res += f'\n\t{str(command)}'
+        return res
 
 class CommandHead(Command):
     '''
@@ -86,10 +93,12 @@ class CommandCreate(Command):
         self.history_obj = self.space[parent].id
 
     def execute(self):
-        self.space.create(self.d, is_new = True, parent=self.parent)
+        new_instance = self.space.create(self.d, is_new = True, parent=self.parent)
+        self.d = new_instance.serialize()
 
     def redo(self):
-        self.space.create(self.d, is_new = False, parent=self.parent)
+        self.space.create(self.d, is_new = False)
+        self.d = self.space[self.d['id']].serialize()
 
     def undo(self):
         ''' 
@@ -118,14 +127,14 @@ class CommandDestroy(Command):
         self.space.destroy(self.id)
 
     def undo(self):
-        self.space.create(self.space[self.id].serialize(), is_new = False, parent=self.parent)
+        self.space.create(self.d, is_new = False, parent=self.parent)
 
 class CommandAttribute(Command):
 
-    def __init__(self,space:Space,obj:str,name:str,value,history_obj:Optional[str] = None):
+    def __init__(self,space:Space,obj:str,name:str,new_value,history_obj:Optional[str] = None):
         super().__init__()
-        self.name = name                                                                                      
-        self.value = value
+        self.name = name            
+        self.new_value = new_value
         self.space = space
         self.obj = obj
         self.time = time.time()
@@ -134,15 +143,19 @@ class CommandAttribute(Command):
 
     def execute(self):
         super().execute()
-        self.space[self.obj].attributes[self.name].set(self.value)
+        self.old_value = self.space[self.obj].attributes[self.name].value
+        self.space[self.obj].attributes[self.name].set(self.new_value)
 
     def redo(self):
         super().redo()
-        self.space[self.obj].attributes[self.name].set(self.value)
+        self.space[self.obj].attributes[self.name].set(self.new_value)
 
     def undo(self):
         super().undo()
-        self.space[self.obj].attributes[self.name].set(self.value)
+        self.space[self.obj].attributes[self.name].set(self.old_value)
+
+    def __str__(self):
+        return f"Attribute {self.obj} {self.name} {self.old_value} {self.new_value}"
 
 class CommandManager():
 
@@ -161,25 +174,22 @@ class CommandManager():
         else:
             command = CommandSequence(self.collected_commands)
 
-        if command.history_obj == "parent":
-            storage_obj = self.space[command.obj].parent_id.value
-        elif command.history_obj == "self":
-            storage_obj = command.obj
-        else:
-            storage_obj = self.space[command.history_obj]
+        storage_obj = self.space[command.history_obj]
 
         # don't repeat atr history within 2 seconds 
         last_command = storage_obj.history.current.command
         if isinstance(command ,CommandAttribute) and isinstance(last_command,CommandAttribute) and command.obj == last_command.obj and command.name == last_command.name:
             if (command.time - last_command.time)<2:
-                last_command.value = command.value
+                last_command.new_value = command.new_value
+                self.collected_commands = []
                 return
 
         while 1:
-            if not storage_obj.catches_command:
-                continue
-            storage_obj.history.push(command)
+            if storage_obj.catches_command:
+                storage_obj.history.push(command)
             if not storage_obj.forwards_command:
+                break
+            if storage_obj.parent_id.value == None:
                 break
             storage_obj = self.space[storage_obj.parent_id.value]
 
@@ -193,6 +203,9 @@ class HistoryItem:
         self.command = command
         self.last : Optional[HistoryItem] = last
         self.next : Optional[HistoryItem] = None
+
+        if last is not None:
+            last.next = self
         
         self.time=time.time()
 
@@ -239,24 +252,35 @@ class History:
         self.current.command.done = True
         return 1
 
-from math import inf
+    def __str__(self):
+        s =  str(self.current.command) +" <=====\n"
+        item = self.current.last
+        while item != None:
+            s = str(item.command) + "\n" + s
+            item = item.last
+        item = self.current.next
+        while item != None:
+            s += str(item.command) + "\n"
+            item = item.next
+        return f"History:\n" +  s
+
 def get_co_ancestor(objs) -> Object:
     '''
     return the lowest common ancestor of multiple objects
     '''
     space = objs[0].space
-    min_len = int(inf)
+    min_len = 1000000000000
     parent_lists = []
     for o in objs:
         parent_list = []
         parent_list.append(o)
-        while o.id != 0:
+        while o.id != "0":
             o = o.parent
             parent_list.append(o)
-        parent_lists.append(reversed(parent_list))
+        parent_lists.append(list(reversed(parent_list)))
         min_len = min(len(parent_list), min_len)
 
-    last = space.base_obj
+    last = space.root_obj
     for i in range(min_len):
         current = parent_lists[0][i]
         for j in range(1,len(parent_lists)):

@@ -19,7 +19,7 @@ class Attribute:
 
     Not all attributes are controlled by components, like attribute "pos". 
     '''
-    def __init__(self, obj : Object,name,type, value:Union[str,function], history_obj:Optional[str] = None,callback=None):
+    def __init__(self, obj : Object,name,type, value, history_obj:Optional[str] = None,callback=None):
         obj.attributes[name]=self
         self.obj = obj
         self.name = name
@@ -34,7 +34,16 @@ class Attribute:
         '''
         Call self.set from a CommandAttribute, to enable undo and redo
         '''
-        CommandAttribute(self.obj.space, self.obj.id, self.name, value, self.history_obj).execute()
+        if self.history_obj == 'self':
+            history_obj = self.obj.id
+        elif self.history_obj == 'parent':
+            if self.obj.id != "0":
+                history_obj = self.obj.parent.id
+            else:
+                history_obj = "none"
+        else:
+            history_obj = self.history_obj
+        CommandAttribute(self.obj.space, self.obj.id, self.name, value, history_obj).execute()
 
     def set(self,value):
         '''
@@ -48,7 +57,7 @@ class Attribute:
         else:
             self.value = value
 
-        self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'value':self.value})
+        self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
 
     def serialize(self):
         d = {'name' : self.name, 'type' : self.type, 'value' : self.value,'history_obj':self.history_obj}
@@ -68,26 +77,25 @@ class Object:
         self.history = History(self)
         self.attributes : Dict[str,Attribute] = {}
 
-        if is_new:
-            self.parent_id = Attribute(self,'children_ids','str',d['parent_id']if 'parent_id' in d else parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
+        self.parent_id = Attribute(self,'parent_id','String',d['parent_id']if 'parent_id' in d else parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
         
-        import types
-        def parent_attribute_set_com_decorator(self,value):
-            self.history_obj = get_co_ancestor([self.value,value])
-            self.set_com(value)
-        self.parent_id.set_com = types.MethodType(Attribute,parent_attribute_set_com_decorator)
+
+        if self.id != '0':
+            import types
+            def parent_attribute_set_com_overwrite(self,value):
+                self.history_obj = get_co_ancestor([self.value,value])
+                self.set_com(value)
+            self.parent_id.set_com = types.MethodType(Attribute,parent_attribute_set_com_overwrite)
+            self.parent = self.space[self.parent_id.value]
 
         self.children_ids = [] # It's already sufficient that parent_id be an attribute.
 
         # Child classes can override this function ( instead of __init__() ) to add attributes or anything the class needs.
         self.initialize()
         
-        # After the object's server-side attributes and fields are initialized, we can set their values accroding to d.
         self.deserialize(d)
-
         if is_new:
-            # Called at the end of __init__() to ensure child objects are created after this object is completely created.
-            self.initialize_first_time(parent)
+            self.build()   
 
     def initialize(self):
         '''
@@ -96,28 +104,33 @@ class Object:
         '''
         pass
 
-    def initialize_first_time(self,parent):
+    def build(self):
         '''
         Add default child objects here.
         This function will be called only on 'create' command, but not on 'undo', 'redo' or 'copy' command.
         Called at the end of __init__() to ensure child objects are created after this object is completely created.
         '''
-        self.parent_id.set(parent)
+        pass
 
     def deserialize(self,d):
-        if 'attr' in d:
-            for attr_dict in d['attr']:
+        if 'attributes' in d:
+            for attr_dict in d['attributes']:
                 if attr_dict['name'] in self.attributes:
                     self.attributes[attr_dict['name']].set(attr_dict['value'])
                 else:
-                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['h']).set(attr_dict['value'])
+                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['history_object']).set(attr_dict['value'])
+        if 'children' in d:
+            for child_dict in d['children']:
+                self.space.create(child_dict,parent=self)
 
     def serialize(self) -> Dict[str,Any]:
         # Do we need to serialize history ?
         d = dict()
         d.update({
             "id":self.id,
-            "type":type(self).__name__
+            "type":type(self).__name__,
+            "attributes":[attr.serialize() for attr in self.attributes.values()],
+            "children":[self.space[c].serialize() for c in self.children_ids]
             })
         return d
 
@@ -143,27 +156,27 @@ class Object:
         # Add new attribute
         if command == 'new attribute':
             if m['name'] not in self.attributes:
-                Attribute(self,m['name'],m['type'],m['value'],m['history_obj']).set_com(m['value']) # Set initial value
+                Attribute(self,m['name'],m['type'],m['value'],m['history_object']).set_com(m['value']) # Set initial value
 
         # Undo
         if command == "undo":
             if self.history.undo():
-                ws.send(f"msg obj {self.id} undone")
+                self.space.send_direct_message(f"msg obj {self.id} undone",ws)
             else:
-                ws.send("msg obj {self.id} noting to undo")
+                self.space.send_direct_message(f"msg obj {self.id} noting to undo",ws)
 
         # Redo
         if command == "redo":
             if self.history.redo():
-                ws.send("msg obj {self.id} redone")
+                self.space.send_direct_message(f"msg obj {self.id} redone",ws)
             else:
-                ws.send("msg obj {self.id} noting to redo")
+               self.space.send_direct_message(f"msg obj {self.id} noting to redo",ws)
 
     def OnDestroy(self):
         pass
 
-    def OnChildCreated(self,m):
-        pass
+    def OnChildCreated(self,child:Object):
+        self.children_ids.append(child.id)
 
-    def OnChildDestroyed(self,m):
-        pass
+    def OnChildDestroyed(self,child:Object):
+        self.children_ids.remove(child.id)

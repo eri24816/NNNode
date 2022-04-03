@@ -1,6 +1,7 @@
 from __future__ import annotations
 from asyncio.queues import Queue
 from math import inf
+from tkinter import E
 from typing import Dict
 #rom objectsync_server.command import *
 from .object import Object
@@ -12,10 +13,10 @@ from itertools import count
 # the environment to run the code in
 class Space():
     obj_classses = {}
-    def __init__(self,name, obj_classses:Dict[str,type], base_obj_class:type = Object):
+    def __init__(self,name, obj_classses:Dict[str,type], root_obj_class:type = Object):
         self.name = name
         self.thread=None
-        self.id_iter = count(0)
+        self.id_iter = count(1)
         self.ws_clients = []
         self.command_manager = CommandManager(self)
 
@@ -26,38 +27,32 @@ class Space():
         # self.message_buffer = {}
 
         self.obj_classses = obj_classses
-        self.base_obj : Object = base_obj_class(self,{'id':'0'})
-        self.objs = {'0':self.base_obj}       
+        self.root_obj : Object = root_obj_class(self,{'id':'0'})
+        self.send_direct_message({'command':'create','d':self.root_obj.serialize()})
+        self.objs = {'0':self.root_obj}     
 
     def __getitem__(self,key):
         return self.objs[key]
 
-    def send_all(self,ws_list,message):
-        for ws in ws_list:
-            ws.send(json.dumps(message))
-
     def recieve_message(self,message,ws):
 
         m=json.loads(message) # message is in Json
+        
+        print('-- client:\t',m)
         command=m['command']
 
-        print('-- client:\t',m)
 
         # Create an Object in the space
         if command == "create":
             d = m['d']
-            d['id'] = self.id_iter.__next__()
+            d['id'] = str(self.id_iter.__next__())
             CommandCreate(self,d,m['parent']).execute()
-            ws.send(f"msg {m['d']['type']} {d['id']} created")
+            self.send_direct_message(f"msg {m['d']['type']} {d['id']} created",ws)
 
         # Destroy an Object in the space
         elif command == "destroy":
             CommandDestroy(self,m['d']['id']).execute()
-            ws.send("msg %s %s destroyed" % (m['info']['type'],m['info']['id']))
-        
-        # Give client an unused id
-        elif command == "gid":
-            ws.send(json.dumps({'command':"gid",'id':next(self.id_iter)}))
+            self.send_direct_message("msg %s %s destroyed" % (m['info']['type'],m['info']['id']),ws)
 
         #TODO
         # Save the graph to disk
@@ -72,7 +67,11 @@ class Space():
         else:
             self.objs[m['id']].recieve_message(m,ws)
 
-    def send_direct_message(_, message):
+        self.command_manager.flush()
+
+        print(self.root_obj.history)
+
+    def send_direct_message(_, message,ws = None):
         '''
         This will be overwritten by server.py
         '''
@@ -90,6 +89,17 @@ class Space():
         if command == 'attribute':
             k+='/'+content
     '''
+
+    def OnClientConnection(self,ws):
+        self.ws_clients.append(ws)
+        self.send_direct_message({
+            'command':'space_metadata',
+            'types':list(self.obj_classses.keys()),
+            },ws)
+        self.send_direct_message({
+            'command':'load',
+            'root_object':self.root_obj.serialize(),
+            },ws)
 
     def create(self,d,is_new=False,parent = None):
         """        
@@ -114,9 +124,11 @@ class Space():
             parent = d['attributes']['parent_id'].value
 
         self.objs.update({id:new_instance})
-        self.send_direct_message({'command':'create','d':d})
+        self.send_direct_message({'command':'create','d':new_instance.serialize()})
 
         self.objs[parent].OnChildCreated(new_instance)
+
+        return new_instance
 
     def destroy(self,d):
         self.send_direct_message({'command':'destroy','id':d['id']})

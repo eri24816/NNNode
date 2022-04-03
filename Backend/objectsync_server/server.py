@@ -89,14 +89,14 @@ async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, pa
             else:
                 await websocket.send("msg space %s has started" % space_name)
             
-            new_space=space_class(name=space_name,obj_classes=obj_classes,base_obj_class = Object)
+            new_space=space_class(name=space_name,obj_classes=obj_classes,root_obj_class = root_obj_class)
             new_thread=threading.Thread(target=new_space.main_loop,name=space_name)
             new_thread.setDaemon(True)
             new_space.thread=new_thread
             spaces.update({space_name:new_space})
             new_thread.start()
 
-            new_space.send_direct_message = lambda content: messages_to_client.put_nowait((new_space.ws_clients, content))
+            new_space.send_direct_message = lambda content, ws=None: messages_to_client.put_nowait((new_space.ws_clients if ws == None else [ws], content))
 
             print(f'space {space_name} created')
 
@@ -112,15 +112,17 @@ async def space_ws(websocket : websockets.legacy.server.WebSocketServerProtocol,
         websocket.close()
         return
 
-    space.ws_clients.append(websocket)
+    space.OnClientConnection(websocket)
     print(f"Client connected to {space_name}")
 
     #TODO: client load entire space
 
     #space.update_demo_objs()
     try:
+        lock = asyncio.Lock()
         async for message in websocket:
-            space.recieve_message(message,websocket)
+            async with lock:
+                space.recieve_message(message,websocket)
     except websockets.exceptions.ConnectionClosed:
         print(f"Client disconnected from {space_name}")
 
@@ -134,7 +136,7 @@ async def direct_message_sender():
         for ws in ws_list:
             if not ws.open:
                 continue
-            await ws.send(json.dumps(message))
+            await ws.send(json.dumps(message, indent=4, sort_keys=True))
 
 '''
 async def buffered_message_sender():
@@ -154,8 +156,8 @@ async def buffered_message_sender():
         await asyncio.sleep(0.1)
 '''
 
-def start(space_class_, obj_classes_):
-    global space_class, obj_classes
+def start(space_class_, obj_classes_, root_obj_class_):
+    global space_class, obj_classes, root_obj_class
     
     space_class = space_class_
 
@@ -165,6 +167,7 @@ def start(space_class_, obj_classes_):
         raise Exception("objectsync_server.server.space_class should inherit objectsync_server.server.spaceironment.space.")
 
     obj_classes = obj_classes_
+    root_obj_class = root_obj_class_
     
     for c in obj_classes.values():
         if not issubclass(c,Object):
@@ -174,7 +177,7 @@ def start(space_class_, obj_classes_):
 
     asyncio.get_event_loop().run_until_complete(start_server)
 
-    print('ObjectSync server started')
+    print('ObjectSync server started\n')
     print('Space class:')
     print(f'\t{space_class}')
     print('Object classes:')

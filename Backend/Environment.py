@@ -40,8 +40,8 @@ class DequeLock:
 
 class Env(objectsync_server.Space):
 
-    def __init__(self,name, obj_classes,base_obj_class):
-        super(Env, self).__init__(name, obj_classes,base_obj_class)
+    def __init__(self,name, obj_classes, root_obj_class:type ):
+        super(Env, self).__init__(name, obj_classes,root_obj_class)
         self.globals=globals()
         self.locals={}
         self.node_stack = MyDeque()

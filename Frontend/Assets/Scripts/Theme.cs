@@ -89,6 +89,7 @@ public class Theme : MonoBehaviour
             case "SimpleNode":
             case "RoundNode":
             case "TestNode1":
+            default:
                 Node node = o.GetComponent<Node>();
                 
                 node.selectColorTransition.SetColor("selected", C2(8));

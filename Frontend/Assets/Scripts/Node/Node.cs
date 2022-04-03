@@ -5,73 +5,26 @@ using UnityEngine.EventSystems;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-public class CoolDown
-{
-    float span;
-    float waitTime = 0;
-    bool pending = false;
-    public CoolDown(float hz)
-    {
-        span = 1f / hz;
-    }
-    public void Request()
-    {
-        pending = true;
-    }
-    public void Delay(float t=-1)
-    {
-        waitTime = Time.time + (t == -1 ? span : t);
-        //pending = false;
-    }
-    public bool Update()
-    {
-        if (pending && Time.time > waitTime)
-        {
-            pending = false;
-            waitTime = Time.time + span;
-            return true;
-        }
-        return false;
-    }
-}
+
 namespace GraphUI
 {
     public class Node : Selectable,  IBeginDragHandler,IEndDragHandler,IDragHandler,ObjectSync.IObjectClient
     {
         #region vars
-        ObjectSync.Object syncObject;
         //public List<Port> ports;
-        public string id, Name;
+        public string  Name;
         //public Dictionary<string, Comp> components{ get; set; };
 
-        ObjectSync.Attribute<Vector3> Pos;
-        ObjectSync.Attribute<string> Output, ParentID;
         ObjectSync.Attribute<bool> Draggable;
 
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;
 
-        bool moveable = true;
         public ColorTransition selectColorTransition, runColorTransition;
+
 
         #endregion
 
-        public bool createByThisClient = false;
-        public virtual void Init(JToken info)
-        {
-            /*
-             * Parse the node info to setup the node.
-            */
-
-            transform.localScale = Vector3.one * 0.002f;
-            SpaceClient.ins.Nodes.Add(id, this);
-
-
-            Pos = syncObject.RegisterAttribute<Vector3>( "transform/pos", (v) => { transform.position = v; }, "space",transform.position);
-            Output = syncObject.RegisterAttribute<string>("output", (v) => {OnOutputChanged(v);},"","");
-            ParentID = syncObject.RegisterAttribute<string>("output", (v) => { OnOutputChanged(v); }, "", "");
-            syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); },"");
-        }
         /*
         protected virtual void CreatePort(JToken portInfo)
         {
@@ -93,46 +46,35 @@ namespace GraphUI
 
         }*/
 
-        public virtual void OnParentChanged()
-        {
-            transform.parent = ((MonoBehaviour)syncObject.space.objs[ParentID.Value].objectClient).transform;
-            sendOnScrollTo = (MonoBehaviour)transform.parent.GetComponent<ObjectSync.IObjectClient>(); 
-        }
+
         // ObjectSync.IObjectClient ====================
-        void ObjectSync.IObjectClient.OnDestroy()
-        {
-            base.OnDestroy();
+        void ObjectSync.IObjectClient.OnDestroy_(JToken message)
+        { 
+            base.OnDestroy_(message);
             StartCoroutine(Removing());
         }
-        public void RecieveMessage(JToken message)
+        public override void RecieveMessage(JToken message)
         {
             switch ((string)message["command"])
             {
-                case "clr":
-                    ClearOutput();
-                    break;
-
-                case "out":
-                    AddOutput((string)message["info"]);
-                    break;
-
                 case "act":
                     switch ((string)message["info"])
                     {
                         case "0": DisplayInactive(); break;
                         case "1": DisplayPending(); break;
                         case "2": DisplayActive(); break;
-                    }
+                    } 
                     break;
-                case "rmv":
-                    StartCoroutine(Removing());
-                    break;
+                default: base.RecieveMessage(message); break;
             }
         }
-        public void OnCreate(JToken message, ObjectSync.Object obj)
+        public override void OnCreate(JToken message, ObjectSync.Object obj)
         {
-            syncObject = obj;
-            Init(message["d"]);
+            base.OnCreate(message,obj);
+            spaceClient.Nodes.Add(syncObject.id, this);
+
+            syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); });
+            Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
         }
         //============================================================
 
@@ -144,27 +86,16 @@ namespace GraphUI
                 {
                     if (CamControl.worldMouseDelta.sqrMagnitude > 0)
                     {
-                        desiredPosition += CamControl.worldMouseDelta;
+                        desiredPosition += transform.worldToLocalMatrix.MultiplyVector(CamControl.worldMouseDelta);
                         Pos.Set(SpaceClient.ins.GetSnappedPosition(desiredPosition));
                     }
                 }
         }
 
-        public virtual void AddOutput(string output)
-        {
-            Output.Set(Output.Value + output,send:false);
-        }
-        public virtual void ClearOutput()
-        {
-            Output.Set("",send:true);
-        }
-
-        public virtual void Reshape(float w, float l, float r) { }//Trapezoid shaped node
-
         protected override void OnDoubleClick()
         {
             base.OnDoubleClick();
-            //SpaceClient.ins.Activate(this);
+            // send activate
         }
 
 
@@ -175,18 +106,7 @@ namespace GraphUI
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != 0) return;
-            /*
-            if (isDemo) // Create a new node
-            {
-                //Node newNode = Instantiate(gameObject).GetComponent<Node>();newNode.id = Manager.ins.GetNewID();newNode.isDemo = false;
-                info["id"] = SpaceClient.ins.GetNewID();
-                Node newNode = SpaceClient.ins.CreateNode(info,true);
-                newNode.transform.localScale = 0.002f * Vector3.one;
-                StartCoroutine(newNode.DragCreating());
-                
-                return;
-            }  */
-            else if(moveable)
+            else if(Draggable.Value)
             { 
                 if (!selected) OnPointerClick(eventData); // if not selected, select it first
                 dragged = true; // Prevent Selectable from selecting
@@ -195,10 +115,10 @@ namespace GraphUI
                         node.BeginDrag();
             }
         }
-        public void BeginDrag() { dragging = true; desiredPosition = transform.position; }
+        public void BeginDrag() { dragging = true; desiredPosition = transform.localPosition; }
         public void OnEndDrag(PointerEventData eventData)
         {
-            if (!moveable) return;
+            if (!Draggable.Value) return;
             if (eventData.button != 0) return;
             foreach (Selectable s in current)
                 if (s is Node node)
@@ -209,26 +129,11 @@ namespace GraphUI
         public void EndDrag() { dragging = false; }
         public void OnDrag(PointerEventData eventData) { }
 
-        public virtual IEnumerator DragCreating()//Drag and drop
-        {
-            moveable = false;
-            
-            
-            while (Input.GetMouseButton(0))
-            {
-                transform.position = SpaceClient.ins.GetSnappedPosition( CamControl.worldMouse);
-                yield return null;
-            }
-            moveable = true;
-
-            Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v) => { transform.position = (Vector3)v; }, history_object: "parent",initValue:transform.position);
-            
-        }
         public virtual IEnumerator Removing()// SAO-like?
         {
             yield return null;
             Unselect();
-            SpaceClient.ins.Nodes.Remove(id);
+            SpaceClient.ins.Nodes.Remove(syncObject.id);
             Destroy(gameObject);
         }
 
@@ -237,12 +142,7 @@ namespace GraphUI
         {
             if (selected) return;
             base.Select();
-            /*
-            if(!isDemo)
-                SpaceClient.ins.nodeInspector.Open(this);
 
-            selectColorTransition.Switch("selected");
-            */
         }
         public override void Unselect()
         {
@@ -290,11 +190,6 @@ namespace GraphUI
             else
                 selectColorTransition.SetDefault("unselected");*/
         }
-        void OnOutputChanged(string output)
-        {
-
-        }
-
 
 
     }

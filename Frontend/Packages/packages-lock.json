@@ -109,7 +109,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.12",
+      "version": "2.0.15",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -224,6 +224,13 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
+    },
+    "jillejr.newtonsoft.json-for-unity.converters": {
+      "version": "https://github.com/jilleJr/Newtonsoft.Json-for-Unity.Converters.git#1.4.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "6064d12de09ac6baa9df88a30722b212b942d0e1"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

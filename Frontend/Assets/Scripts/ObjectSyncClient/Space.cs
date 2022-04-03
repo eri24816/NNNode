@@ -30,6 +30,14 @@ namespace ObjectSync
                 public struct D
                 {
                     public string type;
+                    public List<Attribute> attributes;
+                }
+                [System.Serializable]
+                public class Attribute
+                {
+                    public string name,  history_object;
+                    public string type { get { return value.GetType().Name; } }
+                    public object value;
                 }
             }
         }
@@ -63,13 +71,13 @@ namespace ObjectSync
     {
         public void RecieveMessage(JToken message);
         public void OnCreate(JToken message, Object obj);
-        public void OnDestroy();
+        public void OnDestroy_(JToken message); // OnDestroy is Unity message
     }
 
     public interface ISpaceClient
     {
         public void RecieveMessage(JToken message);
-        public IObjectClient CreateObjectClient(JToken message);
+        public IObjectClient CreateObjectClient(JToken d);
 
         // Define custom attribute type conversion
         public object ConvertJsonToType(JToken j, string type);
@@ -77,17 +85,19 @@ namespace ObjectSync
 
     public class Space
     {
-        readonly ISpaceClient spaceClient;
+        public readonly ISpaceClient spaceClient;
 
         public Dictionary<string, Object> objs;
 
-        readonly WebSocket spaceWS;
+        readonly WebSocket ws;
 
         readonly ConcurrentQueue<string> messagesFromServer;
 
         public AttributeFactory attributeFactory;
 
         readonly string route;
+
+        public JToken metadata;
 
         public Space(ISpaceClient spaceClient, string route, AttributeFactory attributeFactory = null)
         {
@@ -96,9 +106,9 @@ namespace ObjectSync
             objs = new Dictionary<string, Object>();
 
 
-            spaceWS = new WebSocket(route);
-            spaceWS.Connect();
-            spaceWS.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
+            ws = new WebSocket(route);
+            ws.Connect();
+            ws.OnMessage += (sender, e) => messagesFromServer.Enqueue(e.Data);
 
             this.attributeFactory = attributeFactory ?? new AttributeFactory();
 
@@ -111,7 +121,10 @@ namespace ObjectSync
 
         public void SendMessage(object obj)
         {
-            spaceWS.Send(JsonConvert.SerializeObject(obj));
+            if (obj.GetType() == typeof(string))
+                ws.Send((string)obj);
+            else
+                ws.Send(JsonConvert.SerializeObject(obj));
         }
 
         public int nameNum = 0;
@@ -139,16 +152,25 @@ namespace ObjectSync
                 var message = JObject.Parse(receivedString);
                 string command = (string)message["command"];
 
-                if (command == "create")
+                if (command == "space_metadata")
                 {
-                    var id = (string)message["id"];
+                    metadata = message;
+                }
+                else if(command == "load")
+                {
+                    var rootObject = message["root_object"];
+                    Create(rootObject);
+                }
+                else if (command == "create")
+                {
+                    var id = (string)message["d"]["id"];
                     if (!objs.ContainsKey(id))
-                        Create(message);
+                        Create(message["d"]);
                 }
                 else if (command == "destroy")
                 {
                     var id = (string)message["id"];
-                    objs[id].OnDestroy();
+                    objs[id].OnDestroy(message); 
                     objs.Remove(id);
                 }
                 else // directly send update messages to the object
@@ -166,25 +188,31 @@ namespace ObjectSync
             }
         }
         
-        public Object Create(JToken message)
+        public Object Create(JToken d)
         {
-            if( !objs.ContainsKey((string)message["id"]))
+            if(objs.ContainsKey((string)d["id"]))
             {
                 throw new System.Exception("id exists");
             }
 
-            IObjectClient objectClient = spaceClient.CreateObjectClient(message);
-            Object newObj = new Object(this, message, objectClient);
+            IObjectClient objectClient = spaceClient.CreateObjectClient(d);
+            Object newObj = new Object(this, d, objectClient);
 
-            objectClient.OnCreate(message, newObj);
+            objectClient.OnCreate(d, newObj);
 
-            objs.Add((string)message["id"], newObj);
-            
+            objs.Add((string)d["id"], newObj);
+
+
+            foreach (var child_d in d["children"])
+            {
+                Create(child_d);
+            }
+
             return newObj;
         }
         public void Close()
         {
-            spaceWS.Close(CloseStatusCode.Normal,"disconnect from space");
+            ws.Close(CloseStatusCode.Normal,"disconnect from space");
         }
         ~Space() {
             Close();

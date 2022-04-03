@@ -5,12 +5,11 @@ using UnityEngine.EventSystems;
 
 namespace GraphUI
 {
-    public class Selectable : MonoBehaviour, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler,IScrollHandler
+    public class Selectable : ObjectClient, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler
     {
         public static List<Selectable> current=new List<Selectable>();
 
         public bool selected = false;
-        protected MonoBehaviour sendOnScrollTo;
         float lastClickTime;
         float doubleClickDelay = 0.2f;
 
@@ -32,14 +31,12 @@ namespace GraphUI
             current.CopyTo(temp);
             foreach (Selectable s in temp)
             {
-                s.OnDestroy();
+                s.OnDestroy_(null);
             }
         }
         public virtual void OnPointerClick(PointerEventData eventData)
         {
             if (dragged) return; // Check dragging
-            
-            
         }
         protected virtual void OnDoubleClick()
         {
@@ -61,6 +58,8 @@ namespace GraphUI
                 SoundEffect.Hover(this);
             }
         }
+
+        
 
         public virtual void OnPointerExit(PointerEventData eventData)
         {
@@ -110,16 +109,11 @@ namespace GraphUI
                 }
             }
         }
-        public virtual void OnDestroy()
+        public override void OnDestroy_(Newtonsoft.Json.Linq.JToken message)
         {
             if (current.Contains(this)) current.Remove(this);
         }
 
-        public void OnScroll(PointerEventData eventData)
-        {
-            // Send scroll event ahead to the background, instead of blocking it.
-            if(sendOnScrollTo)
-                sendOnScrollTo.SendMessage("OnScroll",eventData);
-        }
+
     }
 }

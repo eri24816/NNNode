@@ -7,21 +7,6 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using ObjectSync;
 
-public static class JsonHelper
-{
-    public static object JToken2type(JToken j, string type)
-    {
-        if (type.Length>=8 && type.Substring(0, 8) == "dropdown") type = "string";
-        return type switch
-        {
-            "string" => (string)j,
-            "float" => (float)j,
-            "Vector3" => j.ToObject<Vector3>(),
-            "bool" => (bool)j,
-            _ => throw new System.Exception($"Type {type} not supported"),
-        };
-    } 
-}
 
 public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 {
@@ -29,7 +14,9 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
     public static SpaceClient ins;
 
-    public Dictionary<string, Node> Nodes;
+    public List<ObjectClient> objectClients = new List<ObjectClient>();
+
+    public Dictionary<string, Node> Nodes = new Dictionary<string, Node>();
     //public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
 
@@ -43,6 +30,8 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     //public Inspector nodeInspector;
     public GameObject categoryPanelPrefab;
     public Theme theme;
+
+    public Dictionary<string,GameObject> objs = new Dictionary<string, GameObject>();
     
     
     public enum State
@@ -71,7 +60,22 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
         ins = this;
 
-        space.SendMessage(new ObjectSync.API.Out.Create { parent = "0", d = {type="TestNode1" } }) ;
+        StartCoroutine(C());
+    }
+    public IEnumerator C()
+    {
+        yield return null;
+        space.SendMessage(new ObjectSync.API.Out.Create
+        {
+            parent = "0",
+            d = {
+                type="TestNode1" ,
+                attributes = new List<ObjectSync.API.Out.Create.Attribute>{
+                    new ObjectSync.API.Out.Create.Attribute{name="transform/pos",value=new Vector3(0,0,-1),history_object = "parent"}
+                }
+            }
+        }); ;
+        yield break;
     }
     private void OnDestroy()
     {
@@ -88,12 +92,14 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public void RecieveMessage(JToken message)
     {
         string command = (string)message["command"];
-        print(message.ToString());
     }
 
-    public IObjectClient CreateObjectClient(JToken message)
+    public IObjectClient CreateObjectClient(JToken d)
     {
-        return theme.Create((string)message["d"]["type"]).GetComponent<IObjectClient>();
+        GameObject newObject = theme.Create((string)d["type"]);
+        ObjectClient objectClient = newObject.GetComponent<ObjectClient>();
+        objectClients.Add(objectClient);
+        return objectClient;
     }
 
     public object ConvertJsonToType(JToken j, string type)

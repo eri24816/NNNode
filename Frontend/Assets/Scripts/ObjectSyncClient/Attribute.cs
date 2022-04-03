@@ -1,6 +1,35 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 
+public class CoolDown
+{
+    float span;
+    System.DateTime waitTime = System.DateTime.Now;
+    bool pending = false;
+    public CoolDown(float hz)
+    {
+        span = 1f / hz;
+    }
+    public void Request()
+    {
+        pending = true;
+    }
+    public void Delay(float t = -1)
+    {
+        waitTime = System.DateTime.Now.AddSeconds(t == -1 ? span : t);
+        //pending = false;
+    }
+    public bool Update()
+    {
+        if (pending && System.DateTime.Now > waitTime)
+        {
+            pending = false;
+            waitTime = System.DateTime.Now.AddSeconds(span);
+            return true;
+        }
+        return false;
+    }
+}
 namespace ObjectSync 
 {
     public class AttributeFactory
@@ -9,10 +38,12 @@ namespace ObjectSync
         {
             return typeName switch
             {
-                "string" => new Attribute<string>(obj, name),
+                "String" => new Attribute<string>(obj, name),
                 "int" => new Attribute<int>(obj, name),
                 "float" => new Attribute<float>(obj, name),
-                _ => throw new System.NotSupportedException("type not supported")
+                "Boolean" => new Attribute<bool>(obj, name),
+                "Vector3" => new Attribute<UnityEngine.Vector3>(obj, name),
+                _ => throw new System.NotSupportedException($"type not supported : {typeName}")
             };
         }
     }
@@ -56,13 +87,23 @@ namespace ObjectSync
             using (new SetLock(this)) // Avoid recursive Set() call
             {
                 this.value = value;
-                OnSet.Invoke(Value);
+                if(OnSet!=null)
+                    OnSet(Value);
                 if (send) Send();
             }
         }
-        public void Set(object value, bool send = true)
+        public void Set(JToken value, bool send = true)
         {
-            Set((T)value, send);
+            Set(value.ToObject<T>(), send);
+            /*
+            try
+            {
+                Set(value.ToObject<T>(), send); 
+            }
+            catch
+            {
+                throw new System.InvalidCastException($"Cast failed. SrcType : {value.GetType()} DstType : {typeof(T).Name} Value : {value}");
+            }*/
         }
         public void Recieve(JToken message)
         {
@@ -82,7 +123,7 @@ namespace ObjectSync
             }
             if (sendCD.Update())
             {
-                obj.SendMessage(new API.Out.Attribute<T> { id = obj.id, command = "atr", name = name, value = value });
+                obj.SendMessage(new API.Out.Attribute<T> { id = obj.id, command = "attribute", name = name, value = value });
             }
         }
     }
