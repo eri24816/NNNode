@@ -95,7 +95,7 @@ public class Theme : MonoBehaviour
                 node.selectColorTransition.SetColor("selected", C2(8));
                 node.selectColorTransition.SetColor("unselected", C0(0,0));
                 node.selectColorTransition.SetColor("hover", C2(5,5));
-                    node.selectColorTransition.SetDefault("unselected");
+                node.selectColorTransition.SetDefault("unselected");
                 
 
                 node.runColorTransition.SetColor("pending", C2(1));

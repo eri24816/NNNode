@@ -31,7 +31,7 @@ namespace GraphUI
             current.CopyTo(temp);
             foreach (Selectable s in temp)
             {
-                s.OnDestroy_(null);
+                s.syncObject.space.SendDestroy(s.syncObject.id);
             }
         }
         public virtual void OnPointerClick(PointerEventData eventData)
@@ -111,6 +111,7 @@ namespace GraphUI
         }
         public override void OnDestroy_(Newtonsoft.Json.Linq.JToken message)
         {
+            base.OnDestroy_(message);
             if (current.Contains(this)) current.Remove(this);
         }
 

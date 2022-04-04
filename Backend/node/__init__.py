@@ -10,7 +10,7 @@ from .torch import *
 
 del FunctionNode,Component,Attribute,Port
 
-object_class_list = [TestNode1]
+object_class_list = [TestNode1,TestNode2]
 import sys, inspect
 def print_classes():
     for name, obj in inspect.getmembers(sys.modules[__name__]):

@@ -27,9 +27,10 @@ class Space():
         # self.message_buffer = {}
 
         self.obj_classses = obj_classses
+        
+        self.objs = {}   
         self.root_obj : Object = root_obj_class(self,{'id':'0'})
-        self.send_direct_message({'command':'create','d':self.root_obj.serialize()})
-        self.objs = {'0':self.root_obj}     
+        self.send_direct_message({'command':'create','d':self.root_obj.serialize()})  
 
     def __getitem__(self,key):
         return self.objs[key]
@@ -51,8 +52,8 @@ class Space():
 
         # Destroy an Object in the space
         elif command == "destroy":
-            CommandDestroy(self,m['d']['id']).execute()
-            self.send_direct_message("msg %s %s destroyed" % (m['info']['type'],m['info']['id']),ws)
+            CommandDestroy(self,m['id']).execute()
+            self.send_direct_message("msg  %s destroyed" % (m['id']),ws)
 
         #TODO
         # Save the graph to disk
@@ -101,7 +102,7 @@ class Space():
             'root_object':self.root_obj.serialize(),
             },ws)
 
-    def create(self,d,is_new=False,parent = None):
+    def create(self,d,is_new=True,parent = None,send = True):
         """        
         Create a new object in the space
 
@@ -121,21 +122,25 @@ class Space():
             new_instance = c(self,d,is_new,parent)
         else:
             new_instance = c(self,d,is_new)
-            parent = d['attributes']['parent_id'].value
+            for attr in d['attributes']:
+                if attr['name']=='parent_id':
+                    parent = attr['value']
+                break
 
-        self.objs.update({id:new_instance})
-        self.send_direct_message({'command':'create','d':new_instance.serialize()})
+        # self.objs.update({id:new_instance}) # This is done in object's constructor.
+        if send:
+            self.send_direct_message({'command':'create','d':new_instance.serialize()})
 
         self.objs[parent].OnChildCreated(new_instance)
 
         return new_instance
 
-    def destroy(self,d):
-        self.send_direct_message({'command':'destroy','id':d['id']})
-        self.objs.pop(d['id'])
-        parent_id = self.objs[d['id']].parent_id.value
-        self.objs[parent_id].OnChildDestroyed(d['id'])
-        self.objs[d['id']].OnDestroy()
+    def destroy(self,id):
+        self.send_direct_message({'command':'destroy','id':id})
+        parent_id = self.objs[id].parent_id.value
+        self.objs[parent_id].OnChildDestroyed(self[id])
+        self.objs[id].OnDestroy()
+        self.objs.pop(id)
     
     def main_loop(self):
         raise NotImplementedError()

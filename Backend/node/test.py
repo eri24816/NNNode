@@ -3,22 +3,24 @@ from objectsync_server import  Attribute
 class TestNode1(Node):
     display_name = 'CNN block'
     category = 'function'
-    shape = 'General'
+    frontend_type = 'TestNode1'
+
+    def build(self):
+        d = {}
+        d['type'] = 'TestNode2'
+        d['id'] = str(self.space.id_iter.__next__())
+        self.space.create(d,parent = self.id,send = False)
 
 
-class TestNode2(FunctionNode):
+class TestNode2(Node):
     display_name = 'KLD loss'
     category = 'function'
-    shape = 'General'
+    frontend_type = 'TestNode1'
 
     in_names = ['mu','covariance']
     out_names = ['KLD']
     max_in_data = [64,64]
 
-    def initialize(self):
-        super().initialize()
-        Attribute(self,'atrname','float',0)
-        Component(self,'name','Slider','atrname')
 
 class TestNode3(FunctionNode):
     display_name = 'sample'

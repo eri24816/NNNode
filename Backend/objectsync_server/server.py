@@ -136,7 +136,7 @@ async def direct_message_sender():
         for ws in ws_list:
             if not ws.open:
                 continue
-            await ws.send(json.dumps(message, indent=4, sort_keys=True))
+            await ws.send(json.dumps(message, indent=4))
 
 '''
 async def buffered_message_sender():

@@ -78,9 +78,6 @@ namespace ObjectSync
     {
         public void RecieveMessage(JToken message);
         public IObjectClient CreateObjectClient(JToken d);
-
-        // Define custom attribute type conversion
-        public object ConvertJsonToType(JToken j, string type);
     }
 
     public class Space
@@ -129,14 +126,19 @@ namespace ObjectSync
 
         public int nameNum = 0;
 
-        public void Undo(string id)
+        public void SendUndo(string id)
         {
             SendMessage("{\"command\":\"undo\",\"id\":\"" + id + "\"}");
         }
 
-        public void Redo(string id)
+        public void SendRedo(string id)
         {
             SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
+        }
+
+        public void SendDestroy(string id)
+        {
+            SendMessage("{\"command\":\"destroy\",\"id\":\"" + id + "\"}");
         }
 
         public void Update()
@@ -163,15 +165,13 @@ namespace ObjectSync
                 }
                 else if (command == "create")
                 {
-                    var id = (string)message["d"]["id"];
-                    if (!objs.ContainsKey(id))
-                        Create(message["d"]);
+                    Create(message["d"]);
                 }
                 else if (command == "destroy")
                 {
                     var id = (string)message["id"];
                     objs[id].OnDestroy(message); 
-                    objs.Remove(id);
+                    //objs.Remove(id);    
                 }
                 else // directly send update messages to the object
                 {
@@ -205,7 +205,7 @@ namespace ObjectSync
 
             foreach (var child_d in d["children"])
             {
-                Create(child_d);
+                newObj.children.Add(Create(child_d));
             }
 
             return newObj;

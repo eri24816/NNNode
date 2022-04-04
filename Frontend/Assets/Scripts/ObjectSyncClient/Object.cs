@@ -9,6 +9,8 @@ namespace ObjectSync
         public readonly IObjectClient objectClient;
         public readonly string id;
         public Dictionary<string, IAttribute> Attributes { get; private set; }
+        public List<Object> children =new List<Object>();
+        string lastParent = null;
         public Object(Space space,JToken d, IObjectClient objectClient)
         {
             this.space = space;
@@ -23,16 +25,25 @@ namespace ObjectSync
                 new_attr.Set(attr_info["value"], false);
                 Attributes.Add((string)attr_info["name"], new_attr);
             }
+            RegisterAttribute<string>("parent_id", OnParentChanged, "none");
         }
-        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> onSet = null, string history_object = "none", T initValue = default)
+
+        private void OnParentChanged(string parent_id)
+        {
+            if(lastParent!=null)space.objs[lastParent].children.Remove(this);
+            if (parent_id != null) space.objs[parent_id].children.Add(this);
+            lastParent = parent_id;
+        }
+
+        public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> listener = null, string history_object = "none", T initValue = default)
         {
             if (Attributes.ContainsKey(name))
             {
                 Attribute<T> attr = (Attribute<T>)Attributes[name];
-                if (onSet != null)
+                if (listener != null)
                 {
-                    attr.OnSet+=onSet;
-                    onSet(attr.Value);
+                    attr.OnSet+=listener;
+                    listener(attr.Value);
                 }
                 return attr;
             }
@@ -43,8 +54,8 @@ namespace ObjectSync
 
                 SendMessage(new API.Out.NewAttribute<T> { command = "new attribute", id = id, name = a.name, type = a.type, history_object = history_object, value = initValue });
                 
-                if(onSet != null)
-                    a.OnSet += onSet;
+                if(listener != null)
+                    a.OnSet += listener;
                 a.Set(initValue, false);
                 return a;
             }
@@ -58,13 +69,18 @@ namespace ObjectSync
             }
             objectClient.RecieveMessage(message);
         }
-        public void OnDestroy(JToken message)
-        {
-            objectClient.OnDestroy_(message);
-        }
         public void SendMessage(object message)
         {
             space.SendMessage(message);
+        }
+        public void OnDestroy(JToken message)
+        {
+            foreach (var c in children)
+            {
+                c.OnDestroy(message);
+            }
+            space.objs.Remove(id);
+            objectClient.OnDestroy_(message);
         }
         public void Update()
         {

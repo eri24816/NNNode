@@ -121,7 +121,7 @@ class Node(objsync.Object):
     Base class of all types of nodes
     '''
     display_name = 'Node'
-    shape : str = ''
+    frontend_type : str = 'GeneralNode'
     category = ''
 
     class Info(TypedDict):
@@ -144,7 +144,7 @@ class Node(objsync.Object):
         '''
         d = super(Node, self).serialize()
         d.update({
-            "category" : self.category,"doc":self.__doc__,"name":self.display_name,'shape' : self.shape,
+            "category" : self.category,"doc":self.__doc__,"name":self.display_name,
             'portInfos' : [port.get_dict() for port in self.port_list],
         })
         return d

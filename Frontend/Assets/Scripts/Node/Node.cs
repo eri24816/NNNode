@@ -48,7 +48,7 @@ namespace GraphUI
 
 
         // ObjectSync.IObjectClient ====================
-        void ObjectSync.IObjectClient.OnDestroy_(JToken message)
+        public override void OnDestroy_(JToken message)
         { 
             base.OnDestroy_(message);
             StartCoroutine(Removing());
@@ -71,7 +71,6 @@ namespace GraphUI
         public override void OnCreate(JToken message, ObjectSync.Object obj)
         {
             base.OnCreate(message,obj);
-            spaceClient.Nodes.Add(syncObject.id, this);
 
             syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); });
             Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
@@ -133,7 +132,6 @@ namespace GraphUI
         {
             yield return null;
             Unselect();
-            SpaceClient.ins.Nodes.Remove(syncObject.id);
             Destroy(gameObject);
         }
 
@@ -141,6 +139,8 @@ namespace GraphUI
         public override void Select()
         {
             if (selected) return;
+
+            selectColorTransition.Switch("selected");
             base.Select();
 
         }

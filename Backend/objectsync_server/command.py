@@ -93,17 +93,20 @@ class CommandCreate(Command):
         self.history_obj = self.space[parent].id
 
     def execute(self):
+        super().execute()
         new_instance = self.space.create(self.d, is_new = True, parent=self.parent)
         self.d = new_instance.serialize()
 
     def redo(self):
-        self.space.create(self.d, is_new = False)
+        super().redo()
+        self.space.create(self.d, is_new = False,parent=self.parent)
         self.d = self.space[self.d['id']].serialize()
 
     def undo(self):
         ''' 
         serialize the object before destroying for redo.
         '''
+        super().undo()
         self.d = self.space[self.d['id']].serialize()
         self.space.destroy(self.d['id'])
 
@@ -114,19 +117,22 @@ class CommandDestroy(Command):
         self.id = id
         assert self.space != None
 
-        self.history_obj = self.space[self.id].id
+        self.history_obj = self.space[self.id].parent_id.value
 
     def execute(self):
+        super().execute()
         self.parent = self.space[self.id].parent_id.value
         self.d = self.space[self.id].serialize()
         self.space.destroy(self.id)
 
     def redo(self):
+        super().redo()
         self.parent = self.space[self.id].parent_id.value
         self.d = self.space[self.id].serialize()
         self.space.destroy(self.id)
 
     def undo(self):
+        super().undo()
         self.space.create(self.d, is_new = False, parent=self.parent)
 
 class CommandAttribute(Command):
@@ -253,14 +259,14 @@ class History:
         return 1
 
     def __str__(self):
-        s =  str(self.current.command) +" <=====\n"
+        s =  "  ===>\t"+str(self.current.command) +"\n"
         item = self.current.last
         while item != None:
-            s = str(item.command) + "\n" + s
+            s = "\t"+str(item.command) + "\n" + s
             item = item.last
         item = self.current.next
         while item != None:
-            s += str(item.command) + "\n"
+            s += "\t"+str(item.command) + "\n"
             item = item.next
         return f"History:\n" +  s
 

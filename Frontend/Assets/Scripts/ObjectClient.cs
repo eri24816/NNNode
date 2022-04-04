@@ -32,10 +32,13 @@ namespace GraphUI
             Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v) => { transform.localPosition = v;}, "parent", Vector3.zero);  
             Output = syncObject.RegisterAttribute<string>("output", (v) => { OnOutputChanged(v); }, "none");
 
-            
         }
         public virtual void OnDestroy_(JToken message)
         {
+            print($"destroying {syncObject.id}");
+            spaceClient.objs.Remove(syncObject.id);
+            print($"destroy{spaceClient.objs.Count}");
+
             Destroy(gameObject);
         }
 
@@ -43,9 +46,6 @@ namespace GraphUI
         {
             switch ((string)message["command"])
             {
-                case "rmv":
-                    Destroy(gameObject);
-                    break;
             }
         }
 

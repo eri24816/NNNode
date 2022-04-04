@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 public class CoolDown
 {
@@ -30,7 +29,7 @@ public class CoolDown
         return false;
     }
 }
-namespace ObjectSync 
+namespace ObjectSync
 {
     public class AttributeFactory
     {
@@ -86,6 +85,8 @@ namespace ObjectSync
             if (setLock) return;
             using (new SetLock(this)) // Avoid recursive Set() call
             {
+                if(this.value!=null)
+                    send &= (!this.value.Equals(value));
                 this.value = value;
                 if(OnSet!=null)
                     OnSet(Value);

@@ -14,9 +14,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
     public static SpaceClient ins;
 
-    public List<ObjectClient> objectClients = new List<ObjectClient>();
 
-    public Dictionary<string, Node> Nodes = new Dictionary<string, Node>();
     //public Dictionary<string, Flow> Flows;
     public Dictionary<string, Node> DemoNodes;
 
@@ -77,18 +75,12 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
         }); ;
         yield break;
     }
-    private void OnDestroy()
-    {
-        //space.Close();
-    }
     private void LateUpdate()
     {
         space.Update();
     }
 
     public float snap = 0.02f;
-
-
     public void RecieveMessage(JToken message)
     {
         string command = (string)message["command"];
@@ -96,19 +88,9 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
 
     public IObjectClient CreateObjectClient(JToken d)
     {
-        GameObject newObject = theme.Create((string)d["type"]);
+        GameObject newObject = theme.Create((string)d["frontend_type"]);
         ObjectClient objectClient = newObject.GetComponent<ObjectClient>();
-        objectClients.Add(objectClient);
         return objectClient;
-    }
-
-    public object ConvertJsonToType(JToken j, string type)
-    {
-        return type switch
-        {
-            "Vector3" => j.ToObject<Vector3>(),
-            _ => throw new System.Exception($"Type {type} not supported"),
-        };
     }
 
     public Vector3 GetSnappedPosition(Vector3 pos)

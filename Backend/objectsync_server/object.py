@@ -34,6 +34,8 @@ class Attribute:
         '''
         Call self.set from a CommandAttribute, to enable undo and redo
         '''
+        if value == self.value: 
+            return
         if self.history_obj == 'self':
             history_obj = self.obj.id
         elif self.history_obj == 'parent':
@@ -49,6 +51,8 @@ class Attribute:
         '''
         Recommand to use set_com(). Direct calling this method does not add command into history
         '''
+        if value == self.value: 
+            return
         if self.callback != None:
             self.callback(self.value,value)
         
@@ -60,7 +64,7 @@ class Attribute:
         self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
 
     def serialize(self):
-        d = {'name' : self.name, 'type' : self.type, 'value' : self.value,'history_obj':self.history_obj}
+        d = {'name' : self.name, 'type' : self.type, 'value' : self.value,'history_object':self.history_obj}
         return d
     
 
@@ -68,6 +72,7 @@ class Object:
     '''
     Base class for ObjectSync objects.
     '''
+    frontend_type = 'Object'
     catches_command = True
     forwards_command = True
 
@@ -76,8 +81,12 @@ class Object:
         self.id = d['id']
         self.history = History(self)
         self.attributes : Dict[str,Attribute] = {}
-
-        self.parent_id = Attribute(self,'parent_id','String',d['parent_id']if 'parent_id' in d else parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
+        if 'attributes' in d:
+            for attr in d['attributes']:
+                if attr['name']== 'parent_id':
+                    parent = attr['value']
+                break
+        self.parent_id = Attribute(self,'parent_id','String', parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
         
 
         if self.id != '0':
@@ -88,12 +97,18 @@ class Object:
             self.parent_id.set_com = types.MethodType(Attribute,parent_attribute_set_com_overwrite)
             self.parent = self.space[self.parent_id.value]
 
+        
+        self.space.objs.update({self.id:self})
+        
         self.children_ids = [] # It's already sufficient that parent_id be an attribute.
 
         # Child classes can override this function ( instead of __init__() ) to add attributes or anything the class needs.
         self.initialize()
+
+        
         
         self.deserialize(d)
+        
         if is_new:
             self.build()   
 
@@ -116,12 +131,12 @@ class Object:
         if 'attributes' in d:
             for attr_dict in d['attributes']:
                 if attr_dict['name'] in self.attributes:
-                    self.attributes[attr_dict['name']].set(attr_dict['value'])
+                    self.attributes[attr_dict['name']].value = (attr_dict['value'])
                 else:
-                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['history_object']).set(attr_dict['value'])
+                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['history_object'])
         if 'children' in d:
             for child_dict in d['children']:
-                self.space.create(child_dict,parent=self)
+                self.space.create(child_dict,parent=self,is_new = False,send=False)
 
     def serialize(self) -> Dict[str,Any]:
         # Do we need to serialize history ?
@@ -129,6 +144,7 @@ class Object:
         d.update({
             "id":self.id,
             "type":type(self).__name__,
+            'frontend_type' : self.frontend_type,
             "attributes":[attr.serialize() for attr in self.attributes.values()],
             "children":[self.space[c].serialize() for c in self.children_ids]
             })
