@@ -1,5 +1,6 @@
 # ObjectSync Server
 ## Overview
+[](overview.png)
 ObjectSync is a tool which helps app developers to make objects and their states shared across the server and multiple clients. Users can change the objects from either the server or any of the clients, and the changes will be automatically applied to all the other endpoints.
 
 There are three core classes in ObjectSync:
