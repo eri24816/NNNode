@@ -29,7 +29,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public GameObject categoryPanelPrefab;
     public Theme theme;
 
-    public Dictionary<string,GameObject> objs = new Dictionary<string, GameObject>();
+    public Dictionary<string,ObjectClient> objs = new Dictionary<string, ObjectClient>();
     
     
     public enum State

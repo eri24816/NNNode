@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 3842888474495308699}
   - component: {fileID: 5241189488818847321}
   - component: {fileID: 6705282589656299566}
+  - component: {fileID: 8394383651023595063}
   m_Layer: 0
   m_Name: TestNode1
   m_TagString: Untagged
@@ -69,6 +70,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eebf6ac4ef5b9234093a39b71ea31e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  specifyParentName: 
+  specifyParent: {fileID: 0}
+  specifyChildContainer: {fileID: 0}
   selected: 0
   Name: 
   componentPanel: {fileID: 0}
@@ -153,6 +157,18 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &8394383651023595063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010612035360753348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e0a9de7efb9bee4db17c1ae977002de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1579163131110375810
 GameObject:
   m_ObjectHideFlags: 0

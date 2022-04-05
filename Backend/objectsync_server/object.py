@@ -133,7 +133,7 @@ class Object:
                 if attr_dict['name'] in self.attributes:
                     self.attributes[attr_dict['name']].value = (attr_dict['value'])
                 else:
-                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['history_object'])
+                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['history_object']if 'history_object' in attr_dict else "none")
         if 'children' in d:
             for child_dict in d['children']:
                 self.space.create(child_dict,parent=self,is_new = False,send=False)
@@ -196,3 +196,8 @@ class Object:
 
     def OnChildDestroyed(self,child:Object):
         self.children_ids.remove(child.id)
+
+    def add_child(self,type,d={}):
+        d['type']=type
+        d['id'] = str(self.space.id_iter.__next__())
+        self.space.create(d,parent = self.id,send = False)

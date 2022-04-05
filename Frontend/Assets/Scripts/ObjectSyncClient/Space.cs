@@ -212,7 +212,14 @@ namespace ObjectSync
         }
         public void Close()
         {
-            ws.Close(CloseStatusCode.Normal,"disconnect from space");
+            try
+            {
+                ws.Close(CloseStatusCode.Normal, "disconnect from space");
+            }
+            catch(System.Exception e)
+            {
+
+            }
         }
         ~Space() {
             Close();

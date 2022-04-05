@@ -29,7 +29,7 @@ class Space():
         self.obj_classses = obj_classses
         
         self.objs = {}   
-        self.root_obj : Object = root_obj_class(self,{'id':'0'})
+        self.root_obj : Object = root_obj_class(self,{'id':'0'},is_new = True)
         self.send_direct_message({'command':'create','d':self.root_obj.serialize()})  
 
     def __getitem__(self,key):

@@ -15,7 +15,7 @@ namespace GraphUI
         public string  Name;
         //public Dictionary<string, Comp> components{ get; set; };
 
-        ObjectSync.Attribute<bool> Draggable;
+        ObjectSync.Attribute<bool> Draggable,IsDemo;
 
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;
@@ -74,6 +74,7 @@ namespace GraphUI
 
             syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); });
             Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
+            IsDemo = syncObject.RegisterAttribute<bool>("is_demo", initValue: false);
         }
         //============================================================
 
@@ -97,14 +98,20 @@ namespace GraphUI
             // send activate
         }
 
-
-
         bool dragging = false;
         Vector3 desiredPosition;
  
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != 0) return;
+            if (IsDemo.Value)
+            {/*
+                GameObject clone = Instantiate(gameObject);
+                clone.transform.SetParent(spaceClient.transform);
+                clone.GetComponent<Node>().enabled = false;
+                clone.AddComponent<>*/
+                return;
+            }
             else if(Draggable.Value)
             { 
                 if (!selected) OnPointerClick(eventData); // if not selected, select it first

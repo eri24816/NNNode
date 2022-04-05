@@ -52,8 +52,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eebf6ac4ef5b9234093a39b71ea31e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  specifyParentName: SpaceClient
+  specifyParent: {fileID: 0}
+  specifyChildContainer: {fileID: 0}
+  keepPrefabTransform: 0
   selected: 0
-  Name: 
+  Name: SpaceClient
   componentPanel: {fileID: 0}
   outline: {fileID: 7737829160960834178}
   selectColorTransition: {fileID: 396011230340003125}

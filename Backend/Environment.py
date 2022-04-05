@@ -7,7 +7,7 @@ from objectsync_server import server
 from objectsync_server.command import *
 import edge
 import node
-import inspect
+import objects
 
 class MyDeque(deque):
     # https://stackoverflow.com/questions/56821682/having-the-deque-with-the-advantages-of-queue-in-a-thread

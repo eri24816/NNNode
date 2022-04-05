@@ -62,6 +62,7 @@ public class Theme : MonoBehaviour
     public GameObject Create(string prefabName)
     {
         GameObject newObject = Instantiate(prefabDict[prefabName]);
+        newObject.transform.localPosition = prefabDict[prefabName].transform.localPosition;
         Setup(newObject, prefabName);
         instantiated.Add(new TypeObjectPair(prefabName, newObject));
         return newObject;
@@ -83,29 +84,25 @@ public class Theme : MonoBehaviour
 
     public void Setup(GameObject o, string prefabName)
     { 
-        switch (prefabName)
+       
+            
+        Node node = o.GetComponent<Node>();
+        if (node)
         {
-            case "GeneralNode":
-            case "SimpleNode":
-            case "RoundNode":
-            case "TestNode1":
-            default:
-                Node node = o.GetComponent<Node>();
-                
-                node.selectColorTransition.SetColor("selected", C2(8));
-                node.selectColorTransition.SetColor("unselected", C0(0,0));
-                node.selectColorTransition.SetColor("hover", C2(5,5));
-                node.selectColorTransition.SetDefault("unselected");
-                
+            node.selectColorTransition.SetColor("selected", C2(8));
+            node.selectColorTransition.SetColor("unselected", C0(0, 0));
+            node.selectColorTransition.SetColor("hover", C2(5, 5));
+            node.selectColorTransition.SetDefault("unselected");
 
-                node.runColorTransition.SetColor("pending", C2(1));
-                node.runColorTransition.SetColor("active", C2(5));
-                node.runColorTransition.SetColor("inactive", C0(1));
-                node.runColorTransition.SetDefault("inactive"); // TODO : Maybe it is running 
+
+            node.runColorTransition.SetColor("pending", C2(1));
+            node.runColorTransition.SetColor("active", C2(5));
+            node.runColorTransition.SetColor("inactive", C0(1));
+            node.runColorTransition.SetDefault("inactive"); // TODO : Maybe it is running 
+        }
 
                 //node.SetColor(C1(10));
                 
-                break;
                 /*
             case "DataFlow":
                 Flow flow = o.GetComponent<Flow>();
@@ -124,7 +121,7 @@ public class Theme : MonoBehaviour
                 o.GetComponentInChildren<RawImage>().color = C1(7,7);
                 break;
                 */
-        }
+        
     }
 
     Color C1(float t, float a = 10)

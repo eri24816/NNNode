@@ -2,9 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Hierachy : MonoBehaviour
+public class Hierachy : ObjectClient
 {
-
     [SerializeField]
     RectTransform rootPanel;
 
