@@ -916,7 +916,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.4627452, g: 0, b: 1, a: 0.5}
+  m_Color: {r: 0.515418, g: 0.4669811, b: 1, a: 0.5}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1496,6 +1496,50 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1810023665
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1810023667}
+  - component: {fileID: 1810023666}
+  m_Layer: 0
+  m_Name: Helper
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1810023666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1810023665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74bd7a595e6e2a74cb1d95efda8554d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1810023667
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1810023665}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1860507054
 GameObject:
   m_ObjectHideFlags: 0
@@ -1759,7 +1803,7 @@ MonoBehaviour:
   - {fileID: 1010612035360753348, guid: 56cbf4a1ddc18cc49b0544a8f456b97d, type: 3}
   - {fileID: 1010612035360753348, guid: 37b45fd53cadfd141ae185a956a3b476, type: 3}
   - {fileID: 4253424027564801966, guid: 463313a770936354aa46c3787b9f34df, type: 3}
-  mainForInspector: {r: 0.4627452, g: 0, b: 1, a: 1}
+  mainForInspector: {r: 0.515418, g: 0.4669811, b: 1, a: 1}
   secondaryForInspector: {r: 0, g: 0.54901934, b: 1, a: 1}
   bgBriteness: 0.27
   bg: {fileID: 2112478762}

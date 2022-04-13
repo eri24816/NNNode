@@ -121,22 +121,35 @@ namespace ObjectSync
                 attr.setLock = false;
             }
         }
-        public void Set(T value, bool send = true)
+        public void Set(T value, bool send = true, bool sendImmediately = false)
         {
+            if (!obj.space.flush || !obj.history_on) sendImmediately = true;
+            if (value!=null && value.Equals(Value)) return;
             if (setLock) return;
             using (new SetLock(this)) // Avoid recursive Set() call
             {
                 if(this.value!=null)
                     send &= (!this.value.Equals(value));
+                var old = this.value;
                 this.value = value;
                 if(OnSet!=null)
                     OnSet(Value);
-                if (send) Send();
+                if (send)
+                {
+                    if (sendImmediately)
+                    {
+                        obj.SendMessage(new API.Out.Attribute<T> { id = obj.id, command = "attribute", name = name, value = value });
+                    }
+                    else
+                        Send();
+                }
             }
         }
         public void Set(JToken value, bool send = true)
         {
+            
             Set(value.ToObject<T>(), send);
+            
             /*
             try
             {

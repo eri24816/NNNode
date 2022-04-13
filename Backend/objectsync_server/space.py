@@ -27,6 +27,8 @@ class Space():
         self.root_obj : Object = root_obj_class(self,{'id':'0'},is_new = True)
         self.send_direct_message({'command':'create','d':self.root_obj.serialize()})  
 
+        self.flush = True
+
     def __getitem__(self,key):
         return self.objs[key]
 
@@ -50,6 +52,10 @@ class Space():
             CommandDestroy(self,m['id']).execute()
             self.send_direct_message("msg  %s destroyed" % (m['id']),ws)
 
+        elif command == "flush on":
+            self.flush = True
+        elif command == "flush off":
+            self.flush = False
         #TODO
         # Save the graph to disk
         elif command == "save":
@@ -58,14 +64,17 @@ class Space():
         # Load the graph from disk
         elif command == "load":
             pass
-
+        
         # Let the object handle other messages
         else:
             self.objs[m['id']].recieve_message(m,ws)
 
-        self.command_manager.flush()
+        temp = len(self.command_manager.collected_commands)
+        if self.flush:
+            self.command_manager.flush()
 
-        print(self.root_obj.history)
+        if temp>0 and self.flush or command == 'undo' or command == 'redo':
+            print(self.root_obj.history)
 
     def send_direct_message(_, message,ws = None, exclude_ws = None):
         '''

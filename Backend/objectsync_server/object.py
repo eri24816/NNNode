@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict, Optional
 from typing import TYPE_CHECKING
+from xml.dom.minidom import Attr
 if TYPE_CHECKING:
     from objectsync_server.space import Space
 
@@ -78,6 +79,7 @@ class Object:
         self.space = space
         self.id = d['id']
         self.history = History(self)
+        self.history_on = True
         self.attributes : Dict[str,Attribute] = {}
         if 'attributes' in d:
             for attr in d['attributes']:
@@ -88,11 +90,6 @@ class Object:
         self.parent_id = Attribute(self,'parent_id','String', parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
 
         if self.id != '0':
-            import types
-            def parent_attribute_set_com_overwrite(self,value):
-                self.history_obj = get_co_ancestor([self.value,value])
-                self.set_com(value)
-            self.parent_id.set_com = types.MethodType(Attribute,parent_attribute_set_com_overwrite)
             self.parent = self.space[self.parent_id.value]
 
         
@@ -102,8 +99,6 @@ class Object:
 
         # Child classes can override this function ( instead of __init__() ) to add attributes or anything the class needs.
         self.initialize()
-
-        
         
         self.deserialize(d)
         
@@ -165,7 +160,12 @@ class Object:
 
         # Update an attribute
         if command =='attribute':
-            self.attributes[m['name']].set_com(m['value'])
+            if m['name'] == 'parent_id':
+                self.parent_id.history_obj = get_co_ancestor([self.space[self.parent_id.value],self.space[m['value']]]).id
+            if self.history_on:
+                self.attributes[m['name']].set_com(m['value'])
+            else: 
+                self.attributes[m['name']].set(m['value'])
         
         # Add a new attribute
         if command == 'new attribute':
@@ -192,6 +192,12 @@ class Object:
                 self.space.send_direct_message(f"msg obj {self.id} redone",ws)
             else:
                self.space.send_direct_message(f"msg obj {self.id} noting to redo",ws)
+
+        if command == "history on":
+            self.history_on = True
+
+        if command == "history off":
+            self.history_on = False
 
     def OnDestroy(self):
         pass

@@ -5,6 +5,11 @@ using UnityEngine.EventSystems;
 
 namespace GraphUI
 {
+    public interface ISelectable
+    {
+
+    }
+
     public class Selectable : ObjectClient, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler
     {
         public static List<Selectable> current = new();

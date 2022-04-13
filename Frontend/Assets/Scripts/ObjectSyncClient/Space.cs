@@ -101,6 +101,8 @@ namespace ObjectSync
 
         public JToken metadata;
 
+        public bool flush = true;
+
         public Space(ISpaceClient spaceClient, string route, AttributeFactory attributeFactory = null)
         {
             this.spaceClient = spaceClient;
@@ -143,6 +145,14 @@ namespace ObjectSync
         public void SendDestroy(string id)
         {
             SendMessage("{\"command\":\"destroy\",\"id\":\"" + id + "\"}");
+        }
+        public void SendFlushOn()
+        {
+            SendMessage("{\"command\":\"flush on\"}");
+        }
+        public void SendFlushOff()
+        {
+            SendMessage("{\"command\":\"flush off\"}");
         }
 
         public void Update()
@@ -228,6 +238,26 @@ namespace ObjectSync
         }
         ~Space() {
             Close();
+        }
+
+        public CommandSequence CommandSequence_()
+        {
+            return new CommandSequence(this);
+        }
+        public class CommandSequence : System.IDisposable
+        {
+            Space space;
+            public CommandSequence(Space space)
+            {
+                this.space = space;
+                space.flush = false;
+                space.SendFlushOff();
+            }
+            public void Dispose()
+            {
+                space.flush=true;   
+                space.SendFlushOn();
+            }
         }
     }
 }

@@ -57,24 +57,8 @@ public class SpaceClient : MonoBehaviour, ISpaceClient
             PrefabDict.Add(prefab.name, prefab);
 
         ins = this;
+    }
 
-        StartCoroutine(C());
-    }
-    public IEnumerator C()
-    {
-        yield return null;
-        space.SendMessage(new ObjectSync.API.Out.Create
-        {
-            parent = "0",
-            d = {
-                type="TestNode1" ,
-                attributes = new List<ObjectSync.API.Out.Create.Attribute>{
-                    new ObjectSync.API.Out.Create.Attribute{name="transform/pos",value=new Vector3(0,0,-1),history_object = "parent"}
-                }
-            }
-        });
-        yield break;
-    }
     private void LateUpdate()
     {
         space.Update();

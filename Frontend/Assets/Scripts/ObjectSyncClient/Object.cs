@@ -9,9 +9,10 @@ namespace ObjectSync
         public readonly Space space;
         public readonly IObjectClient objectClient;
         public readonly string id;
+        public bool history_on = true;
         public Dictionary<string, IAttribute> Attributes { get; private set; }
 
-        public List<Object> children =new();
+        public HashSet<Object> children =new();
         string lastParent = null;
         public Object(Space space,JToken d, IObjectClient objectClient)
         {
@@ -31,11 +32,13 @@ namespace ObjectSync
             RegisterAttribute<string>("parent_id", OnParentChanged, "none");
         }
 
-        private void OnParentChanged(string parent_id)
+        private void OnParentChanged(string new_value)
         {
-            if(lastParent!=null)space.objs[lastParent].children.Remove(this);
-            if (parent_id != null) space.objs[parent_id].children.Add(this);
-            lastParent = parent_id;
+
+            if (lastParent != null) {  space.objs[lastParent].children.Remove(this);}
+            
+            if (new_value != null) space.objs[new_value].children.Add(this);
+            lastParent = new_value;
         }
 
         public Attribute<T> RegisterAttribute<T>(string name, System.Action<T> listener = null, string history_object = "none", T initValue = default)
@@ -50,7 +53,7 @@ namespace ObjectSync
                 }
                 return attr;
             }
-            else
+            else 
             {
                 Attribute<T> a = new(this, name);
                 Attributes[name] = a;
@@ -120,6 +123,34 @@ namespace ObjectSync
         public void Redo()
         {
             SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
+        }
+        public void SendHistoryOn()
+        {
+            SendMessage("{\"command\":\"history on\",\"id\":\"" + id + "\"}");
+        }
+        public void SendHistoryOff()
+        {
+            SendMessage("{\"command\":\"history off\",\"id\":\"" + id + "\"}");
+        }
+
+        public NoHisyory NoHistory_()
+        {
+            return new NoHisyory(this);
+        }
+        public class NoHisyory : System.IDisposable
+        {
+            Object obj;
+            public NoHisyory(Object obj)
+            {
+                this.obj = obj;
+                obj.history_on = false;
+                obj.SendHistoryOff();
+            }
+            public void Dispose()
+            {
+                obj.history_on = true;
+                obj.SendHistoryOn();
+            }
         }
 
         public void Tag(string tag)

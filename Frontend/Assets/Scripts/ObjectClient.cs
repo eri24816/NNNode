@@ -8,7 +8,6 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
     protected SpaceClient spaceClient;
 
     public ObjectSync.Object syncObject;
-    protected ObjectSync.Attribute<Vector3> Pos;
     protected ObjectSync.Attribute<string> Output, ParentID;
 
     protected MonoBehaviour sendOnScrollTo;
@@ -36,7 +35,6 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
         transform.localScale = Vector3.one;
 
 
-        Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v) => { transform.localPosition = v;}, "parent", Vector3.zero);  
         Output = syncObject.RegisterAttribute<string>("output", (v) => { OnOutputChanged(v); }, "none");
 
     }

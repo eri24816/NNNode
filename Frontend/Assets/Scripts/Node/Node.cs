@@ -15,7 +15,8 @@ namespace GraphUI
         public string  Name;
         //public Dictionary<string, Comp> components{ get; set; };
 
-        ObjectSync.Attribute<bool> Draggable,IsDemo;
+        public ObjectSync.Attribute<bool> Draggable,IsDemo;
+        protected ObjectSync.Attribute<Vector3> Pos;
 
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;
@@ -44,7 +45,11 @@ namespace GraphUI
                 foreach (var d in GetComponentsInChildren<Selectable>())
                 {
                     if (d.gameObject == gameObject) continue;
-                    Destroy(d);
+                    if(d is Node node)
+                    {
+                        node.Draggable.Set(false);
+                    }
+                    //Destroy(d);
                 }
             }
         }
@@ -70,6 +75,12 @@ namespace GraphUI
 
         }*/
 
+        public override void OnParentChanged(string parent_id)
+        {
+            base.OnParentChanged(parent_id);
+            if(Pos != null)
+                TrySetPosition(Pos.Value);
+        }
 
         // ObjectSync.IObjectClient ====================
         public override void OnDestroy_(JToken message)
@@ -97,6 +108,8 @@ namespace GraphUI
             base.OnCreate(message,obj);
 
             syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); });
+
+            Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v)=> { TrySetPosition(v); }, "parent", Vector3.zero);
             Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
             IsDemo = syncObject.RegisterAttribute<bool>("is_demo", initValue: false);
 
@@ -129,31 +142,38 @@ namespace GraphUI
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != 0) return;
-            if (IsDemo.Value)
+            if (Draggable.Value)
             {
-                string creationTag = $"create/{ Random.Range(0, 10000000) }";
-                spaceClient.space.SendMessage(new ObjectSync.API.Out.Create
+                if (IsDemo.Value)
                 {
-                    parent = "0",
-                    d = {
+                    string creationTag = $"create/{ Random.Range(0, 10000000) }";
+                    spaceClient.space.SendMessage(new ObjectSync.API.Out.Create
+                    {
+                        parent = "0",
+                        d = {
                         type=syncObject.type ,
                         attributes = new List<ObjectSync.API.Out.Create.Attribute>{
                             //new ObjectSync.API.Out.Create.Attribute{name="transform/pos",value=new Vector3(0,0,-1),history_object = "parent"},
                             new ObjectSync.API.Out.Create.Attribute{name="tag/"+creationTag,value="",history_object = "none"}
                         }
                     }
-                });
-                spaceClient.creationWaiter.Add(new(creationTag, (o) =>
+                    });
+                    spaceClient.creationWaiter.Add(new(creationTag, (o) =>
+                    {
+                        ClearSelection();
+                        ((Selectable)o).Select();
+                        o.syncObject.Tag("creating_drag");
+                        Droppable.BeginDrag_s();
+                    }));
+                }
+                else
                 {
-                    ClearSelection();
-                    ((Selectable)o).Select();
-                    o.syncObject.Tag("creating_drag");
                     Droppable.BeginDrag_s();
-                }));
+                }
             }
-            else if (Draggable.Value)
+            else
             {
-                Droppable.BeginDrag_s();
+                transform.parent.GetComponentInParent<IBeginDragHandler>().OnBeginDrag(eventData);
             }
         }
 
@@ -223,6 +243,18 @@ namespace GraphUI
                 selectColorTransition.SetDefault("unselected");*/
         }
 
+        void TrySetPosition(Vector3 pos,Space space = Space.Self)
+        {
+            //if(space == Space.World) pos = transform.worldToLocalMatrix.MultiplyPoint(pos);
+            if (transform.parent.GetComponentInParent<UnityEngine.UI.LayoutGroup>() == null)
+            {
+                if(space == Space.Self)
+                    transform.localPosition = pos;
+                else
+                    transform.position = pos;
+            }
+        }
+
         #region IDroppable
         Vector3 dragOrigin;
         public void BeginDrag()
@@ -230,7 +262,7 @@ namespace GraphUI
             if (syncObject.TaggedAs("creating_drag"))
             {
                 var tf = transform as RectTransform;
-                transform.position = CamControl.worldMouse - tf.localToWorldMatrix.MultiplyVector(tf.rect.center);
+                TrySetPosition( CamControl.worldMouse - tf.localToWorldMatrix.MultiplyVector(tf.rect.center));
             }
             dragOrigin = transform.position;
         }
@@ -242,39 +274,59 @@ namespace GraphUI
         void IDroppable.EnterSlot(ISlot slot)
         {
             transform.SetParent(((MonoBehaviour)slot).transform);
-            //print("enter");
         }
 
         void IDroppable.ExitSlot(ISlot slot)
         {
             transform.SetParent(spaceClient.Root.transform);
-            //print("exit");
-        }
-
-        void IDroppable.DropOn(ISlot target)
-        {
-            //print("dropon");
         }
 
         void IDroppable.Drag(Vector3 delta)
         {
-            if (transform.parent.GetComponentInParent<UnityEngine.UI.LayoutGroup>() == null)
+            if (syncObject.TaggedAs("creating_drag"))
             {
-                if (syncObject.TaggedAs("creating_drag"))
-                {
-                    var tf = transform as RectTransform;
-                    transform.position = CamControl.worldMouse - tf.localToWorldMatrix.MultiplyVector(tf.rect.center);
-                }
-                else
-                {
-                    transform.position = dragOrigin + delta;
-                }
+                var tf = transform as RectTransform;
+                TrySetPosition( CamControl.worldMouse - tf.localToWorldMatrix.MultiplyVector(tf.rect.center),Space.World);
             }
+            else
+            {
+                TrySetPosition(dragOrigin + delta, Space.World);
+            }
+            
         }
-        public void EndDrag()
+        void IDroppable.EndDrag(ISlot slot)
         {
             if (syncObject.TaggedAs("creating_drag"))
-                { syncObject.Untag("creating_drag"); }
+            {
+                syncObject.Untag("creating_drag");
+                using (syncObject.NoHistory_())
+                {
+                    if (transform.parent.GetComponentInParent<UnityEngine.UI.LayoutGroup>() == null)
+                        Pos.Set(transform.localPosition);
+                    if (slot != null)
+                    {
+                        ParentID.Set(((ObjectClient)slot).syncObject.id);
+                    }
+                    else
+                    {
+                        ParentID.Set(spaceClient.Root.syncObject.id);
+                    }
+                }
+            }
+            else
+                using (spaceClient.space.CommandSequence_())
+                {
+                    if (transform.parent.GetComponentInParent<UnityEngine.UI.LayoutGroup>() == null)
+                        Pos.Set(transform.localPosition);
+                    if (slot != null)
+                    {
+                        ParentID.Set(((ObjectClient)slot).syncObject.id);
+                    }
+                    else
+                    {
+                        ParentID.Set(spaceClient.Root.syncObject.id);
+                    }
+                }
         }
         #endregion
 

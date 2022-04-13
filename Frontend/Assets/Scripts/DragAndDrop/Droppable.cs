@@ -10,9 +10,8 @@ namespace GraphUI {
         public bool AcceptsDropOn(ISlot target);
         public void EnterSlot(ISlot slot);
         public void ExitSlot(ISlot slot);
-        public void DropOn(ISlot target);
         public void Drag(Vector3 delta);
-        public void EndDrag();
+        public void EndDrag(ISlot slot);
     }
 
     [RequireComponent(typeof(CanvasGroup))]
@@ -92,14 +91,14 @@ namespace GraphUI {
                     yield return null;
                 }
             }
-            if(slot != null)
+            if(slot != null && obj.AcceptsDropOn(slot) && slot.AcceptsDrop(obj))
             {
-                if (obj.AcceptsDropOn(slot) && slot.AcceptsDrop(obj))
-                {
-                    obj.DropOn(slot);
-                }
+                obj.EndDrag(slot);
             }
-            obj.EndDrag();
+            else
+            {
+                obj.EndDrag(null);
+            }
         }
 
         void EnterSlot(ISlot slot)
@@ -115,6 +114,7 @@ namespace GraphUI {
             if (slot == this.slot)
             {
                 obj.ExitSlot(slot);
+                this.slot=null;
             }
         }
 

@@ -44,21 +44,26 @@ class CommandSequence(Command):
         self.commands = commands
         space = commands[0].space
         self.history_obj = get_co_ancestor([space[c.history_obj] for c in self.commands]).id
+        self.done = True
         
     def execute(self):
         super().execute()
         for command in self.commands:
             command.execute()
+        self.done = True
     
     def redo(self):
         super().redo()
         for command in self.commands:
             command.redo()
+            
+        self.done = True
 
     def undo(self):
         super().undo()
         for command in reversed(self.commands):
             command.undo()
+        self.done = False
 
     def __str__(self):
         res = "Sequence: " 
