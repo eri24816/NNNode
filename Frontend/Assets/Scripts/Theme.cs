@@ -27,7 +27,6 @@ public class Theme : MonoBehaviour
     [SerializeField] GameObject bg;
     [SerializeField] List<Image> buttons;
 
-
     private void OnValidate()
     {
         CheckColorChange();
@@ -36,6 +35,7 @@ public class Theme : MonoBehaviour
     {
         CheckColorChange();
     }
+
     void CheckColorChange()
     {
         if (mainForInspector != _main)

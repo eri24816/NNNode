@@ -15,6 +15,10 @@ namespace ObjectSync
                 public string command = "new attribute", id, name, type, history_object;
                 public T value;
             }
+            public class DeleteAttribute
+            {
+                public string command = "delete attribute", id, name;
+            }
             public class Attribute<T>
             {
                 public string command = "attribute";
@@ -78,6 +82,7 @@ namespace ObjectSync
     {
         public void RecieveMessage(JToken message);
         public IObjectClient CreateObjectClient(JToken d);
+        public void OnObjectCreated(Object obj);
     }
 
     public class Space
@@ -125,7 +130,6 @@ namespace ObjectSync
         }
 
         public int nameNum = 0;
-
         public void SendUndo(string id)
         {
             SendMessage("{\"command\":\"undo\",\"id\":\"" + id + "\"}");
@@ -171,7 +175,6 @@ namespace ObjectSync
                 {
                     var id = (string)message["id"];
                     objs[id].OnDestroy(message); 
-                    //objs.Remove(id);    
                 }
                 else // directly send update messages to the object
                 {
@@ -196,7 +199,7 @@ namespace ObjectSync
             }
 
             IObjectClient objectClient = spaceClient.CreateObjectClient(d);
-            Object newObj = new Object(this, d, objectClient);
+            Object newObj = new(this, d, objectClient);
 
             objectClient.OnCreate(d, newObj);
 
@@ -208,15 +211,17 @@ namespace ObjectSync
                 newObj.children.Add(Create(child_d));
             }
 
+            spaceClient.OnObjectCreated(newObj);
+
             return newObj;
         }
         public void Close()
         {
             try
             {
-                ws.Close(CloseStatusCode.Normal, "disconnect from space");
+                //ws.Close(CloseStatusCode.Normal, "disconnect from space");
             }
-            catch(System.Exception e)
+            catch(System.Exception)
             {
 
             }

@@ -7,7 +7,7 @@ namespace GraphUI
 {
     public class Selectable : ObjectClient, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler
     {
-        public static List<Selectable> current=new List<Selectable>();
+        public static List<Selectable> current = new();
 
         public bool selected = false;
         float lastClickTime;
@@ -21,7 +21,7 @@ namespace GraphUI
         }
         public static void ClearSelection()
         {
-            foreach (Selectable s in current)
+            foreach (Selectable s in current.ToArray())
                 s.Unselect();
             current.Clear();
         }
@@ -34,9 +34,16 @@ namespace GraphUI
                 s.syncObject.space.SendDestroy(s.syncObject.id);
             }
         }
+
+
         public virtual void OnPointerClick(PointerEventData eventData)
         {
-            if (dragged) return; // Check dragging
+            if (unselectOtherWhenClick)
+            {
+                foreach (Selectable s in current.ToArray())
+                    if (s != this)
+                        s.Unselect();
+            }
         }
         protected virtual void OnDoubleClick()
         {
@@ -45,10 +52,12 @@ namespace GraphUI
         public virtual void Select()
         {
             selected = true;
+            current.Add(this);
         }
         public virtual void Unselect()
         {
             selected = false;
+            current.Remove(this);
         }
 
         public virtual void OnPointerEnter(PointerEventData eventData)
@@ -59,16 +68,13 @@ namespace GraphUI
             }
         }
 
-        
-
         public virtual void OnPointerExit(PointerEventData eventData)
         {
             mouseLastExitTime = Time.time;
         }
-        protected bool dragged;
+        bool unselectOtherWhenClick = false;
         public void OnPointerDown(PointerEventData eventData)
         {
-            dragged = false;
             SoundEffect.Click(this);
             if (eventData.button == 0)
             {
@@ -76,16 +82,15 @@ namespace GraphUI
                 else lastClickTime = Time.time;
 
 
+                unselectOtherWhenClick = false;
                 if (CamControl.ctrlDown)
                 {
                     if (selected)
                     {
-                        current.Remove(this);
                         Unselect();
                     }
                     else
                     {
-                        current.Add(this);
                         Select();
                     }
                 }
@@ -93,19 +98,21 @@ namespace GraphUI
                 {
                     if (!selected)
                     {
-                        current.Add(this);
                         Select();
                     }
                 }
                 else
                 {
-                    foreach (Selectable s in current)
-                        if (s != this)
-                            s.Unselect();
-                    current.Clear();
-                    current.Add(this);
                     if (!selected)
-                        Select();
+                    {
+                        foreach (Selectable s in current.ToArray())
+                            if (s != this)
+                                s.Unselect(); Select();
+                    }
+                    else
+                    {
+                        unselectOtherWhenClick = true;
+                    }
                 }
             }
         }
@@ -114,7 +121,5 @@ namespace GraphUI
             base.OnDestroy_(message);
             if (current.Contains(this)) current.Remove(this);
         }
-
-
     }
 }

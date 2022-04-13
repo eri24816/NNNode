@@ -1,60 +1,16 @@
-'''
-Websocket server for NNobj
-
-API:
-    /lobby/{space_name}  Lobby
-        Usage:
-            1. Connect
-            Send commands to server :
-                - stt <space name>
-                    1. Wait for a respond message from server
-        
-    /space/{space_name}  Interact with an spaceironment
-        Usage:
-            1. Connect
-            2. Wait for a respond message from server
-            3. 
-            Send commands to server :
-                - new : create a obj or a flow
-                - cod : modify code in a Codeobj
-                - act : activate a obj
-                - mov : move a obj
-            Recieve messages form server : 
-                
-
-
-
-prefix:
-    client -> server:
-    - cod
-    - exc
-
-    server -> client
-    - msg
-    - wrn
-    - err
-
-'''
-
-
-
-from asyncio.events import get_running_loop
-from asyncio.queues import Queue
 from typing import Dict, Tuple, Optional
-import typing
 from typing import TYPE_CHECKING
 import websockets
 import asyncio
 import threading
-if True:
-    from .space import Space
-    from .object import Object
+from .space import Space
+from .object import Object
 import json
 
 space_class : Optional[type] = None
 
 if TYPE_CHECKING:
-    spaces: typing.Dict[str,Space]=dict()
+    spaces: Dict[str,Space]=dict()
 else:
     spaces=dict()
 
@@ -72,11 +28,9 @@ def set_space_class(space_class_):
 
 @router.route("/lobby") #* lobby
 async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, path):
-    #print( isinstance(space_class,Space))
     global message_sender_started
     if not message_sender_started:
         asyncio.create_task(direct_message_sender())
-        #asyncio.create_task(buffered_message_sender())
         message_sender_started = True
     async for message in websocket:
         command=message[:3]
@@ -96,7 +50,7 @@ async def lobby(websocket : websockets.legacy.server.WebSocketServerProtocol, pa
             spaces.update({space_name:new_space})
             new_thread.start()
 
-            new_space.send_direct_message = lambda content, ws=None: messages_to_client.put_nowait((new_space.ws_clients if ws == None else [ws], content))
+            new_space.send_direct_message = lambda content, ws=None, exclude_ws = []: messages_to_client.put_nowait(([w for w in new_space.ws_clients if w != exclude_ws] if ws == None else [ws], content))
 
             print(f'space {space_name} created')
 
@@ -137,24 +91,6 @@ async def direct_message_sender():
             if not ws.open:
                 continue
             await ws.send(json.dumps(message, indent=4))
-
-'''
-async def buffered_message_sender():
-    while(True):
-        for space in spaces.values():
-            # Each space has a message buffer
-            if space.running_obj:
-                space.running_obj.flush_output()
-            for key, value in sorted(space.message_buffer.copy().items()):
-                command_, id = key[1:4], key[5:].split('/')[0]
-                if command_ == "atr":
-                    messages_to_client.put_nowait((space.ws_clients,{'command': command_, 'id': id, 'name':value,'value':space.objs[id].attributes[value].value}))
-                else:
-                    messages_to_client.put_nowait((space.ws_clients,{'command': command_, 'id': id, 'info': value}))
-                #print({'command': command_, 'id': id, 'value': value})
-            space.message_buffer.clear()
-        await asyncio.sleep(0.1)
-'''
 
 def start(space_class_, obj_classes_, root_obj_class_):
     global space_class, obj_classes, root_obj_class

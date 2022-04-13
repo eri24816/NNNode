@@ -5,14 +5,17 @@ namespace ObjectSync
 {
     public class Object
     {
+        public readonly string type;
         public readonly Space space;
         public readonly IObjectClient objectClient;
         public readonly string id;
         public Dictionary<string, IAttribute> Attributes { get; private set; }
-        public List<Object> children =new List<Object>();
+
+        public List<Object> children =new();
         string lastParent = null;
         public Object(Space space,JToken d, IObjectClient objectClient)
         {
+            type = (string)d["type"];
             this.space = space;
             this.objectClient = objectClient;
             Attributes = new Dictionary<string, IAttribute>();
@@ -49,7 +52,7 @@ namespace ObjectSync
             }
             else
             {
-                Attribute<T> a = new Attribute<T>(this, name);
+                Attribute<T> a = new(this, name);
                 Attributes[name] = a;
 
                 SendMessage(new API.Out.NewAttribute<T> { command = "new attribute", id = id, name = a.name, type = a.type, history_object = history_object, value = initValue });
@@ -60,12 +63,34 @@ namespace ObjectSync
                 return a;
             }
         }
+        public void DeleteAttribute(string name)
+        {
+            if (Attributes.ContainsKey(name))
+            {
+                SendMessage(new API.Out.DeleteAttribute { id = id, name = name });
+                Attributes.Remove(name);
+            }
+        }
         public void RecieveMessage(JToken message)
         {
             string command = (string)message["command"];
             if(command == "attribute")
             {
                 Attributes[(string)message["name"]].Recieve(message);
+            }
+            else if(command == "new attribute")
+            {
+                if (!Attributes.ContainsKey((string)message["name"]))
+                {
+                    var new_attr = space.attributeFactory.Produce(this, (string)message["name"], (string)message["type"]);
+                    new_attr.Set(message["value"], false);
+                    Attributes.Add((string)message["name"], new_attr);
+                }
+            }
+            else if (command == "delete attribute")
+            {
+                if (Attributes.ContainsKey((string)message["name"]))
+                    Attributes.Remove((string)message["name"]);
             }
             objectClient.RecieveMessage(message);
         }
@@ -86,6 +111,37 @@ namespace ObjectSync
         {
             foreach(var a in Attributes)
                 a.Value.Update();
+        }
+
+        public void Undo()
+        {
+            SendMessage("{\"command\":\"undo\",\"id\":\"" + id + "\"}");
+        }
+        public void Redo()
+        {
+            SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
+        }
+
+        public void Tag(string tag)
+        {
+            string q = $"tag/{tag}";
+            if (!Attributes.ContainsKey(q))
+            {
+                RegisterAttribute<string>(q);
+            }
+        }
+        public void Untag(string tag)
+        {
+            string q = $"tag/{tag}";
+            if (Attributes.ContainsKey(q))
+            {
+                DeleteAttribute(q);
+            }
+        }
+        public bool TaggedAs(string tag)
+        {
+            string q = $"tag/{tag}";
+            return Attributes.ContainsKey(q);
         }
     }
 }

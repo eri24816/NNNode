@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using ObjectSync;
 
 
-public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
+public class SpaceClient : MonoBehaviour, ISpaceClient
 {
     public ObjectSync.Space space;
 
@@ -29,8 +29,8 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
     public GameObject categoryPanelPrefab;
     public Theme theme;
 
-    public Dictionary<string,ObjectClient> objs = new Dictionary<string, ObjectClient>();
-    
+    public Dictionary<string,ObjectClient> objs = new();
+    public ObjectClient Root { get { return objs["0"]; } }
     
     public enum State
     {
@@ -72,7 +72,7 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
                     new ObjectSync.API.Out.Create.Attribute{name="transform/pos",value=new Vector3(0,0,-1),history_object = "parent"}
                 }
             }
-        }); ;
+        });
         yield break;
     }
     private void LateUpdate()
@@ -86,15 +86,38 @@ public class SpaceClient : MonoBehaviour, ObjectSync.ISpaceClient
         string command = (string)message["command"];
     }
 
+
     public IObjectClient CreateObjectClient(JToken d)
     {
         GameObject newObject = theme.Create((string)d["frontend_type"]);
         ObjectClient objectClient = newObject.GetComponent<ObjectClient>();
+        objectClient.name = $"{d["type"]} #{d["id"]} ({d["frontend_type"]})";
         return objectClient;
+    }
+
+    /*
+     * Wait for an Objet with a specific tag to be create, then invoke a callback. 
+     * Example usage:
+     * creationWaiter.Add(new("sometag", (o) => {print($"{o} created.")}));
+     */
+    public List<System.Tuple<string, System.Action<ObjectClient>>> creationWaiter = new();
+
+    public void OnObjectCreated(ObjectSync.Object obj)
+    {
+        foreach(var p in creationWaiter.ToArray())
+        {
+            if (obj.TaggedAs(p.Item1))
+            {
+                p.Item2((ObjectClient)obj.objectClient);
+                creationWaiter.Remove(p);
+            }
+        }
     }
 
     public Vector3 GetSnappedPosition(Vector3 pos)
     {
         return new Vector3(Mathf.Round(pos.x / snap) * snap, Mathf.Round(pos.y / snap) * snap, pos.z);
     }
+
+
 }

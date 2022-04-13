@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
-
+using System.Collections.Generic;
 public class CoolDown
 {
     float span;
@@ -29,6 +29,40 @@ public class CoolDown
         return false;
     }
 }
+class FriendlyTypeName
+{
+    // From https://stackoverflow.com/questions/401681/how-can-i-get-the-correct-text-definition-of-a-generic-type-using-reflection
+    public static string GetFriendlyTypeName(System.Type type)
+    {
+        if (type.IsGenericParameter)
+        {
+            return type.Name;
+        }
+
+        if (!type.IsGenericType)
+        {
+            return type.Name;
+        }
+
+        var builder = new System.Text.StringBuilder();
+        var name = type.Name;
+        var index = name.IndexOf("`");
+        builder.Append( name[..index]);
+        builder.Append('<');
+        var first = true;
+        foreach (var arg in type.GetGenericArguments())
+        {
+            if (!first)
+            {
+                builder.Append(',');
+            }
+            builder.Append(GetFriendlyTypeName(arg));
+            first = false;
+        }
+        builder.Append('>');
+        return builder.ToString();
+    }
+}
 namespace ObjectSync
 {
     public class AttributeFactory
@@ -42,6 +76,13 @@ namespace ObjectSync
                 "float" => new Attribute<float>(obj, name),
                 "Boolean" => new Attribute<bool>(obj, name),
                 "Vector3" => new Attribute<UnityEngine.Vector3>(obj, name),
+
+                "List<String>" => new Attribute<List<string>>(obj, name),
+                "List<int>" => new Attribute<List<int>>(obj, name),
+                "List<float>" => new Attribute<List<float>>(obj, name),
+                "List<Boolean>" => new Attribute<List<bool>>(obj, name),
+                "List<Vector3>" => new Attribute<List<UnityEngine.Vector3>>(obj, name),
+
                 _ => throw new System.NotSupportedException($"type not supported : {typeName}")
             };
         }
@@ -66,7 +107,7 @@ namespace ObjectSync
         {
             this.obj = obj;
             this.name = name; // Name format: category1/category2/.../attr_name
-            type = typeof(T).Name;
+            type = FriendlyTypeName.GetFriendlyTypeName(typeof(T));
             recvCD = new CoolDown(3);
             sendCD = new CoolDown(2); // Avoid client to upload too frequently e.g. upload the code everytime the user key in a letter.
         }

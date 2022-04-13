@@ -1,16 +1,11 @@
 from __future__ import annotations
-from asyncio.queues import Queue
-from math import inf
-from tkinter import E
 from typing import Dict
-#rom objectsync_server.command import *
 from .object import Object
 from objectsync_server.command import CommandManager, CommandCreate, CommandDestroy
 
 import json
 from itertools import count
 
-# the environment to run the code in
 class Space():
     obj_classses = {}
     def __init__(self,name, obj_classses:Dict[str,type], root_obj_class:type = Object):
@@ -72,24 +67,10 @@ class Space():
 
         print(self.root_obj.history)
 
-    def send_direct_message(_, message,ws = None):
+    def send_direct_message(_, message,ws = None, exclude_ws = None):
         '''
         This will be overwritten by server.py
         '''
-
-    '''
-    def send_buffered_message(self,id,command,content:Any = ''):
-
-        priority = 5 # the larger the higher, 0~9
-        if command == 'create':
-            priority = 8
-        
-        k=str(9-priority)+command+"/"+str(id)
-        if command == 'create':
-            k+='/'+content['type']
-        if command == 'attribute':
-            k+='/'+content
-    '''
 
     def OnClientConnection(self,ws):
         self.ws_clients.append(ws)
@@ -127,7 +108,6 @@ class Space():
                     parent = attr['value']
                 break
 
-        # self.objs.update({id:new_instance}) # This is done in object's constructor.
         if send:
             self.send_direct_message({'command':'create','d':new_instance.serialize()})
 

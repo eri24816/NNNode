@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace GraphUI
 {
-    public class Node : Selectable,  IBeginDragHandler,IEndDragHandler,IDragHandler,ObjectSync.IObjectClient
+    public class Node : Selectable,  IBeginDragHandler,IEndDragHandler,IDragHandler,ObjectSync.IObjectClient,IDroppable,ISlot
     {
         #region vars
         //public List<Port> ports;
@@ -22,8 +22,32 @@ namespace GraphUI
 
         public ColorTransition selectColorTransition, runColorTransition;
 
+        Droppable droppable;
 
         #endregion
+
+        private void Start()
+        {
+            droppable = GetComponent<Droppable>();
+            if (IsDemo.Value)
+            {
+                foreach (var d in GetComponentsInChildren<Droppable>())
+                {
+                    if (d.gameObject == gameObject) continue;
+                    Destroy(d);
+                }
+                foreach (var d in GetComponentsInChildren<Slot>())
+                {
+                    if (d.gameObject == gameObject) continue;
+                    Destroy(d);
+                }
+                foreach (var d in GetComponentsInChildren<Selectable>())
+                {
+                    if (d.gameObject == gameObject) continue;
+                    Destroy(d);
+                }
+            }
+        }
 
         /*
         protected virtual void CreatePort(JToken portInfo)
@@ -75,6 +99,7 @@ namespace GraphUI
             syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); });
             Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
             IsDemo = syncObject.RegisterAttribute<bool>("is_demo", initValue: false);
+
         }
         //============================================================
 
@@ -100,39 +125,39 @@ namespace GraphUI
 
         bool dragging = false;
         Vector3 desiredPosition;
- 
+
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != 0) return;
             if (IsDemo.Value)
-            {/*
-                GameObject clone = Instantiate(gameObject);
-                clone.transform.SetParent(spaceClient.transform);
-                clone.GetComponent<Node>().enabled = false;
-                clone.AddComponent<>*/
-                return;
-            }
-            else if(Draggable.Value)
-            { 
-                if (!selected) OnPointerClick(eventData); // if not selected, select it first
-                dragged = true; // Prevent Selectable from selecting
-                foreach (Selectable s in current)
-                    if (s is Node node)
-                        node.BeginDrag();
-            }
-        }
-        public void BeginDrag() { dragging = true; desiredPosition = transform.localPosition; }
-        public void OnEndDrag(PointerEventData eventData)
-        {
-            if (!Draggable.Value) return;
-            if (eventData.button != 0) return;
-            foreach (Selectable s in current)
-                if (s is Node node)
+            {
+                string creationTag = $"create/{ Random.Range(0, 10000000) }";
+                spaceClient.space.SendMessage(new ObjectSync.API.Out.Create
                 {
-                    node.EndDrag();
-                }
+                    parent = "0",
+                    d = {
+                        type=syncObject.type ,
+                        attributes = new List<ObjectSync.API.Out.Create.Attribute>{
+                            //new ObjectSync.API.Out.Create.Attribute{name="transform/pos",value=new Vector3(0,0,-1),history_object = "parent"},
+                            new ObjectSync.API.Out.Create.Attribute{name="tag/"+creationTag,value="",history_object = "none"}
+                        }
+                    }
+                });
+                spaceClient.creationWaiter.Add(new(creationTag, (o) =>
+                {
+                    ClearSelection();
+                    ((Selectable)o).Select();
+                    o.syncObject.Tag("creating_drag");
+                    Droppable.BeginDrag_s();
+                }));
+            }
+            else if (Draggable.Value)
+            {
+                Droppable.BeginDrag_s();
+            }
         }
-        public void EndDrag() { dragging = false; }
+
+        public void OnEndDrag(PointerEventData eventData){}
         public void OnDrag(PointerEventData eventData) { }
 
         public virtual IEnumerator Removing()// SAO-like?
@@ -198,6 +223,66 @@ namespace GraphUI
                 selectColorTransition.SetDefault("unselected");*/
         }
 
+        #region IDroppable
+        Vector3 dragOrigin;
+        public void BeginDrag()
+        {
+            if (syncObject.TaggedAs("creating_drag"))
+            {
+                var tf = transform as RectTransform;
+                transform.position = CamControl.worldMouse - tf.localToWorldMatrix.MultiplyVector(tf.rect.center);
+            }
+            dragOrigin = transform.position;
+        }
+        bool IDroppable.AcceptsDropOn(ISlot target)
+        {
+            return true;
+        }
+
+        void IDroppable.EnterSlot(ISlot slot)
+        {
+            transform.SetParent(((MonoBehaviour)slot).transform);
+            //print("enter");
+        }
+
+        void IDroppable.ExitSlot(ISlot slot)
+        {
+            transform.SetParent(spaceClient.Root.transform);
+            //print("exit");
+        }
+
+        void IDroppable.DropOn(ISlot target)
+        {
+            //print("dropon");
+        }
+
+        void IDroppable.Drag(Vector3 delta)
+        {
+            if (transform.parent.GetComponentInParent<UnityEngine.UI.LayoutGroup>() == null)
+            {
+                if (syncObject.TaggedAs("creating_drag"))
+                {
+                    var tf = transform as RectTransform;
+                    transform.position = CamControl.worldMouse - tf.localToWorldMatrix.MultiplyVector(tf.rect.center);
+                }
+                else
+                {
+                    transform.position = dragOrigin + delta;
+                }
+            }
+        }
+        public void EndDrag()
+        {
+            if (syncObject.TaggedAs("creating_drag"))
+                { syncObject.Untag("creating_drag"); }
+        }
+        #endregion
+
+        public bool AcceptsDrop(IDroppable dropped)
+        {
+            if (IsDemo.Value) return false;
+            return true;
+        }
 
     }
 }

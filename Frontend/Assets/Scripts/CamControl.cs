@@ -73,8 +73,17 @@ public class CamControl : MonoBehaviour
         Physics.Raycast(cam.ScreenPointToRay(mouse), out RaycastHit hit);
         colliderHover = hit.collider;
 
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) Selectable.TheOnlySelectedNode()?.Undo();
-        if (ctrlDown && Input.GetKeyDown(KeyCode.Y)) Selectable.TheOnlySelectedNode()?.Redo();
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Z)) {
+            var o = Selectable.TheOnlySelectedNode();
+            if (o) o.Undo();
+            else SpaceClient.ins.Root.Undo();
+        }
+        if (ctrlDown && Input.GetKeyDown(KeyCode.Y))
+        {
+            var o = Selectable.TheOnlySelectedNode();
+            if (o) o.Redo();
+            else SpaceClient.ins.Root.Redo();
+        }
         if (Input.GetKeyDown(KeyCode.Delete))
         {
             Selectable.Delete();
@@ -83,7 +92,7 @@ public class CamControl : MonoBehaviour
         {
             Debug.Break();
         }
-        
+
 
     }
 
@@ -94,4 +103,7 @@ public class CamControl : MonoBehaviour
             transform.Translate(new Vector3(0, 0, e.scrollDelta.y * zoom * focusPlane.GetDistanceToPoint(transform.position)));
         transform.Translate(worldMouse - WorldPoint()); // make center of the camera stick to a point
     }
+
+
+
 }

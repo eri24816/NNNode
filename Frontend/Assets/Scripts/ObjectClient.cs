@@ -7,7 +7,7 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
 {
     protected SpaceClient spaceClient;
 
-    protected ObjectSync.Object syncObject;
+    public ObjectSync.Object syncObject;
     protected ObjectSync.Attribute<Vector3> Pos;
     protected ObjectSync.Attribute<string> Output, ParentID;
 
@@ -36,7 +36,7 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
         transform.localScale = Vector3.one;
 
 
-            Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v) => { transform.localPosition = v;}, "parent", Vector3.zero);  
+        Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v) => { transform.localPosition = v;}, "parent", Vector3.zero);  
         Output = syncObject.RegisterAttribute<string>("output", (v) => { OnOutputChanged(v); }, "none");
 
     }
@@ -51,9 +51,12 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
 
     public virtual void RecieveMessage(JToken message)
     {
+        /*
         switch ((string)message["command"])
         {
+
         }
+        */
     }
 
     public virtual void OnParentChanged(string parent_id)
@@ -72,6 +75,7 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
     {
 
     }
+
     public void OnScroll(PointerEventData eventData)
     {
         // Send scroll event ahead to the background, instead of blocking it.
@@ -81,10 +85,10 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
 
     public void Undo()
     {
-        syncObject.SendMessage("{\"command\":\"undo\",\"id\":\"" + syncObject.id + "\"}");
+        syncObject.Undo();
     }
     public void Redo()
     {
-        syncObject.SendMessage("{\"command\":\"redo\",\"id\":\"" + syncObject.id + "\"}");
+        syncObject.Redo();
     }
 }

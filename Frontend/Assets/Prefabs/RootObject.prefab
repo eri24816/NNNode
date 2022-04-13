@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4398760584315928354}
   - component: {fileID: 396011230340003125}
   - component: {fileID: 3842888474495308699}
+  - component: {fileID: -5572390060139805853}
   m_Layer: 0
   m_Name: RootObject
   m_TagString: Untagged
@@ -47,7 +48,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1010612035360753348}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eebf6ac4ef5b9234093a39b71ea31e2a, type: 3}
   m_Name: 
@@ -55,7 +56,6 @@ MonoBehaviour:
   specifyParentName: SpaceClient
   specifyParent: {fileID: 0}
   specifyChildContainer: {fileID: 0}
-  keepPrefabTransform: 0
   selected: 0
   Name: SpaceClient
   componentPanel: {fileID: 0}
@@ -94,6 +94,21 @@ MonoBehaviour:
   color: {r: 0, g: 0, b: 0, a: 0}
   graphics:
   - {fileID: 3308184739947190641}
+--- !u!114 &-5572390060139805853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010612035360753348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f352f3b45b8c55c44ac60413127117bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  specifyParentName: SpaceClient
+  specifyParent: {fileID: 0}
+  specifyChildContainer: {fileID: 0}
 --- !u!1 &1579163131110375810
 GameObject:
   m_ObjectHideFlags: 0

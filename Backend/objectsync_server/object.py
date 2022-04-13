@@ -1,12 +1,10 @@
 from __future__ import annotations
-import copy
-from typing import Any, Dict, Union, Optional
-from objectsync_server.command import History, CommandAttribute
-import time
+from typing import Any, Dict, Optional
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from objectsync_server.space import Space
-from objectsync_server.command import get_co_ancestor
+
+from objectsync_server.command import History, CommandAttribute, get_co_ancestor
 
 class Attribute:
     '''
@@ -86,8 +84,8 @@ class Object:
                 if attr['name']== 'parent_id':
                     parent = attr['value']
                 break
+
         self.parent_id = Attribute(self,'parent_id','String', parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
-        
 
         if self.id != '0':
             import types
@@ -169,10 +167,17 @@ class Object:
         if command =='attribute':
             self.attributes[m['name']].set_com(m['value'])
         
-        # Add new attribute
+        # Add a new attribute
         if command == 'new attribute':
             if m['name'] not in self.attributes:
-                Attribute(self,m['name'],m['type'],m['value'],m['history_object']).set_com(m['value']) # Set initial value
+                Attribute(self,m['name'],m['type'],m['value'],m['history_object'])
+                self.space.send_direct_message(m,exclude_ws=ws)
+
+        # Delete an attribute
+        if command == 'delete attribute':
+            if m['name'] in self.attributes:
+                self.attributes.pop(m['name'])
+                self.space.send_direct_message(m,exclude_ws=ws)
 
         # Undo
         if command == "undo":
