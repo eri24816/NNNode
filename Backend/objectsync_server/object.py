@@ -63,7 +63,7 @@ class Attribute:
         self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
 
     def serialize(self):
-        d = {'name' : self.name, 'type' : self.type, 'value' : self.value,'history_object':self.history_obj}
+        d = {'type' : self.type, 'value' : self.value,'history_object':self.history_obj}
         return d
     
 
@@ -81,11 +81,8 @@ class Object:
         self.history = History(self)
         self.history_on = True
         self.attributes : Dict[str,Attribute] = {}
-        if 'attributes' in d:
-            for attr in d['attributes']:
-                if attr['name']== 'parent_id':
-                    parent = attr['value']
-                break
+        if 'attributes' in d and 'parent_id' in d['attributes']:
+            parent = d['attributes']['parent_id']['value']
 
         self.parent_id = Attribute(self,'parent_id','String', parent,history_obj='none',callback=self.OnParentChanged) # Set history_in to 'none' because OnParentChanged will save history
 
@@ -122,11 +119,11 @@ class Object:
 
     def deserialize(self,d):
         if 'attributes' in d:
-            for attr_dict in d['attributes']:
-                if attr_dict['name'] in self.attributes:
-                    self.attributes[attr_dict['name']].value = (attr_dict['value'])
+            for name, attr_dict in d['attributes'].items():
+                if name in self.attributes:
+                    self.attributes[name].value = (attr_dict['value'])
                 else:
-                    Attribute(self,attr_dict['name'],attr_dict['type'],attr_dict['value'],attr_dict['history_object']if 'history_object' in attr_dict else "none")
+                    Attribute(self,name,attr_dict['type'],attr_dict['value'],attr_dict['history_object']if 'history_object' in attr_dict else "none")
         if 'children' in d:
             for child_dict in d['children']:
                 self.space.create(child_dict,parent=self,is_new = False,send=False)
@@ -134,11 +131,14 @@ class Object:
     def serialize(self) -> Dict[str,Any]:
         # Do we need to serialize history ?
         d = dict()
+        attr_dict = {}
+        for name, attr in self.attributes.items():
+            attr_dict[name] = attr.serialize()
         d.update({
             "id":self.id,
             "type":type(self).__name__,
             'frontend_type' : self.frontend_type,
-            "attributes":[attr.serialize() for attr in self.attributes.values()],
+            "attributes":attr_dict,
             "children":[self.space[c].serialize() for c in self.children_ids]
             })
         return d
@@ -211,4 +211,4 @@ class Object:
     def add_child(self,type,d={}):
         d['type']=type
         d['id'] = str(self.space.id_iter.__next__())
-        self.space.create(d,parent = self.id,send = False)
+        return self.space.create(d,parent = self.id,send = False)

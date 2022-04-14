@@ -152,9 +152,9 @@ namespace GraphUI
                         parent = "0",
                         d = {
                         type=syncObject.type ,
-                        attributes = new List<ObjectSync.API.Out.Create.Attribute>{
+                        attributes = new Dictionary<string, ObjectSync.API.Out.Create.Attribute>{
                             //new ObjectSync.API.Out.Create.Attribute{name="transform/pos",value=new Vector3(0,0,-1),history_object = "parent"},
-                            new ObjectSync.API.Out.Create.Attribute{name="tag/"+creationTag,value="",history_object = "none"}
+                            ["tag/"+creationTag]=new ObjectSync.API.Out.Create.Attribute{value="",history_object = "none"}
                         }
                     }
                     });

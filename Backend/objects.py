@@ -12,6 +12,9 @@ class NodeList(objsync.Object):
 
     def build(self):
         for name,t in node.node_class_dict.items():
-            self.add_child(name,{'attributes':[
-                {'name':'is_demo','type':'Boolean','value':True}
-                ]})
+            #child_container = self.add_child('VerticalLayoutGroup')
+            #child_container.add_child(name,{'attributes':[{'name':'is_demo','type':'Boolean','value':True}]})
+            self.add_child(name,{'attributes':{'is_demo':{'type':'Boolean','value':True}}})
+
+class VerticalLayoutGroup(objsync.Object):
+    frontend_type = 'VerticalLayoutGroup'

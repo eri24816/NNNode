@@ -23,11 +23,13 @@ namespace ObjectSync
 
             id = (string)d["id"];
 
-            foreach (var attr_info in d["attributes"])
+            foreach (var pair in (JObject)d["attributes"])
             {
-                var new_attr = space.attributeFactory.Produce(this, (string)attr_info["name"], (string)attr_info["type"]);
+                string name = pair.Key;
+                var attr_info = pair.Value;
+                var new_attr = space.attributeFactory.Produce(this, name, (string)attr_info["type"]);
                 new_attr.Set(attr_info["value"], false);
-                Attributes.Add((string)attr_info["name"], new_attr);
+                Attributes.Add(name, new_attr);
             }
             RegisterAttribute<string>("parent_id", OnParentChanged, "none");
         }

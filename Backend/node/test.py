@@ -2,7 +2,7 @@ from .node import Component, Port, FunctionNode, Node
 from objectsync_server import  Attribute
 class TestNode1(Node):
     display_name = 'CNN block'
-    category = 'function'
+    category = ''
     frontend_type = 'TestNode1'
 
     def build(self):

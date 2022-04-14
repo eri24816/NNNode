@@ -34,12 +34,12 @@ namespace ObjectSync
                 public struct D
                 {
                     public string type;
-                    public List<Attribute> attributes;
+                    public Dictionary<string,Attribute> attributes;
                 }
                 [System.Serializable]
                 public class Attribute
                 {
-                    public string name,  history_object;
+                    public string  history_object;
                     public string type { get { return value.GetType().Name; } }
                     public object value;
                 }

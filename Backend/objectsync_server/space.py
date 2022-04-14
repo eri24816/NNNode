@@ -112,10 +112,7 @@ class Space():
             new_instance = c(self,d,is_new,parent)
         else:
             new_instance = c(self,d,is_new)
-            for attr in d['attributes']:
-                if attr['name']=='parent_id':
-                    parent = attr['value']
-                break
+            parent = d['attributes']['parent_id']['value']
 
         if send:
             self.send_direct_message({'command':'create','d':new_instance.serialize()})
