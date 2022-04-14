@@ -86,7 +86,7 @@ namespace GraphUI
         public override void OnDestroy_(JToken message)
         { 
             base.OnDestroy_(message);
-            StartCoroutine(Removing());
+            //StartCoroutine(Removing());
         }
         public override void RecieveMessage(JToken message)
         {

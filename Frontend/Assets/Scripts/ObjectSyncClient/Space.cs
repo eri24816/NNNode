@@ -218,7 +218,8 @@ namespace ObjectSync
 
             foreach (var child_d in d["children"])
             {
-                newObj.children.Add(Create(child_d));
+                Create(child_d);
+                //newObj.children.Add(Create(child_d));
             }
 
             spaceClient.OnObjectCreated(newObj);

@@ -68,7 +68,7 @@ class CommandSequence(Command):
     def __str__(self):
         res = "Sequence: " 
         for command in self.commands:
-            res += f'\n\t{str(command)}'
+            res += f'\n\t\t{str(command)}'
         return res
 
 class CommandHead(Command):
@@ -115,6 +115,9 @@ class CommandCreate(Command):
         self.d = self.space[self.d['id']].serialize()
         self.space.destroy(self.d['id'])
 
+    def __str__(self):
+        return f"Create {self.d['id']}"
+
 class CommandDestroy(Command):
     
     def __init__(self,space:Space,id:str):
@@ -139,6 +142,9 @@ class CommandDestroy(Command):
     def undo(self):
         super().undo()
         self.space.create(self.d, is_new = False, parent=self.parent)
+
+    def __str__(self):
+        return f"Destroy {self.d['id']}"
 
 class CommandAttribute(Command):
 

@@ -36,7 +36,6 @@ namespace ObjectSync
 
         private void OnParentChanged(string new_value)
         {
-
             if (lastParent != null) {  space.objs[lastParent].children.Remove(this);}
             
             if (new_value != null) space.objs[new_value].children.Add(this);
