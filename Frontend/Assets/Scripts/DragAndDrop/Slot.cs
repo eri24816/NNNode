@@ -55,7 +55,8 @@ namespace GraphUI
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (eventData.pointerEnter.GetComponentInParent<Slot>() != this) return;
+            if(eventData.pointerEnter!=null)
+                if (eventData.pointerEnter.GetComponentInParent<Slot>() != this) return;
             if (Current == this) Current = null;
         }
         private void OnDestroy()
