@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Hierachy : ObjectClient
+public class Heirarchy : MonoBehaviour
 {
     [SerializeField]
     RectTransform rootPanel;
 
-    public void AddItem(string categoryString, string containerPrefabName)
+    public void AddItem(string categoryString, ObjectClient item)
     {
 
     }
@@ -51,3 +51,4 @@ public class Hierachy : ObjectClient
         else ((RectTransform)transform).sizeDelta = new Vector2(250, ((RectTransform)transform).sizeDelta.y);
     }
 }
+

@@ -8,7 +8,7 @@ public class Background : MonoBehaviour,IPointerClickHandler,IScrollHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         if (eventData.button == 0)
-            GraphUI.Selectable.ClearSelection();
+            NNNode.Selectable.ClearSelection();
     }
     public void OnScroll(PointerEventData eventData)
     {

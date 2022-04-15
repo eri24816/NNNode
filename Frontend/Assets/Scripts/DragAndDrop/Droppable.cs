@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace GraphUI {
+namespace NNNode {
     public interface IDroppable
     {
         public void BeginDrag();

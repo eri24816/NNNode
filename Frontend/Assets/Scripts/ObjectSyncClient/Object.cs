@@ -140,7 +140,7 @@ namespace ObjectSync
         }
         public class NoHisyory : System.IDisposable
         {
-            Object obj;
+            readonly Object obj;
             public NoHisyory(Object obj)
             {
                 this.obj = obj;

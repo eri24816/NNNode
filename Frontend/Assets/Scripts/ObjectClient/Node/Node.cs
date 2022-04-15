@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 
-namespace GraphUI
+namespace NNNode
 {
     public class Node : Selectable,  IBeginDragHandler,IEndDragHandler,IDragHandler,ObjectSync.IObjectClient,IDroppable,ISlot
     {

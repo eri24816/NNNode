@@ -1,5 +1,5 @@
 using UnityEngine;
-using GraphUI;
+using NNNode;
 using System.Collections.Generic;
 using UnityEngine.UI;
 

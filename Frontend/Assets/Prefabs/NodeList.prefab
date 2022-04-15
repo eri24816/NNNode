@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4253424027564801965}
   - component: {fileID: 4253424027564801964}
   - component: {fileID: 4253424027564801955}
+  - component: {fileID: 8666447161119426298}
   m_Layer: 5
   m_Name: NodeList
   m_TagString: Untagged
@@ -126,8 +127,20 @@ MonoBehaviour:
   specifyParentName: NodeListParent
   specifyParent: {fileID: 0}
   specifyChildContainer: {fileID: 4253424028977738380}
-  keepPrefabTransform: 1
+  category: 
   rootPanel: {fileID: 4253424028977738380}
+--- !u!114 &8666447161119426298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4253424027564801966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e851d6998afe0a42aaa1eed72df02ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4253424028248050601
 GameObject:
   m_ObjectHideFlags: 0

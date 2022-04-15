@@ -123,17 +123,15 @@ namespace ObjectSync
         }
         public void Set(T value, bool send = true, bool sendImmediately = false)
         {
-            if (!obj.space.flush || !obj.history_on) sendImmediately = true;
+            if (!obj.space.flush || !obj.history_on) sendImmediately = true; // Space.NoFlush and Object.HistoryOff required attributes changes to be immediately sent to work correctly.
             if (value!=null && value.Equals(Value)) return;
             if (setLock) return;
-            using (new SetLock(this)) // Avoid recursive Set() call
+            using (new SetLock(this)) // Avoid recursive Set() call through the callback.
             {
                 if(this.value!=null)
                     send &= (!this.value.Equals(value));
-                var old = this.value;
                 this.value = value;
-                if(OnSet!=null)
-                    OnSet(Value);
+                OnSet?.Invoke(Value);
                 if (send)
                 {
                     if (sendImmediately)
@@ -147,18 +145,7 @@ namespace ObjectSync
         }
         public void Set(JToken value, bool send = true)
         {
-            
             Set(value.ToObject<T>(), send);
-            
-            /*
-            try
-            {
-                Set(value.ToObject<T>(), send); 
-            }
-            catch
-            {
-                throw new System.InvalidCastException($"Cast failed. SrcType : {value.GetType()} DstType : {typeof(T).Name} Value : {value}");
-            }*/
         }
         public void Recieve(JToken message)
         {

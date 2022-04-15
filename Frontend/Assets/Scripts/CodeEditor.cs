@@ -29,7 +29,7 @@ namespace TMPro
         ILayoutElement,
         IScrollHandler
     {
-        public GraphUI.Node node;
+        public NNNode.Node node;
         // Setting the content type acts as a shortcut for setting a combination of InputType, CharacterValidation, LineType, and TouchScreenKeyboardType
         public enum ContentType
         {

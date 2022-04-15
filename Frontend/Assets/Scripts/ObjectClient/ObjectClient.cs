@@ -15,6 +15,8 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
     public string specifyParentName = null;
     public Transform specifyParent = null;
     public Transform specifyChildContainer = null;
+
+    public string category;
     public virtual void OnCreate(JToken d, ObjectSync.Object obj)
     {
         syncObject = obj;

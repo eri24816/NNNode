@@ -155,6 +155,10 @@ class Object:
 
     # --------------------------
 
+    def send_message(self,m):
+        m['id'] = self.id
+        self.space.send_direct_message(m)
+
     def recieve_message(self,m,ws):
         command = m['command']
 

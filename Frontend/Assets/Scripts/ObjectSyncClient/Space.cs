@@ -132,16 +132,6 @@ namespace ObjectSync
         }
 
         public int nameNum = 0;
-        public void SendUndo(string id)
-        {
-            SendMessage("{\"command\":\"undo\",\"id\":\"" + id + "\"}");
-        }
-
-        public void SendRedo(string id)
-        {
-            SendMessage("{\"command\":\"redo\",\"id\":\"" + id + "\"}");
-        }
-
         public void SendDestroy(string id)
         {
             SendMessage("{\"command\":\"destroy\",\"id\":\"" + id + "\"}");

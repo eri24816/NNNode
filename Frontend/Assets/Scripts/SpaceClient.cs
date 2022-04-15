@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using WebSocketSharp; 
-using GraphUI;
+using NNNode;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using ObjectSync;
@@ -24,14 +24,16 @@ public class SpaceClient : MonoBehaviour, ISpaceClient
     public GameObject inDataPortPrefab, outDataPortPrefab,inControlPortPrefab,outControlPortPrefab;
 
     public Transform canvasTransform;
-    public Hierachy demoNodeContainer;
     //public Inspector nodeInspector;
     public GameObject categoryPanelPrefab;
     public Theme theme;
 
     public Dictionary<string,ObjectClient> objs = new();
     public ObjectClient Root { get { return objs["0"]; } }
-    
+    public ObjectClient this[string index]
+    {
+        get { return objs[index]; }
+    }
     public enum State
     {
         idle,  
