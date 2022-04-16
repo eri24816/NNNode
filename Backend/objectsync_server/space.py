@@ -92,6 +92,9 @@ class Space():
             'root_object':self.root_obj.serialize(),
             },ws)
 
+    def GetMetadata(self):
+        pass
+
     def create(self,d,is_new=True,parent = None,send = True):
         """        
         Create a new object in the space
