@@ -1,32 +1,27 @@
 import objectsync_server as objsync
 import node
-from objectsync_server.object import Object
+from objectsync_server.object import Attribute, Object
 
 class RootObject(objsync.Object):
     frontend_type = 'RootObject'
+    def initialize(self):
+        Attribute(self,'parent_object','String','SpaceClient',history_obj='none')
 
     def build(self):
-        self.add_child('NodeList')
+        self.add_child('NodeList',{
+            'attributes':{
+                'parent_object':{'type':'String','value':'NodeListContainer'}
+            }
+        })
 
 class NodeList(objsync.Object):
-    frontend_type = "VerticalLayoutGroup"
-    
-    def build(self):
-        self.heirarchy = self.add_child('Heirarchy')
-        for name,t in node.node_class_dict.items():
-            new_demo_node = self.heirarchy.add_child(name,{'attributes':{
-                'is_demo':{'type':'Boolean','value':True}
-                }})
-            self.heirarchy.add_item(new_demo_node)
-
-class Hierarchy(objsync.Object):
     frontend_type = "Hierarchy"
     
-    def add_item(self,item : Object):
-        if item.parent != self:
-            return
-        
-        self.send_message({'command':'add item','item_id':item.id})
+    def build(self):
+        for name,t in node.node_class_dict.items():
+            new_demo_node = self.add_child(name,{'attributes':{
+                'tag/is_demo':{'type':'Boolean','value':True}
+                }})
 
 class VerticalLayoutGroup(objsync.Object):
     frontend_type = 'VerticalLayoutGroup'

@@ -15,7 +15,7 @@ namespace NNNode
         public string  Name;
         //public Dictionary<string, Comp> components{ get; set; };
 
-        public ObjectSync.Attribute<bool> Draggable,IsDemo;
+        public ObjectSync.Attribute<bool> Draggable;
         protected ObjectSync.Attribute<Vector3> Pos;
 
         [SerializeField] Transform componentPanel;
@@ -30,7 +30,7 @@ namespace NNNode
         private void Start()
         {
             droppable = GetComponent<Droppable>();
-            if (IsDemo.Value)
+            if (syncObject.TaggedAs("is_demo"))
             {
                 foreach (var d in GetComponentsInChildren<Droppable>())
                 {
@@ -111,7 +111,6 @@ namespace NNNode
 
             Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v)=> { TrySetPosition(v); }, "parent", Vector3.zero);
             Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
-            IsDemo = syncObject.RegisterAttribute<bool>("is_demo", initValue: false);
 
         }
         //============================================================
@@ -144,7 +143,7 @@ namespace NNNode
             if (eventData.button != 0) return;
             if (Draggable.Value)
             {
-                if (IsDemo.Value)
+                if (syncObject.TaggedAs("is_demo"))
                 {
                     string creationTag = $"create/{ Random.Range(0, 10000000) }";
                     spaceClient.space.SendMessage(new ObjectSync.API.Out.Create
@@ -332,7 +331,7 @@ namespace NNNode
 
         public bool AcceptsDrop(IDroppable dropped)
         {
-            if (IsDemo.Value) return false;
+            if (syncObject.TaggedAs("is_demo")) return false;
             return true;
         }
 

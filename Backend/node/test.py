@@ -2,7 +2,7 @@ from .node import Component, Port, FunctionNode, Node
 from objectsync_server import  Attribute
 class TestNode1(Node):
     display_name = 'CNN block'
-    category = ''
+    category = 'function'
     frontend_type = 'TestNode1'
 
     def build(self):
@@ -14,7 +14,7 @@ class TestNode1(Node):
 
 class TestNode2(Node):
     display_name = 'KLD loss'
-    category = 'function'
+    category = 'function/aaa'
     frontend_type = 'TestNode1'
 
     in_names = ['mu','covariance']

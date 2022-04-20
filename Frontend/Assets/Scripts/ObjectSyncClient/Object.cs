@@ -104,7 +104,10 @@ namespace ObjectSync
         }
         public void OnDestroy(JToken message)
         {
-            foreach (var c in children)
+            space.objs[lastParent].children.Remove(this);
+            Object[] childrenCopy = new Object[children.Count];
+            children.CopyTo(childrenCopy);
+            foreach (var c in childrenCopy)
             {
                 c.OnDestroy(message);
             }
