@@ -107,7 +107,7 @@ namespace NNNode
         {
             base.OnCreate(message,obj);
 
-            syncObject.RegisterAttribute<Vector3>("color", (v) => { var w = (Vector3)v; SetColor(new Color(w.x, w.y, w.z)); });
+            syncObject.RegisterAttribute<Vector3>("color", (v) => { SetColor(new Color(v.x, v.y, v.z)); });
 
             Pos = syncObject.RegisterAttribute<Vector3>("transform/pos", (v)=> { TrySetPosition(v); }, "parent", Vector3.zero);
             Draggable = syncObject.RegisterAttribute<bool>("draggable", initValue: true);
@@ -236,10 +236,10 @@ namespace NNNode
             selectColorTransition.SetColor("selected", color*0.8f);
             selectColorTransition.SetColor("unselected", Color.black);
             selectColorTransition.SetColor("hover", Color.white*0.3f);
-            if (Application.isEditor)
-                selectColorTransition.SetDefault("selected");
-            else
-                selectColorTransition.SetDefault("unselected");*/
+
+            selectColorTransition.SetDefault("unselected");
+            */
+            outline.color = color;
         }
 
         void TrySetPosition(Vector3 pos,Space space = Space.Self)
