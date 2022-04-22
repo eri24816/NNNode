@@ -14,7 +14,7 @@ class TestNode1(Node):
 
 class TestNode2(Node):
     display_name = 'KLD loss'
-    category = 'function/aaa'
+    category = 'functionㄊ'
     frontend_type = 'TestNode1'
 
     in_names = ['mu','covariance']
@@ -24,8 +24,8 @@ class TestNode2(Node):
 
 class TestNode3(FunctionNode):
     display_name = 'sample'
-    category = 'function'
-    shape = 'General'
+    category = 'function/aa'
+    frontend_type = 'TestNode1'
 
     in_names = ["input"]
     out_names = ['value','mu','var']
