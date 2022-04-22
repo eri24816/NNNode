@@ -14,6 +14,7 @@ public class CamControl : MonoBehaviour
     public static Collider colliderHover;
     //public static Port portHover;
     public UnityEngine.UI.ScrollRect nodeList;
+    public MyInputModule inputModule;
     Plane focusPlane; 
     Camera cam;
     private void Start()
@@ -21,6 +22,7 @@ public class CamControl : MonoBehaviour
         ins = this; 
         focusPlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         cam = GetComponent<Camera>();
+        inputModule.scrollFallback += OnScroll;
     }
     public Vector3 WorldPoint()
     {

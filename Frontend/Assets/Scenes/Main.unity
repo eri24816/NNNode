@@ -1272,6 +1272,7 @@ MonoBehaviour:
   zoom: 0.1
   touchPadMode: 0
   nodeList: {fileID: 0}
+  inputModule: {fileID: 1778613792}
 --- !u!1 &1706901523
 GameObject:
   m_ObjectHideFlags: 0
@@ -1438,7 +1439,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1778613791}
   - component: {fileID: 1778613790}
-  - component: {fileID: 1778613789}
+  - component: {fileID: 1778613792}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -1446,25 +1447,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1778613789
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1778613788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalAxis: Horizontal
-  m_VerticalAxis: Vertical
-  m_SubmitButton: Submit
-  m_CancelButton: Cancel
-  m_InputActionsPerSecond: 10
-  m_RepeatDelay: 0.5
-  m_ForceModuleActive: 0
 --- !u!114 &1778613790
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1495,6 +1477,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1778613792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778613788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b7854da37c7a6041b1dc127c7a2df2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalAxis: Horizontal
+  m_VerticalAxis: Vertical
+  m_SubmitButton: Submit
+  m_CancelButton: Cancel
+  m_InputActionsPerSecond: 10
+  m_RepeatDelay: 0.5
+  m_ForceModuleActive: 0
 --- !u!1 &1810023665
 GameObject:
   m_ObjectHideFlags: 0
@@ -1797,7 +1798,7 @@ MonoBehaviour:
   - {fileID: 357937049128392484, guid: 0d68f42ac39b66249a27bd8e02c3ad2e, type: 3}
   - {fileID: 357937049128392484, guid: 68467c8094c2607468cda4fc6c6a7454, type: 3}
   - {fileID: 1468223545780764545, guid: 0afe668810b5b2d488f7d82c15081cf4, type: 3}
-  - {fileID: 1468223545780764545, guid: 26eb3c160939a4f41b96d60992c71166, type: 3}
+  - {fileID: 1468223545780764545, guid: 7c75df2c70620094d98cb491fba962e7, type: 3}
   - {fileID: 243579921277508087, guid: 88f257725fbcca045bee73371d9bfb10, type: 3}
   - {fileID: 1010612035360753348, guid: 56cbf4a1ddc18cc49b0544a8f456b97d, type: 3}
   - {fileID: 1010612035360753348, guid: 37b45fd53cadfd141ae185a956a3b476, type: 3}

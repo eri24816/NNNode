@@ -36,10 +36,10 @@ namespace NNNode
 
         public Hierarchy GetSubcategory(string category)
         {
-            var res = transform.Find(category);
+            var res = SubcategoryPanel.transform.Find(category);
             if (res != null) return res.GetComponent<Hierarchy>();
 
-            Hierarchy subcategory = Instantiate(prefab, transform).GetComponent<Hierarchy>();
+            Hierarchy subcategory = Instantiate(prefab, SubcategoryPanel.transform).GetComponent<Hierarchy>();
             subcategory.SetName(category);
             subcategory.prefab = prefab;
             return subcategory;

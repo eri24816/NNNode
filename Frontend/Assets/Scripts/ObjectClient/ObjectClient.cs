@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHandler
+public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient
 {
     protected SpaceClient spaceClient;
 
@@ -82,12 +82,6 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient, IScrollHand
 
     }
 
-    public void OnScroll(PointerEventData eventData)
-    {
-        // Send scroll event ahead to the background, instead of blocking it.
-        if (sendOnScrollTo)
-            sendOnScrollTo.SendMessage("OnScroll", eventData);
-    }
 
     public void Undo()
     {
