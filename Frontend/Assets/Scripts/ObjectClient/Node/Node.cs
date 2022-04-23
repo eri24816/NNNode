@@ -17,6 +17,7 @@ namespace NNNode
 
         public ObjectSync.Attribute<bool> Draggable;
         protected ObjectSync.Attribute<Vector3> Pos;
+        protected ObjectSync.Attribute<string> Pos2;
 
         [SerializeField] Transform componentPanel;
         [SerializeField] UnityEngine.UI.Image outline;

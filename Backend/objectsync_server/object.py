@@ -18,14 +18,14 @@ class Attribute:
 
     Not all attributes are controlled by components, like attribute "pos". 
     '''
-    def __init__(self, obj : Object,name,type, value, history_obj:Optional[str] = None,callback=None):
+    def __init__(self, obj : Object,name,type, value, history_obj:Optional[str] = 'none',callback=None):
         obj.attributes[name]=self
         self.obj = obj
         self.name = name
         self.type = type # string, float, etc.
         self.value = value
 
-        self.history_obj = history_obj if history_obj != None else obj.id
+        self.history_obj = history_obj
 
         self.callback = callback
     
@@ -46,7 +46,7 @@ class Attribute:
             history_obj = self.history_obj
         CommandAttribute(self.obj.space, self.obj.id, self.name, value, history_obj).execute()
 
-    def set(self,value):
+    def set(self,value, send = True):
         '''
         Recommand to use set_com(). Direct calling this method does not add command into history
         '''
@@ -60,12 +60,27 @@ class Attribute:
         else:
             self.value = value
 
-        self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
+        if send:
+            self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
 
     def serialize(self):
         d = {'type' : self.type, 'value' : self.value,'history_object':self.history_obj}
         return d
     
+class StreamAttribute(Attribute):
+    '''
+    A special type of attribute that saves traffic
+    '''
+    def set_com(self,value):
+        raise Exception('StreamAttribute does not support history')
+
+    def add(self,string):
+        self.obj.space.send_direct_message({'command':'stream add','id':self.obj.id,'name':self.name,'value':string})
+        self.set(self.value+string, send=False)
+
+    def clear(self):
+        self.obj.space.send_direct_message({'command':'stream clear','id':self.obj.id,'name':self.name})
+        self.set('', send=False)
 
 class Object:
     '''

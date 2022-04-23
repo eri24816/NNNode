@@ -120,22 +120,10 @@ class Node(objsync.Object):
     '''
     Base class of all types of nodes
     '''
-    display_name = 'Node'
+    name = 'Node'
     frontend_type : str = 'GeneralNode'
-    category = ''
+    category = 'uncategorized'
 
-    class Info(TypedDict):
-        type : str
-        id : int
-
-        # for client ------------------------------
-        shape : str     # CodeNode, FunctionNode, RoundNode
-        category : str
-        doc : str
-        name : str              # Just for frontend. In backend we never use it but use "id" instead
-        output : str            # Output is necessary for all classes of node to at least store exceptions occured in nodes
-        portInfos : List[Dict]  # PortInfos are determined by server side Node classes and is used to tell client how to set up ports
-    
     def serialize(self) -> Dict:
         '''
         Node info
@@ -144,7 +132,7 @@ class Node(objsync.Object):
         '''
         d = super(Node, self).serialize()
         d.update({
-            "category" : self.category,"doc":self.__doc__,"name":self.display_name,
+            "category" : self.category,"doc":self.__doc__,"name":self.name,
             'portInfos' : [port.get_dict() for port in self.port_list],
         })
         return d
@@ -158,7 +146,9 @@ class Node(objsync.Object):
 
         # Is the node ready to run?
         self.active = False
-        self.color = objsync.Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)),'')
+        self.color = objsync.Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)))
+        self.state = objsync.Attribute(self, 'state', 'String','0')
+        self.output_stream = objsync.StreamAttribute(self, 'output_stream', 'Stream','')
     
     ## Core methods ------------------------------
 
@@ -177,17 +167,17 @@ class Node(objsync.Object):
         self.active = True
         self.space.add_to_deque(self) # It's normally working in LIFO order, but manual activation by client can be FIFO.
         
-        self.space.Add_buffered_message(self.id, 'act', '1')  # 1 means "pending" (just for client to display)
+        self.state.set(1)
 
     def deactivate(self):
         self.active = False
 
-        self.space.Add_buffered_message(self.id, 'act', '0')
+        self.state.set(0)
 
     def run(self):
         # space calls this method
-        self.space.Add_buffered_message(self.id,'act','2') # 2 means "running"
-        self.space.Add_buffered_message(self.id, 'clr') # Clear output
+        self.state.set(2) # 2 means "running"
+        self.output_stream.clear()
 
         # Redirect printed outputs and error messages to client
         with stdoutIO(self): #TODO: optimize this
@@ -195,7 +185,7 @@ class Node(objsync.Object):
                 self._run()
             except Exception:
                 self.running_finished(False)
-                self.added_output += traceback.format_exc()
+                self.output_stream.add(traceback.format_exc())
                 self.flush_output()
             else:
                 self.running_finished(True)  
@@ -244,8 +234,7 @@ class Node(objsync.Object):
     def flush_output(self): # called when client send 'upd'
         if self.added_output == '':
             return
-        self.output += self.added_output
-        self.space.Add_buffered_message(self.id, 'out', self.added_output) # send client only currently added lines of output
+        self.output_stream.add(self.added_output)
         self.added_output = ''
 
     def recive_message(self,m):
@@ -256,7 +245,7 @@ class Node(objsync.Object):
         super().recive_message(m)
         command = m['command']
                     
-        if command == "act":
+        if command == "double click":
             self.On_double_click()
 
     def On_double_click(self):
@@ -362,11 +351,6 @@ class FunctionNode(Node):
 
     #display_name = 'Function'
     category = 'function'
-
-    class Info(Node.Info):
-        in_names : List[str]
-        out_names : List[str]
-        allow_multiple_in_data : List[bool]
 
     # Most of the child classes of FunctionNode just differ in following 4 class properties and their function() method.
     shape = 'General'

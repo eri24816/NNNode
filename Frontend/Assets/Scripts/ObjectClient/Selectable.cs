@@ -52,7 +52,7 @@ namespace NNNode
         }
         protected virtual void OnDoubleClick()
         {
-
+            SendMessage("{\"command\":\"double click\",\"id\":\"" + syncObject.id + "\"}");
         }
         public virtual void Select()
         {

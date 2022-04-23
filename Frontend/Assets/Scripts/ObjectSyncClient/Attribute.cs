@@ -76,6 +76,7 @@ namespace ObjectSync
                 "float" => new Attribute<float>(obj, name),
                 "Boolean" => new Attribute<bool>(obj, name),
                 "Vector3" => new Attribute<UnityEngine.Vector3>(obj, name),
+                "Stream" => new Attribute<StreamAttribute>(obj, name),
 
                 "List<String>" => new Attribute<List<string>>(obj, name),
                 "List<int>" => new Attribute<List<int>>(obj, name),
@@ -94,7 +95,7 @@ namespace ObjectSync
         private T value;
         private T recievedValue;
 
-        readonly Object obj;
+        public readonly Object obj;
         public readonly string name;
         public string type; // For inspector to know how to generate the attribute editor
         readonly CoolDown recvCD, sendCD;
@@ -167,6 +168,31 @@ namespace ObjectSync
             {
                 obj.SendMessage(new API.Out.Attribute<T> { id = obj.id, command = "attribute", name = name, value = value });
             }
+        }
+    }
+
+    // A special type of attribute that saves traffic
+    public class StreamAttribute : Attribute<string>
+    {
+        public StreamAttribute(Object obj, string name) : base(obj, name)
+        {
+            type = "Stream";
+        }
+        public void ReceiveAdd(string value)
+        {
+            Set(Value + value, false);
+        }
+        public void Add(string value)
+        {
+            obj.SendMessage("{\"command\":\"add\",\"id\":\"" + obj.id + "\",\"name\":\"" + name + "\",\"value\":\"" + value + "\"}");
+        }
+        public void ReceiveClear()
+        {
+            Set("", false);
+        }
+        public void Clear()
+        {
+            obj.SendMessage("{\"command\":\"add\",\"id\":\"" + obj.id + "\",\"name\":\"" + name + "\"}");
         }
     }
 }

@@ -78,23 +78,33 @@ namespace ObjectSync
         public void RecieveMessage(JToken message)
         {
             string command = (string)message["command"];
-            if(command == "attribute")
+            switch (command)
             {
-                Attributes[(string)message["name"]].Recieve(message);
-            }
-            else if(command == "new attribute")
-            {
-                if (!Attributes.ContainsKey((string)message["name"]))
-                {
-                    var new_attr = space.attributeFactory.Produce(this, (string)message["name"], (string)message["type"]);
-                    new_attr.Set(message["value"], false);
-                    Attributes.Add((string)message["name"], new_attr);
-                }
-            }
-            else if (command == "delete attribute")
-            {
-                if (Attributes.ContainsKey((string)message["name"]))
-                    Attributes.Remove((string)message["name"]);
+                case "attribute": Attributes[(string)message["name"]].Recieve(message); break;
+
+                case "new attribute":
+                    if (!Attributes.ContainsKey((string)message["name"]))
+                    {
+                        var new_attr = space.attributeFactory.Produce(this, (string)message["name"], (string)message["type"]);
+                        new_attr.Set(message["value"], false);
+                        Attributes.Add((string)message["name"], new_attr);
+                    }
+                    break;
+
+                case "delete attribute":
+                    if (Attributes.ContainsKey((string)message["name"]))
+                        Attributes.Remove((string)message["name"]);
+                    break;
+
+                case "stream add":
+                    if (Attributes.ContainsKey((string)message["name"]))
+                        ((StreamAttribute)Attributes[(string)message["name"]]).ReceiveAdd((string)message["value"]);
+                    break;
+
+                case "stream clear":
+                    if (Attributes.ContainsKey((string)message["name"]))
+                        ((StreamAttribute)Attributes[(string)message["name"]]).ReceiveClear();
+                    break;
             }
             objectClient.RecieveMessage(message);
         }
