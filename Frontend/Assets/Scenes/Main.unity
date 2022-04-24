@@ -916,7 +916,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.515418, g: 0.4669811, b: 1, a: 0.5}
+  m_Color: {r: 0.27843142, g: 1, b: 0.55991, a: 0.5}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1150,6 +1150,7 @@ GameObject:
   - component: {fileID: 1473135913}
   - component: {fileID: 1473135916}
   - component: {fileID: 1473135917}
+  - component: {fileID: 1473135918}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1273,6 +1274,22 @@ MonoBehaviour:
   touchPadMode: 0
   nodeList: {fileID: 0}
   inputModule: {fileID: 1778613792}
+--- !u!114 &1473135918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473135912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49b4cc203aa6414fae5c798d1d0e7d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EventMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_MaxRayIntersections: 0
 --- !u!1 &1706901523
 GameObject:
   m_ObjectHideFlags: 0
@@ -1532,7 +1549,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1810023665}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1802,8 +1819,9 @@ MonoBehaviour:
   - {fileID: 243579921277508087, guid: 88f257725fbcca045bee73371d9bfb10, type: 3}
   - {fileID: 1010612035360753348, guid: 56cbf4a1ddc18cc49b0544a8f456b97d, type: 3}
   - {fileID: 1010612035360753348, guid: 37b45fd53cadfd141ae185a956a3b476, type: 3}
-  mainForInspector: {r: 0.515418, g: 0.4669811, b: 1, a: 1}
-  secondaryForInspector: {r: 0, g: 0.54901934, b: 1, a: 1}
+  - {fileID: 816286257490676180, guid: bad8c68b59497a04ea552fa0a29fdd6f, type: 3}
+  mainForInspector: {r: 0.27843142, g: 1, b: 0.55991, a: 1}
+  secondaryForInspector: {r: 0, g: 0.26439476, b: 1, a: 1}
   bgBriteness: 0.27
   bg: {fileID: 2112478762}
   buttons:
@@ -2934,10 +2952,10 @@ RectTransform:
   m_Father: {fileID: 1263004987}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 480}
+  m_SizeDelta: {x: 250, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &4741971589970969551
 GameObject:

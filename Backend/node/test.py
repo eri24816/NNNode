@@ -15,7 +15,7 @@ class TestNode1(Node):
 class TestNode2(Node):
     display_name = 'KLD loss'
     category = 'functionㄊ'
-    frontend_type = 'TestNode1'
+    frontend_type = '3dnode'
 
     in_names = ['mu','covariance']
     out_names = ['KLD']

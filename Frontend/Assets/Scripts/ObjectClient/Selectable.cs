@@ -7,7 +7,7 @@ namespace NNNode
 {
     public interface ISelectable
     {
-
+        
     }
 
     public class Selectable : ObjectClient, IPointerClickHandler,IPointerEnterHandler,IPointerExitHandler,IPointerDownHandler

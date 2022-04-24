@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &5668935462634169875
+--- !u!1001 &7308984056210198378
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -93,7 +93,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4659660520553783511, guid: e904c44ba00199445bda68ea6422b257, type: 3}
       propertyPath: m_Name
-      value: TestNode1
+      value: NodeBasePrefab Variant
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e904c44ba00199445bda68ea6422b257, type: 3}
