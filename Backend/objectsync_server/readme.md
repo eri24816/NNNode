@@ -48,7 +48,7 @@ The layout in the `Space` would be like:
                     "name": "color",
                     "type": "Vector3",
                     "value": {0, 1, 0}
-                }
+                },
                 {
                     "name": "position",
                     "type": "Vector3",
@@ -68,17 +68,17 @@ A space is initialized with a root `Object` in it, which has no parent and is th
 
 After a space is initialized, one can create new `Object`s in the space as children of the root `Object` or other existing `Object`.  To create an `Object`, call `Space.create(d)` on the server side or send `{"command": "create", "d":{...} }` from the client side. To define an object's default children, override the `Object.build()` method and call `Space.create(d)`.
 
-> `d` is the object's serialization. See section [Serialization](#serialization) for more details.
+> `d` is the object's serialized data. See section [Serialization](#serialization) for more details.
 
 Destroying an object removes the object and all of its children from the space. To destroy an `Object`, call `Space.destroy(id)` on the server side or send `{"command": "destroy", "id": "id"}` from the client side.
 
-> If the hierarchical characteristic is not desired, one can set every `Object` they created as a direct childrn of the root object.
+> If the hierarchical characteristic is not desired, one can set every `Object` they created as a direct child of the root object.
 
 [^1]: Except the root `Object`.
 
 
 ## Serialization
-An `Object` can be serialized into JSON or a python dict. A serialization is used when passing the `Object`'s state through the network, saving the 'Object' to a file, and restoring a destroyed `Object`. A serialization has the following format:
+An `Object` can be serialized into JSON or a python dict. A serialization is used when passing the `Object`'s state through the network, saving the `Object` to a file, and restoring a destroyed `Object`. A serialization has the following format:
 
 ```
 {
@@ -100,7 +100,7 @@ An `Object` can be serialized into JSON or a python dict. A serialization is use
     ]
 }
 ```
-> The serialization is calle "d" in method argument lists and in the JSON api.
+> The serialization is called "d" in method argument lists and in the JSON api.
 
 ## History and Command
 
@@ -112,7 +112,7 @@ The communication between the server and the clients is done through a websocket
 
 A client can connect to a space through `ws://<server>:<port>/space/<space name>`.
 
-The server and the clients communicate through a JSON string. The JSON message always has a `"command"` field, from which the reciever knows which method to use to handle the message. Here is the list of built-in message types:
+The server and the clients communicate through a JSON string. The JSON message always has a `"command"` field, from which the reciever decides which method is used to handle the message. Here is the list of built-in message types:
 
 ### Server -> Client
 #### space_metadata
@@ -140,7 +140,7 @@ Inform the client to create a new `Object`.
 ```
 {
     "command": "create",
-    "d": <serialization of object>
+    "d": <serialization of the object>
 }
 ```
 #### destroy
@@ -159,7 +159,7 @@ Inform the client to add an attribute to the `Object`.
     "id": <object id>,
     "name": <name>,
     "type": <type>,
-    "history_object": <id of history object>
+    "history_object": <id of an object> //The attribute's changes will always recorded in the object's history
     "value": <init value>
 }
 ```
@@ -215,7 +215,7 @@ Change an `Object`'s attribute in the server. Afterwards, the server will send b
 }
 ```
 #### undo
-Undo the last change recorded in an object's history. If there is a `Command` to undo, the server will send back a message indicating what is changed when undoing.
+Undo the last change recorded in an object's history. If there is a `Command` to undo, the server will send back a message (such as "attribute") indicating what is changed when undoing.
 ```
 {
     "command": "undo",
