@@ -1,0 +1,43 @@
+# PynSource Version 1.2
+{'type':'meta', 'info1':'Lorem ipsum dolor sit amet, consectetur adipiscing elit is latin. Comments are saved.'}
+{'type':'umlshape', 'id':'Command', 'x':1323, 'y':58, 'width':98, 'height':170, 'attrs': 'done|history_obj|space', 'meths': '__init__|execute|redo|undo'}
+{'type':'umlshape', 'id':'CommandSequence', 'x':1576, 'y':417, 'width':160, 'height':186, 'attrs': 'commands|done|history_obj', 'meths': '__init__|__str__|execute|redo|undo'}
+{'type':'umlshape', 'id':'CommandHead', 'x':1761, 'y':418, 'width':120, 'height':138, 'attrs': 'done', 'meths': '__init__|execute|redo|undo'}
+{'type':'umlshape', 'id':'CommandCreate', 'x':1411, 'y':416, 'width':140, 'height':202, 'attrs': 'd|history_obj|parent|space', 'meths': '__init__|__str__|execute|redo|undo'}
+{'type':'umlshape', 'id':'CommandDestroy', 'x':1232, 'y':418, 'width':150, 'height':202, 'attrs': 'd|history_obj|id|parent', 'meths': '__init__|__str__|execute|redo|undo'}
+{'type':'umlshape', 'id':'CommandAttribute', 'x':1000, 'y':420, 'width':171, 'height':250, 'attrs': 'history_obj|name|new_value|obj|old_value|space|time', 'meths': '__init__|__str__|execute|redo|undo'}
+{'type':'umlshape', 'id':'CommandManager', 'x':374, 'y':127, 'width':154, 'height':138, 'attrs': 'collected_commands|space', 'meths': '__init__|flush|push'}
+{'type':'umlshape', 'id':'HistoryItem', 'x':521, 'y':371, 'width':120, 'height':138, 'attrs': 'command|last|next|time', 'meths': '__init__'}
+{'type':'umlshape', 'id':'History', 'x':348, 'y':352, 'width':100, 'height':170, 'attrs': 'current|space', 'meths': '__init__|__str__|push|redo|undo'}
+{'type':'umlshape', 'id':'ABC', 'x':1351, 'y':4, 'width':40, 'height':28, 'attrs': '', 'meths': ''}
+{'type':'umlshape', 'id':'Space', 'x':102, 'y':11, 'width':162, 'height':346, 'attrs': 'command_manager|flush|id_iter|name|obj_classses|objs|root_obj|thread|ws_clients', 'meths': 'GetMetadata|OnClientConnection|__getitem__|__init__|create|destroy|main_loop|recieve_message|send_direct_message'}
+{'type':'umlshape', 'id':'list', 'x':1563, 'y':627, 'width':50, 'height':28, 'attrs': '', 'meths': ''}
+{'type':'umlshape', 'id':'Object', 'x':105, 'y':407, 'width':157, 'height':426, 'attrs': 'attributes|catches_command|children_ids|forwards_command|frontend_type|history|history_on|id|parent|parent_id|space', 'meths': 'OnChildCreated|OnChildDestroyed|OnDestroy|OnParentChanged|__init__|add_child|build|deserialize|initialize|recieve_message|send_message|serialize'}
+{'type':'umlshape', 'id':'Attribute', 'x':345, 'y':546, 'width':100, 'height':218, 'attrs': 'callback|history_obj|name|obj|type|value', 'meths': '__init__|serialize|set|set_com'}
+{'type':'umlshape', 'id':'StreamAttribute', 'x':315, 'y':811, 'width':160, 'height':96, 'attrs': '', 'meths': 'add|clear|set_com'}
+{'type':'comment', 'id':'C9617', 'x':699, 'y':372, 'width':188, 'height':65, 'comment': 'RXZlcnkgSGlzdG9yeUl0ZW0gaGFzIAphIENvbW1hbmQ='}
+{'type':'comment', 'id':'C9617_copy0', 'x':1224, 'y':278, 'width':355, 'height':65, 'comment': 'U3ViY2xhc3NlcyBvZiBDb21tYWQgaW1wbGVtZW50IGV4ZWN1dGUoKSwgCnVuZG8oKSwgYW5kIHJlZG8oKS4KU29tZXRpbWVzIGV4ZWN1dGUoKSBpcyB0aGUgc2FtZSB0byByZWRvKCku'}
+{'type':'comment', 'id':'C9617_copy1', 'x':316, 'y':10, 'width':334, 'height':111, 'comment': 'QSBTcGFjZSBoYXMgYSBDb21tYW5kTWFuYWdlciBhcwphIGJ1ZmZlciBmb3IgbmV3bHkgZXhlY3V0ZWQgQ29tbWFuZHMuCgpXaGVuIGNhbGxpbmcgZmx1c2goKSwgdGhlIENvbW1hbmRNYW5hZ2VyCndpbGwgYXBwZW5kIHRoZSBjb2xsZWN0ZWQgY29tbWFuZHMgdG8gCnNvbWUgT2JqZWN0cycgSGlzdG9yaWVzLg=='}
+{'type':'comment', 'id':'C9617_copy0_copy0', 'x':1559, 'y':673, 'width':202, 'height':50, 'comment': 'UmVwcmVzZW50cyBhIHNlcXVlbmNlCm9mIENvbW1hbmRzLg=='}
+{'type':'edge', 'id':'CommandDestroy_to_Command', 'source':'CommandDestroy', 'target':'Command', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'CommandAttribute_to_Command', 'source':'CommandAttribute', 'target':'Command', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'Command_to_ABC', 'source':'Command', 'target':'ABC', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'CommandSequence_to_Command', 'source':'CommandSequence', 'target':'Command', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'CommandCreate_to_Command', 'source':'CommandCreate', 'target':'Command', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'CommandHead_to_Command', 'source':'CommandHead', 'target':'Command', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'Command_to_HistoryItem', 'source':'Command', 'target':'HistoryItem', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Space_to_CommandManager', 'source':'Space', 'target':'CommandManager', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Command_to_CommandManager', 'source':'Command', 'target':'CommandManager', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'HistoryItem_to_History', 'source':'HistoryItem', 'target':'History', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'list_to_CommandSequence', 'source':'list', 'target':'CommandSequence', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Command_to_History', 'source':'Command', 'target':'History', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Object_to_History', 'source':'Object', 'target':'History', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'HistoryItem_to_HistoryItem', 'source':'HistoryItem', 'target':'HistoryItem', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'StreamAttribute_to_Attribute', 'source':'StreamAttribute', 'target':'Attribute', 'uml_edge_type': 'generalisation'}
+{'type':'edge', 'id':'Space_to_Object', 'source':'Space', 'target':'Object', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Object_to_Object', 'source':'Object', 'target':'Object', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Attribute_to_Object', 'source':'Attribute', 'target':'Object', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'History_to_Object', 'source':'History', 'target':'Object', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Object_to_Attribute', 'source':'Object', 'target':'Attribute', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'Object_to_Space', 'source':'Object', 'target':'Space', 'uml_edge_type': 'composition'}
+{'type':'edge', 'id':'CommandManager_to_Space', 'source':'CommandManager', 'target':'Space', 'uml_edge_type': 'composition'}
