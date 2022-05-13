@@ -23,6 +23,7 @@ public class CamControl : MonoBehaviour
         focusPlane = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 0));
         cam = GetComponent<Camera>();
         inputModule.scrollFallback += OnScroll;
+        inputModule.pressFallback += OnClick;
     }
     public Vector3 WorldPoint()
     {
@@ -106,6 +107,10 @@ public class CamControl : MonoBehaviour
         transform.Translate(worldMouse - WorldPoint()); // make center of the camera stick to a point
     }
 
-
+    public void OnClick(PointerEventData e)
+    {
+        if(!(shiftDown || ctrlDown))
+            Selectable.ClearSelection();
+    }
 
 }

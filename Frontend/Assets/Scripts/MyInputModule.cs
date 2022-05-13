@@ -536,6 +536,7 @@ namespace UnityEngine.EventSystems
 
         // Called when no iscrollhandler
         public Action<PointerEventData> scrollFallback;
+        public Action<PointerEventData> pressFallback;
 
         /// <summary>
         /// Process all mouse events.
@@ -601,6 +602,8 @@ namespace UnityEngine.EventSystems
                 // if we can't find a press handler set the press
                 // handler to be what would receive a click.
                 var newPressed = ExecuteEvents.ExecuteHierarchy(currentOverGo, pointerEvent, ExecuteEvents.pointerDownHandler);
+                if(newPressed==null)
+                    pressFallback(pointerEvent);
                 var newClick = ExecuteEvents.GetEventHandler<IPointerClickHandler>(currentOverGo);
 
                 // didnt find a press handler... search for a click handler
