@@ -44,7 +44,7 @@ class Env(objectsync_server.Space):
         super(Env, self).__init__(name, obj_classes,root_obj_class)
         self.globals=globals()
         self.locals={}
-        self.node_stack = MyDeque()
+        self.node_deque = MyDeque()
 
         # If a node produces a backward signal, prevent its sibling to be activated by setting lock_deque to True
         self.lock_deque = False
@@ -55,21 +55,18 @@ class Env(objectsync_server.Space):
 
     def update_demo_nodes(self):
         for node_class in self.node_classes.values():
-            self.send_direct_message({'command':'new','info':node_class.get_class_info()})
+            self.send_message({'command':'new','info':node_class.get_class_info()})
 
     def add_to_deque(self,node):
         if not self.lock_deque:
-            self.node_stack.append(node)
+            self.node_deque.append(node)
 
     def main_loop(self):
         self.flag_exit = 0
         while not self.flag_exit:
-            self.running_node = self.node_stack.pop()
+            self.running_node = self.node_deque.pop()
             if self.running_node == 'EXIT_SIGNAL':
                 return
 
             self.lock_deque = False
             self.running_node.run()
-
-from objectsync_server.server import set_space_class
-set_space_class(Env)

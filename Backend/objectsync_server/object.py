@@ -9,14 +9,10 @@ from objectsync_server.command import History, CommandAttribute, get_co_ancestor
 
 class Attribute:
     '''
-    A node can have 0, 1, or more attributes and components. 
+    An object can have 0 or more attributes with names. 
 
-    Attributes are states of nodes, they can be string, float or other types. Once an attribute is modified (whether in client or server),
-    cilent (or server) will send "atr" command to server (or client) to update the attribute.
-
-    Components are UI components that each controls an attribute, like slider or input field.
-
-    Not all attributes are controlled by components, like attribute "pos". 
+    Attributes are states of object, they can be string, float or other types. Once an attribute is modified (whether in client or server),
+    the server will send "attribute" command to all clients to update the attribute value.
     '''
     def __init__(self, obj : Object,name,type, value, history_obj:Optional[str] = 'none',callback=None):
         obj.attributes[name]=self
@@ -27,11 +23,12 @@ class Attribute:
 
         self.history_obj = history_obj
 
+        # Called when the attribute is changed.
         self.callback = callback
     
     def set_com(self,value):
         '''
-        Call self.set from a CommandAttribute, to enable undo and redo
+        Call set() with a CommandAttribute, to enable undo and redo
         '''
         if value == self.value: 
             return
@@ -48,7 +45,7 @@ class Attribute:
 
     def set(self,value, send = True):
         '''
-        Recommand to use set_com(). Direct calling this method does not add command into history
+        Note: Call set_com() instead if you want to record the change in history.
         '''
         if value == self.value: 
             return
@@ -61,7 +58,7 @@ class Attribute:
             self.value = value
 
         if send:
-            self.obj.space.send_direct_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
+            self.obj.space.send_message({'command':'attribute','id':self.obj.id,'name':self.name,'value':self.value})
 
     def serialize(self):
         d = {'type' : self.type, 'value' : self.value,'history_object':self.history_obj}
@@ -75,11 +72,11 @@ class StreamAttribute(Attribute):
         raise Exception('StreamAttribute does not support history')
 
     def add(self,string):
-        self.obj.space.send_direct_message({'command':'stream add','id':self.obj.id,'name':self.name,'value':string})
+        self.obj.space.send_message({'command':'stream add','id':self.obj.id,'name':self.name,'value':string})
         self.set(self.value+string, send=False)
 
     def clear(self):
-        self.obj.space.send_direct_message({'command':'stream clear','id':self.obj.id,'name':self.name})
+        self.obj.space.send_message({'command':'stream clear','id':self.obj.id,'name':self.name})
         self.set('', send=False)
 
 class Object:
@@ -172,7 +169,7 @@ class Object:
 
     def send_message(self,m):
         m['id'] = self.id
-        self.space.send_direct_message(m)
+        self.space.send_message(m)
 
     def recieve_message(self,m,ws):
         command = m['command']
@@ -190,27 +187,27 @@ class Object:
         if command == 'new attribute':
             if m['name'] not in self.attributes:
                 Attribute(self,m['name'],m['type'],m['value'],m['history_object'])
-                self.space.send_direct_message(m,exclude_ws=ws)
+                self.space.send_message(m,exclude_ws=ws)
 
         # Delete an attribute
         if command == 'delete attribute':
             if m['name'] in self.attributes:
                 self.attributes.pop(m['name'])
-                self.space.send_direct_message(m,exclude_ws=ws)
+                self.space.send_message(m,exclude_ws=ws)
 
         # Undo
         if command == "undo":
             if self.history.undo():
-                self.space.send_direct_message(f"msg obj {self.id} undone",ws)
+                self.space.send_message(f"msg obj {self.id} undone",ws)
             else:
-                self.space.send_direct_message(f"msg obj {self.id} noting to undo",ws)
+                self.space.send_message(f"msg obj {self.id} noting to undo",ws)
 
         # Redo
         if command == "redo":
             if self.history.redo():
-                self.space.send_direct_message(f"msg obj {self.id} redone",ws)
+                self.space.send_message(f"msg obj {self.id} redone",ws)
             else:
-               self.space.send_direct_message(f"msg obj {self.id} noting to redo",ws)
+               self.space.send_message(f"msg obj {self.id} noting to redo",ws)
 
         if command == "history on":
             self.history_on = True

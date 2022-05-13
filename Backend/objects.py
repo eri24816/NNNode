@@ -1,5 +1,5 @@
 import objectsync_server as objsync
-import node
+from node.node import Node
 from objectsync_server.object import Attribute, Object
 
 class RootObject(objsync.Object):
@@ -18,10 +18,12 @@ class NodeList(objsync.Object):
     frontend_type = "Hierarchy"
     
     def build(self):
-        for name,t in node.node_class_dict.items():
-            new_demo_node = self.add_child(name,{'attributes':{
-                'tag/is_demo':{'type':'Boolean','value':True}
-                }})
+        for name,t in self.space.obj_classes.items():
+            if(issubclass(t,Node)):
+                new_demo_node = self.add_child(name,{'attributes':{
+                    # Tag the demo node with 'is_demo' so that it can be set not interactive in the frontend
+                    'tag/is_demo':{'type':'Boolean','value':True}
+                    }})
 
 class VerticalLayoutGroup(objsync.Object):
     frontend_type = 'VerticalLayoutGroup'

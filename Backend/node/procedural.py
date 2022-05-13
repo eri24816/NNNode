@@ -24,7 +24,7 @@ class ForNode(Node):
             self.set_iterator()
             self.activate()
 
-    def _run(self):
+    def run_node(self):
         
         for port in self.port_list:
             if port.isInput:
@@ -73,7 +73,7 @@ class WhileNode(Node):
         if (len(self.condition_port.flows)==1 and self.condition_port.flows[0].is_ready()):
             self.activate()
 
-    def _run(self):
+    def run_node(self):
 
         for port in self.port_list:
             if port.isInput:

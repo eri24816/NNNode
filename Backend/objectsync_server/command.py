@@ -1,6 +1,5 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from ast import Str
 from typing import TYPE_CHECKING, Optional, Any
 if TYPE_CHECKING:
     from objectsync_server import Space, Object
@@ -9,7 +8,7 @@ import time
 
 class Command(ABC):
     '''
-    Undoable changes
+    Implements the command pattern.
     '''
     def __init__(self,space :Optional[Space] = None):
         '''
@@ -38,7 +37,9 @@ class Command(ABC):
         self.done = False
 
 class CommandSequence(Command):
-    
+    '''
+    Represents a sequence of commands that the commands should be executed successively (and not apart).
+    '''
     def __init__(self, commands:list[Command]):
         super().__init__()
         self.commands = commands
@@ -73,11 +74,12 @@ class CommandSequence(Command):
 
 class CommandHead(Command):
     '''
-    A null Command that represents the first HistoryItem in the History linked list.
+    A placeholder that serves as the first HistoryItem in the History linked list.
     '''
     def __init__(self,space = None):
         super(CommandHead,self).__init__(space)
         self.done = True
+
     def execute(self):
         raise NotImplementedError()
 
@@ -87,8 +89,13 @@ class CommandHead(Command):
     def undo(self):
         raise NotImplementedError()
 
-class CommandCreate(Command):
+    def __str__(self):
+        return "CommandHead"
 
+class CommandCreate(Command):
+    '''
+    Creation of a new object.
+    '''
     def __init__(self,space:Space,d:dict[str,Any],parent:str):
         super().__init__(space)
         self.space = space
@@ -109,7 +116,7 @@ class CommandCreate(Command):
 
     def undo(self):
         ''' 
-        serialize the object before destroying for redo.
+        Serialize the object before destroying so it can be recover using redo().
         '''
         super().undo()
         self.d = self.space[self.d['id']].serialize()
@@ -119,7 +126,9 @@ class CommandCreate(Command):
         return f"Create {self.d['id']}"
 
 class CommandDestroy(Command):
-    
+    '''
+    Destruction of an object.
+    '''
     def __init__(self,space:Space,id:str):
         super().__init__(space)
         self.id = id
@@ -147,7 +156,9 @@ class CommandDestroy(Command):
         return f"Destroy {self.d['id']}"
 
 class CommandAttribute(Command):
-
+    '''
+    Change of an attribute value.
+    '''
     def __init__(self,space:Space,obj:str,name:str,new_value,history_obj:Optional[str] = None):
         super().__init__()
         self.name = name            
@@ -172,18 +183,30 @@ class CommandAttribute(Command):
         self.space[self.obj].attributes[self.name].set(self.old_value)
 
     def __str__(self):
-        return f"Attribute {self.obj} {self.name} {self.old_value} {self.new_value}"
+        return f"Attribute {self.obj} {self.name} old: {self.old_value} new: {self.new_value}"
 
 class CommandManager():
-
+    '''
+    A space has a command manager to collect recently executed commands.
+    
+    methods:
+        push(command:Command): Collect a command
+        flush(): Flush all collected commands to objects' histories. If there is multiple collected commands, they will turn into a CommandSequence.
+    '''
     def __init__(self,space:Space):
         self.space = space
         self.collected_commands : list[Command] = []
 
     def push(self,command:Command):
+        '''
+        Collect a command.
+        '''
         self.collected_commands.append(command)
 
     def flush(self):
+        '''
+        Flush all collected commands to objects' histories. If there is multiple collected commands, they will turn into a CommandSequence.
+        '''
         if len(self.collected_commands) == 0:
             return
         if len(self.collected_commands) == 1:
@@ -201,6 +224,9 @@ class CommandManager():
                 self.collected_commands = []
                 return
 
+        # Push the command to the histories of:
+        # 1. the object that the command is executed on
+        # 2. its ancestors
         while 1:
             if storage_obj.catches_command:
                 storage_obj.history.push(command)
@@ -214,7 +240,7 @@ class CommandManager():
 
 class HistoryItem:
     '''
-    Works as a linked list.
+    Pack a command into an item of a linked list.
     '''
     def __init__(self,command:Command,last=None):
         self.command = command
@@ -227,15 +253,29 @@ class HistoryItem:
         self.time=time.time()
 
 class History:
+    '''
+    Every object has a history. This is a linked list of Commands.
 
+    methods:
+        push(command:Command): Link a new command after the current command.
+        undo(): Undo the current command and move the pointer to the previous command.
+        redo(): Redo the next command and move the pointer to the next command.
+    '''
+    
     def __init__(self,object:Object):
         self.space = object.space
         self.current : HistoryItem = HistoryItem(CommandHead())
 
     def push(self,command : Command):
+        '''
+        Link a new command after the current command.
+        '''
         self.current=HistoryItem(command,self.current)
 
     def undo(self):
+        '''
+        Undo the current command and move the pointer to the previous command.
+        '''
         if self.current.last == None:
             return 0
 
@@ -253,6 +293,9 @@ class History:
         return 1
 
     def redo(self):
+        '''
+        Redo the next command and move the pointer to the next command.
+        '''
         if self.current.next == None:
             return 0
 
@@ -283,7 +326,7 @@ class History:
 
 def get_co_ancestor(objs) -> Object:
     '''
-    return the lowest common ancestor of multiple objects
+    Returns the lowest common ancestor of multiple objects.
     '''
     space = objs[0].space
     min_len = 1000000000000

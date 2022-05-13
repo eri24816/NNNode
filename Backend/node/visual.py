@@ -27,7 +27,7 @@ class DisplayNode(Node):
     def in_data_active(self,port):
         self.attempt_to_activate()
 
-    def _run(self):
+    def run_node(self):
         if self.mode.value == '__str__':
             self.display_content.set(str(self.in_data.flows[0].get_value()))
         elif self.mode.value == 'image':

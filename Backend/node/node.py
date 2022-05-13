@@ -9,8 +9,8 @@ import sys
 import traceback
 import config
 
-from typing import TYPE_CHECKING, TypedDict
-from typing import Dict, List
+from typing import TYPE_CHECKING
+from typing import Dict, List, final
 if TYPE_CHECKING:
     import edge
     from Environment import Env
@@ -121,15 +121,10 @@ class Node(objsync.Object):
     Base class of all types of nodes
     '''
     name = 'Node'
-    frontend_type : str = 'GeneralNode'
+    frontend_type = 'GeneralNode'
     category = 'uncategorized'
 
     def serialize(self) -> Dict:
-        '''
-        Node info
-        History item "new" stores this. When creating new node, this is sent to all clients.
-        And when client sends redo, the node can be recreated from it. 
-        '''
         d = super(Node, self).serialize()
         d.update({
             "category" : self.category,"doc":self.__doc__,"name":self.name,
@@ -140,11 +135,10 @@ class Node(objsync.Object):
     ## Initialization ------------------------------
 
     def initialize(self):
-        # For the API, each ports of the node are identified by position in this list
-        # Create ports in __init__ then add all port into this list
+
         self.port_list : List[Port] = []
 
-        # Is the node ready to run?
+        # Is the node queueing to run?
         self.active = False
         self.color = objsync.Attribute(self, 'color', 'Vector3',v3(*config.get_color(self.category)))
         self.state = objsync.Attribute(self, 'state', 'String','0')
@@ -174,6 +168,7 @@ class Node(objsync.Object):
 
         self.state.set(0)
 
+    @final
     def run(self):
         # space calls this method
         self.state.set(2) # 2 means "running"
@@ -182,7 +177,7 @@ class Node(objsync.Object):
         # Redirect printed outputs and error messages to client
         with stdoutIO(self): #TODO: optimize this
             try:
-                self._run()
+                self.run_node()
             except Exception:
                 self.running_finished(False)
                 self.output_stream.add(traceback.format_exc())
@@ -214,9 +209,9 @@ class Node(objsync.Object):
             self.run()
 
 
-    ## Virtual methods ------------------------------
+    ## Abstract methods ------------------------------
 
-    def _run(self):
+    def run_node(self):
         '''
         Actually define what the type of node acts
         '''
@@ -277,7 +272,7 @@ class CodeNode(Node):
     def is_ready(self):
         return True
 
-    def _run(self):
+    def run_node(self):
 
         exec_(self.code.value,self.space.globals,self.space.locals)
 
@@ -319,7 +314,7 @@ class EvalAssignNode(Node):
     def in_data_active(self,port):
         self.attempt_to_activate()
 
-    def _run(self):
+    def run_node(self):
         if len(self.in_data.flows)>0:
 
             if len(self.in_data.flows) == 1:
@@ -393,7 +388,7 @@ class FunctionNode(Node):
     def in_data_activate(self,port):
         self.attempt_to_activate()
 
-    def _run(self):
+    def run_node(self):
 
         # Gather data from input dataFlows
         funcion_input = []

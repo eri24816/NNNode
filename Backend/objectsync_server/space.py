@@ -7,25 +7,22 @@ import json
 from itertools import count
 
 class Space():
-    obj_classses = {}
-    def __init__(self,name, obj_classses:Dict[str,type], root_obj_class:type = Object):
+    '''
+    In ObjectSync, `Object`s must be created in a `Space`. A `Space` has a collection of `Object`s. It assigns an unique id to each `Object` created in it, so `Object`s in the same `Space` can access each other with the ids.
+    '''
+    obj_classes = {}
+    def __init__(self,name, obj_classes:Dict[str,type], root_obj_class:type = Object):
         self.name = name
         self.thread=None
         self.id_iter = count(1)
         self.ws_clients = []
         self.command_manager = CommandManager(self)
 
-        # unlike history, some types of changes aren't necessary needed to be updated sequentially on client, like code in a node or whether the node is running.
-        # one buffer per client
-        # format:[ { "<command>/<node id>": <value> } ]
-        # it's a dictionary so replicated updates will overwrite
-        # self.message_buffer = {}
-
-        self.obj_classses = obj_classses
+        self.obj_classes = obj_classes
         
         self.objs = {}   
         self.root_obj : Object = root_obj_class(self,{'id':'0'},is_new = True)
-        self.send_direct_message({'command':'create','d':self.root_obj.serialize()})  
+        self.send_message({'command':'create','d':self.root_obj.serialize()})  
 
         self.flush = True
 
@@ -45,17 +42,18 @@ class Space():
             d = m['d']
             d['id'] = str(self.id_iter.__next__())
             CommandCreate(self,d,m['parent']).execute()
-            self.send_direct_message(f"msg {m['d']['type']} {d['id']} created",ws)
+            self.send_message(f"msg {m['d']['type']} {d['id']} created",ws)
 
         # Destroy an Object in the space
         elif command == "destroy":
             CommandDestroy(self,m['id']).execute()
-            self.send_direct_message("msg  %s destroyed" % (m['id']),ws)
+            self.send_message("msg  %s destroyed" % (m['id']),ws)
 
         elif command == "flush on":
             self.flush = True
         elif command == "flush off":
             self.flush = False
+
         #TODO
         # Save the graph to disk
         elif command == "save":
@@ -76,18 +74,18 @@ class Space():
         if temp>0 and self.flush or command == 'undo' or command == 'redo':
             print(self.root_obj.history)
 
-    def send_direct_message(_, message,ws = None, exclude_ws = None):
+    def send_message(_, message,ws = None, exclude_ws = None):
         '''
         This will be overwritten by server.py
         '''
 
     def OnClientConnection(self,ws):
         self.ws_clients.append(ws)
-        self.send_direct_message({
+        self.send_message({
             'command':'space_metadata',
-            'types':list(self.obj_classses.keys()),
+            'types':list(self.obj_classes.keys()),
             },ws)
-        self.send_direct_message({
+        self.send_message({
             'command':'load',
             'root_object':self.root_obj.serialize(),
             },ws)
@@ -105,7 +103,7 @@ class Space():
             - parent ([type], optional): the id of its parent. Must provide if is_new == True.
         """
         type,id = d['type'],d['id']
-        c = self.obj_classses[type]
+        c = self.obj_classes[type]
 
         # Instantiate the object
         # Note that the constructor may automatically create more objects (usually as children)
@@ -117,15 +115,15 @@ class Space():
             new_instance = c(self,d,is_new)
             parent = d['attributes']['parent_id']['value']
 
-        if send:
-            self.send_direct_message({'command':'create','d':new_instance.serialize()})
-
         self.objs[parent].OnChildCreated(new_instance)
+
+        if send:
+            self.send_message({'command':'create','d':new_instance.serialize()})
 
         return new_instance
 
     def destroy(self,id):
-        self.send_direct_message({'command':'destroy','id':id})
+        self.send_message({'command':'destroy','id':id})
         parent_id = self.objs[id].parent_id.value
         self.objs[parent_id].OnChildDestroyed(self[id])
         self.objs[id].OnDestroy()
