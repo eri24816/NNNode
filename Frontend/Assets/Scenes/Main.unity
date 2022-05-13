@@ -588,9 +588,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 996819432}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8403e4197f414e47aedf39a6597a594, type: 3}
+  m_Script: {fileID: 11500000, guid: d94579b9b6e5877408e80477a84603e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nameText: {fileID: 0}
+  attributeHierarchy: {fileID: 0}
+  itemContainer: {fileID: 0}
+  intInput: {fileID: 0}
 --- !u!114 &996819437
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1819,7 +1823,6 @@ MonoBehaviour:
   - {fileID: 243579921277508087, guid: 88f257725fbcca045bee73371d9bfb10, type: 3}
   - {fileID: 1010612035360753348, guid: 56cbf4a1ddc18cc49b0544a8f456b97d, type: 3}
   - {fileID: 1010612035360753348, guid: 37b45fd53cadfd141ae185a956a3b476, type: 3}
-  - {fileID: 816286257490676180, guid: bad8c68b59497a04ea552fa0a29fdd6f, type: 3}
   mainForInspector: {r: 0.27843142, g: 1, b: 0.55991, a: 1}
   secondaryForInspector: {r: 0, g: 0.26439476, b: 1, a: 1}
   bgBriteness: 0.27
