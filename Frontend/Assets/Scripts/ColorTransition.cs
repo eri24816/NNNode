@@ -9,6 +9,8 @@ public class ColorTransition : MonoBehaviour
     Dictionary<string, Color> colors = new Dictionary<string, Color>();
     [SerializeField]
     List<UnityEngine.UI.Graphic> graphics;
+    [SerializeField]
+    List<SpriteRenderer> spriteRenderers;
     IEnumerator routine;
 
     public void SetColor(string name, Color color)
@@ -50,11 +52,19 @@ public class ColorTransition : MonoBehaviour
             {
                 g.color = color;
             }
+            foreach(SpriteRenderer s in spriteRenderers)
+            {
+                s.color = color;
+            }
 
             yield return null;
         }
         color = target;
         foreach (UnityEngine.UI.Graphic g in graphics)
             g.color = color;
+        foreach (SpriteRenderer s in spriteRenderers)
+        {
+            s.color = color;
+        }
     }
 }

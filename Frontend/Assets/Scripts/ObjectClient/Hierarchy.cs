@@ -11,10 +11,14 @@ namespace ObjectSync.ObjectClients
         [SerializeField]
         NNNode.Hierarchy heirarchy;
 
+        public void Start()
+        {
+            transform.localPosition = Vector3.zero;
+            heirarchy.SetName("Node List");
+        }
         public override void OnAddChild(ObjectClient child)
         {
             heirarchy.AddItem(child.category, child.gameObject);
-            heirarchy.SetName("Node List");
         }
     }
 }

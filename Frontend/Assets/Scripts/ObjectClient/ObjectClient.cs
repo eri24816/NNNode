@@ -21,6 +21,7 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient
         spaceClient = obj.space.spaceClient as SpaceClient;
         spaceClient.objs.Add(syncObject.id,this);
 
+
         if (d["category"] != null)
             category = (string)d["category"];
 
@@ -32,12 +33,15 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient
 
         if (syncObject.Attributes.ContainsKey("parent_object"))
         {
+            var scale = transform.localScale;
+            var rotation = transform.localRotation;
             transform.SetParent(GameObject.Find(((ObjectSync.Attribute<string>)syncObject.Attributes["parent_object"]).Value).transform, true);
+            transform.localScale = scale;
+            transform.localRotation = rotation;
         }
 
         else
             ParentID = syncObject.RegisterAttribute<string>("parent_id", OnParentChanged, "none");
-        transform.localScale = Vector3.one;
 
 
         Output = syncObject.RegisterAttribute<string>("output", (v) => { OnOutputChanged(v); }, "none");
@@ -69,7 +73,11 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient
             parentTransform = spaceClient.objs[parent_id].specifyChildContainer;
         else
             parentTransform = spaceClient.objs[parent_id].transform;
+        var scale = transform.localScale;
+        var rotation = transform.localRotation;
         transform.SetParent(parentTransform, true);
+        transform.localScale = scale;
+        transform.localRotation = rotation;
         spaceClient[parent_id].OnAddChild(this);
     }
     public virtual void OnAddChild(ObjectClient child)

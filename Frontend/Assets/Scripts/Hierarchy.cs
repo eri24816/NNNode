@@ -9,7 +9,7 @@ namespace NNNode
     public class Hierarchy : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField]
-        GameObject prefab;
+        GameObject prefab, displayFramePrefab;
         [SerializeField]
         RectTransform leafPanel, subcategoryPanel;
         [SerializeField]
@@ -34,7 +34,19 @@ namespace NNNode
             int idx = categoryString.IndexOf("/");
             if (idx == -1)
             {
-                item.transform.SetParent(leafPanel);
+                if (item.transform is RectTransform)
+                {
+
+                    item.transform.SetParent(leafPanel);
+                }
+                else
+                {
+                    // If the item is not an UI object (e.g. it's a 3d model), warp it with a display frame to place it correctly.
+                    var displayFrame =  Instantiate(displayFramePrefab, leafPanel);
+                    item.transform.SetParent(displayFrame.transform);
+                    item.transform.localPosition = Vector3.zero;
+                    //item.transform.localScale = Vector3.one*50;
+                }
             }
             else
             {
@@ -58,6 +70,12 @@ namespace NNNode
             subcategory.prefab = prefab;
             return subcategory;
         }
+
+        public GameObject GetLeaf(string name)
+        {
+            return leafPanel.transform.Find(name).gameObject;
+        }
+
         public void Clear()
         {
             foreach (Transform child in leafPanel)

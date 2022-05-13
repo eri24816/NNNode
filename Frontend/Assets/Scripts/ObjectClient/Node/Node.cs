@@ -198,8 +198,6 @@ namespace NNNode
         }
         public override void Unselect()
         {
-            //SpaceClient.ins.nodeInspector.Clear();
-
             base.Unselect();
 
             selectColorTransition.Switch("unselected");
@@ -240,7 +238,7 @@ namespace NNNode
 
             selectColorTransition.SetDefault("unselected");
             */
-            outline.color = color;
+            if(outline) outline.color = color;
         }
 
         void TrySetPosition(Vector3 pos,Space space = Space.Self)

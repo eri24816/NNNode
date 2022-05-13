@@ -78,7 +78,7 @@ namespace NNNode {
             delta = Vector3.zero;
             yield return new WaitForEndOfFrame();
             obj.BeginDrag();
-            using (new NoBlockRaycast(canvasGroup))
+            using (new NoBlockRaycast(gameObject))
             {
                 while (isDragging)
                 {
@@ -128,13 +128,25 @@ namespace NNNode {
 class NoBlockRaycast : System.IDisposable
 {
     CanvasGroup canvasGroup;
-    public NoBlockRaycast(CanvasGroup canvasGroup)
+    List<Collider> colliders = new List<Collider>();
+    public NoBlockRaycast(GameObject gameObject)
     {
-        canvasGroup.blocksRaycasts = false;
-        this.canvasGroup = canvasGroup;
+        if(gameObject.TryGetComponent(out canvasGroup)){
+            canvasGroup.blocksRaycasts = false;
+        }
+        foreach(Collider collider in gameObject.gameObject.GetComponentsInChildren<Collider>())
+        {
+            collider.enabled = false;
+            colliders.Add(collider);
+        }
     }
     public void Dispose()
     {
-        canvasGroup.blocksRaycasts = true;
+        if(canvasGroup)
+            canvasGroup.blocksRaycasts = true;
+        foreach (Collider collider in colliders)
+        {
+            collider.enabled = true;
+        }
     }
 }
