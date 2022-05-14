@@ -55,11 +55,11 @@ class Space():
             self.flush = False
 
         #TODO
-        # Save the graph to disk
+        # Save the space to disk
         elif command == "save":
             pass
 
-        # Load the graph from disk
+        # Load the space from disk
         elif command == "load":
             pass
         
