@@ -473,7 +473,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e851d6998afe0a42aaa1eed72df02ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Scale: 0.3
   prefab: {fileID: 6759212295550940209}
+  displayFramePrefab: {fileID: 0}
   leafPanel: {fileID: 3408718130153868492}
   subcategoryPanel: {fileID: 972839879397323661}
   nameText: {fileID: 7705026190054716473}

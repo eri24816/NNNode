@@ -24,8 +24,8 @@ class TestNode2(Node):
 
 class TestNode3(FunctionNode):
     display_name = 'sample'
-    category = 'function/aa'
-    frontend_type = 'TestNode1'
+    category = 'function'
+    frontend_type = 'TextEditorNode'
 
     in_names = ["input"]
     out_names = ['value','mu','var']

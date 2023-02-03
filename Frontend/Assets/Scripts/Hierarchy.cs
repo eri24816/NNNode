@@ -8,6 +8,8 @@ namespace NNNode
 {
     public class Hierarchy : MonoBehaviour, IPointerClickHandler
     {
+        public float Scale = 0.5f;
+
         [SerializeField]
         GameObject prefab, displayFramePrefab;
         [SerializeField]
@@ -36,8 +38,8 @@ namespace NNNode
             {
                 if (item.transform is RectTransform)
                 {
-
                     item.transform.SetParent(leafPanel);
+                    item.transform.localScale = Vector3.one * Scale;
                 }
                 else
                 {
@@ -45,7 +47,6 @@ namespace NNNode
                     var displayFrame =  Instantiate(displayFramePrefab, leafPanel);
                     item.transform.SetParent(displayFrame.transform);
                     item.transform.localPosition = Vector3.zero;
-                    //item.transform.localScale = Vector3.one*50;
                 }
             }
             else

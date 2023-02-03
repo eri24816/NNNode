@@ -10,8 +10,6 @@ public class ObjectClient : MonoBehaviour, ObjectSync.IObjectClient
     public ObjectSync.Object syncObject;
     protected ObjectSync.Attribute<string> Output, ParentID;
 
-    protected MonoBehaviour sendOnScrollTo;
-
     public Transform specifyChildContainer = null;
 
     public string category;

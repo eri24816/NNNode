@@ -231,7 +231,7 @@ GameObject:
   - component: {fileID: 5590914048926598549}
   - component: {fileID: 2713899860357775731}
   m_Layer: 0
-  m_Name: NodeBasePrefab
+  m_Name: NodeBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -308,6 +308,7 @@ MonoBehaviour:
   color: {r: 0, g: 0, b: 0, a: 0}
   graphics:
   - {fileID: 5669041480626274690}
+  spriteRenderers: []
 --- !u!114 &8933088260885902728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -324,6 +325,7 @@ MonoBehaviour:
   color: {r: 0, g: 0, b: 0, a: 0}
   graphics:
   - {fileID: 7153144176627367778}
+  spriteRenderers: []
 --- !u!114 &1414667092233264701
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -338,7 +340,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: 60
-  m_MinHeight: 40
+  m_MinHeight: 60
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1

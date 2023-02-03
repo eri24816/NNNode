@@ -30,7 +30,7 @@ namespace ObjectSync
     class Link<T>
     {
         readonly List<Attribute<T>> attributes = new();
-        public bool locked = false;
+        public Link(){}
         public Link(IEnumerable<Attribute<T>> attrs)
         {
             foreach (var attr in attrs)
@@ -38,10 +38,20 @@ namespace ObjectSync
                 Add(attr);
             }
         }
+        ~Link()
+        {
+            Close();
+        }
         public void Add(Attribute<T> attribute)
         {
             attributes.Add(attribute);
             attribute.OnSet += ValueChangeListener;
+
+            // Update the value of the added atribute.
+            if(attributes.Count > 0)
+            {
+                ValueChangeListener(attributes[0].Value);
+            }
         }
         public void Remove(Attribute<T> attribute)
         {
@@ -66,9 +76,6 @@ namespace ObjectSync
                     attribute.Set(value);
                 }
             }
-        }
-        ~Link(){
-            Close();
         }
     }
 }
